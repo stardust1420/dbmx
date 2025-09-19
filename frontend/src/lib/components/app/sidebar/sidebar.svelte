@@ -10,6 +10,13 @@
 	import SettingsDialog from '$lib/components/app/sidebar/settings-dialog.svelte';
 	import { type ComponentProps } from 'svelte';
 	import * as ContextMenu from '$lib/components/ui/context-menu/index.js';
+	import NavUser from './user.svelte';
+
+	let userData = {
+		name: 'Stardust',
+		email: 'stardust@dbmx.com',
+		avatar: 'https://api.dicebear.com/9.x/glass/svg?seed=Kimberly'
+	};
 
 	let {
 		ref = $bindable(null),
@@ -463,19 +470,7 @@
 		</Sidebar.Group>
 	</Sidebar.Content>
 	<Sidebar.Footer>
-		<div class="flex flex-row items-center">
-			<Plus size={25} class="align-left mx-2" />
-			<SettingsDialog />
-			<a href="/settings" class="ml-auto"><Settings size={25} color="#f05c5c" href="/settings" /></a
-			>
-		</div>
-		<!-- <Sidebar.Menu>
-			<Sidebar.MenuItem>
-				<Sidebar.MenuButton>
-					
-				</Sidebar.MenuButton>
-			</Sidebar.MenuItem>
-		</Sidebar.Menu> -->
+		<NavUser user={userData} />
 	</Sidebar.Footer>
 	<Sidebar.Rail />
 </Sidebar.Root>
