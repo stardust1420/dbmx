@@ -5,6 +5,7 @@
 	let { children } = $props();
 
 	import CreditCardIcon from '@lucide/svelte/icons/credit-card';
+	import ActivityIcon from 'lucide-svelte/icons/activity';
 	import TerminalIcon from '@lucide/svelte/icons/terminal';
 	import UserIcon from '@lucide/svelte/icons/user';
 	import BotIcon from '@lucide/svelte/icons/bot';
@@ -67,7 +68,7 @@
 				<Command.Shortcut>⌘P</Command.Shortcut>
 			</Command.Item>
 			<Command.Item onSelect={() => goToRoute('/connections')}>
-				<TerminalIcon class="mr-2 size-4" />
+				<ActivityIcon class="mr-2 size-4" />
 				<span>Connections</span>
 				<Command.Shortcut>⌘C</Command.Shortcut>
 			</Command.Item>
