@@ -112,10 +112,18 @@
 				// Add tables and columns to suggestions set
 
 				if (db.Tables) {
-					db.Tables.forEach((table) => $suggestions.add(table));
+					suggestions.update((s) => {
+						const next = new Set(s);
+						db.Tables.forEach((t) => next.add(t));
+						return next; // return a NEW Set
+					});
 				}
 				if (db.Columns) {
-					db.Columns.forEach((column) => $suggestions.add(column));
+					suggestions.update((s) => {
+						const next = new Set(s);
+						db.Columns.forEach((c) => next.add(c));
+						return next; // return a NEW Set
+					});
 				}
 
 				// If the server and database to which connection was established is the current table's database
@@ -161,10 +169,18 @@
 						$activeDBs.push(db);
 						// Add tables and columns to suggestions set
 						if (db.Tables) {
-							db.Tables.forEach((table) => $suggestions.add(table));
+							suggestions.update((s) => {
+								const next = new Set(s);
+								db.Tables.forEach((t) => next.add(t));
+								return next; // return a NEW Set
+							});
 						}
 						if (db.Columns) {
-							db.Columns.forEach((column) => $suggestions.add(column));
+							suggestions.update((s) => {
+								const next = new Set(s);
+								db.Columns.forEach((c) => next.add(c));
+								return next; // return a NEW Set
+							});
 						}
 
 						// If the server and database to which connection was established is the current table's database
@@ -246,13 +262,12 @@
 						$activeDBs.findIndex((db) => db.ID === dbID),
 						1
 					); // Use splice to remove the item
-					// Remove tables and columns from suggestions set
-					if (db.Tables) {
-						db.Tables.forEach((table) => $suggestions.delete(table));
+					// Remove tables and columns from suggestions set (immutable update)
+					const toDelete = new Set([...(db?.Tables ?? []), ...(db?.Columns ?? [])]);
+					if (toDelete.size > 0) {
+						$suggestions = new Set([...$suggestions].filter((x) => !toDelete.has(x)));
 					}
-					if (db.Columns) {
-						db.Columns.forEach((column) => $suggestions.delete(column));
-					}
+
 					db.IsActive = false;
 					db.Tables = [];
 					db.Columns = [];
