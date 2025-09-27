@@ -2,334 +2,285 @@
 	import loader from '@monaco-editor/loader';
 	import { onMount, onDestroy } from 'svelte';
 
+	// ----- Types (strict & runtime-safe) -----
+	import type * as MonacoNS from 'monaco-editor';
+
 	let editorContainer: HTMLElement;
-	let editor: import('monaco-editor').editor.IStandaloneCodeEditor;
-	let completionProviderDisposable: import('monaco-editor').IDisposable;
+	let editor: MonacoNS.editor.IStandaloneCodeEditor | null = null;
+	let model: MonacoNS.editor.ITextModel | null = null;
+
+	let completionProviderDisposable: MonacoNS.IDisposable | null = null;
+	let cursorSub: MonacoNS.IDisposable | null = null;
+	let mouseSub: MonacoNS.IDisposable | null = null;
+
 	let isInitialized = false;
 
-	// Paste the Upstream Sunburst theme JSON here or import it
-	const UpstreamSunburstTheme: import('monaco-editor').editor.IStandaloneThemeData = {
+	// Props (Svelte runes)
+	let {
+		value = $bindable(''),
+		selectedQuery = $bindable(''),
+		height = '100%',
+		width = '100%',
+		suggestions = $bindable<string[]>([])
+	} = $props();
+
+	function refreshSuggestWidget() {
+		if (!editor) return;
+		const sc = (editor as any).getContribution?.('editor.contrib.suggestController');
+		if (sc?.cancelSuggestWidget) sc.cancelSuggestWidget();
+		if (sc?.triggerSuggest) sc.triggerSuggest();
+		else editor.trigger('keyboard', 'editor.action.triggerSuggest', {});
+	}
+
+	// Local caches for fast, case-insensitive matching
+	let localSuggestions: string[] = [];
+	let localSuggestionsLC: string[] = [];
+	$effect(() => {
+		localSuggestions = Array.isArray(suggestions) ? suggestions.slice() : [];
+		localSuggestionsLC = localSuggestions.map((s) => s.toLowerCase());
+
+		if (editor && isInitialized) schedule(refreshSuggestWidget);
+	});
+
+	const AuroraSQLTheme: MonacoNS.editor.IStandaloneThemeData = {
 		base: 'vs-dark',
 		inherit: true,
 		rules: [
-			{
-				background: '000000',
-				token: ''
-			},
-			{
-				foreground: 'ffffff',
-				background: '0f0f0f',
-				token: 'text'
-			},
-			{
-				background: '000000',
-				token: 'source.ruby.rails.embedded.html'
-			},
-			{
-				foreground: 'ffffff',
-				background: '101010',
-				token: 'text.html.ruby'
-			},
-			{
-				foreground: 'ccff33',
-				token: 'constant.numeric.ruby'
-			},
-			{
-				foreground: 'ffffff',
-				background: '000000',
-				token: 'source'
-			},
-			{
-				foreground: '9933cc',
-				token: 'comment'
-			},
-			{
-				foreground: '339999',
-				token: 'constant'
-			},
-			{
-				foreground: 'ff6600',
-				token: 'keyword'
-			},
-			{
-				foreground: 'edf8f9',
-				token: 'keyword.preprocessor'
-			},
-			{
-				foreground: 'ffffff',
-				token: 'keyword.preprocessor directive'
-			},
-			{
-				foreground: 'ffcc00',
-				token: 'entity.name.function'
-			},
-			{
-				foreground: 'ffcc00',
-				token: 'storage.type.function.js'
-			},
-			{
-				fontStyle: 'italic',
-				token: 'variable.parameter'
-			},
-			{
-				foreground: '772cb7',
-				background: '070707',
-				token: 'source comment.block'
-			},
-			{
-				foreground: 'ffffff',
-				token: 'variable.other'
-			},
-			{
-				foreground: '999966',
-				token: 'support.function.activerecord.rails'
-			},
-			{
-				foreground: '66ff00',
-				token: 'string'
-			},
-			{
-				foreground: 'aaaaaa',
-				token: 'string constant.character.escape'
-			},
-			{
-				foreground: '000000',
-				background: 'cccc33',
-				token: 'string.interpolated'
-			},
-			{
-				foreground: '44b4cc',
-				token: 'string.regexp'
-			},
-			{
-				foreground: 'cccc33',
-				token: 'string.literal'
-			},
-			{
-				foreground: '555555',
-				token: 'string.interpolated constant.character.escape'
-			},
-			{
-				fontStyle: 'underline',
-				token: 'entity.name.class'
-			},
-			{
-				fontStyle: 'underline',
-				token: 'support.class.js'
-			},
-			{
-				fontStyle: 'italic underline',
-				token: 'entity.other.inherited-class'
-			},
-			{
-				foreground: 'ff6600',
-				token: 'meta.tag.inline.any.html'
-			},
-			{
-				foreground: 'ff6600',
-				token: 'meta.tag.block.any.html'
-			},
-			{
-				foreground: '99cc99',
-				fontStyle: 'italic',
-				token: 'entity.other.attribute-name'
-			},
-			{
-				foreground: 'dde93d',
-				token: 'keyword.other'
-			},
-			{
-				foreground: 'ff6600',
-				token: 'meta.selector.css'
-			},
-			{
-				foreground: 'ff6600',
-				token: 'entity.other.attribute-name.pseudo-class.css'
-			},
-			{
-				foreground: 'ff6600',
-				token: 'entity.name.tag.wildcard.css'
-			},
-			{
-				foreground: 'ff6600',
-				token: 'entity.other.attribute-name.id.css'
-			},
-			{
-				foreground: 'ff6600',
-				token: 'entity.other.attribute-name.class.css'
-			},
-			{
-				foreground: '999966',
-				token: 'support.type.property-name.css'
-			},
-			{
-				foreground: 'ffffff',
-				token: 'keyword.other.unit.css'
-			},
-			{
-				foreground: 'ffffff',
-				token: 'constant.other.rgb-value.css'
-			},
-			{
-				foreground: 'ffffff',
-				token: 'constant.numeric.css'
-			},
-			{
-				foreground: 'ffffff',
-				token: 'support.function.event-handler.js'
-			},
-			{
-				foreground: 'ffffff',
-				token: 'keyword.operator.js'
-			},
-			{
-				foreground: 'cccc66',
-				token: 'keyword.control.js'
-			},
-			{
-				foreground: 'ffffff',
-				token: 'support.class.prototype.js'
-			},
-			{
-				foreground: 'ff6600',
-				token: 'object.property.function.prototype.js'
-			}
+			// base / comments
+			{ token: '', foreground: 'E6E9EF', background: '000000' },
+			{ token: 'comment', foreground: '7D8696', fontStyle: 'italic' },
+			{ token: 'comment.sql', foreground: '7D8696', fontStyle: 'italic' },
+
+			// keywords (SELECT, WHERE, JOIN, LIMIT…)
+			{ token: 'keyword', foreground: '8CAAEE' }, // soft azure
+			{ token: 'keyword.sql', foreground: '8CAAEE' },
+
+			// types (INT, VARCHAR…), NULL/TRUE/FALSE
+			{ token: 'type', foreground: '8BD5CA' }, // teal
+			{ token: 'type.sql', foreground: '8BD5CA' },
+			{ token: 'predefined', foreground: 'F2CDCD' }, // NULL/TRUE/FALSE (rose)
+			{ token: 'predefined.sql', foreground: 'F2CDCD' },
+
+			// strings & numbers
+			{ token: 'string', foreground: 'A6E3A1' }, // mint
+			{ token: 'string.sql', foreground: 'A6E3A1' },
+			{ token: 'string.escape', foreground: 'B5E8E0' },
+			{ token: 'number', foreground: 'F5A97F' }, // coral/peach
+			{ token: 'number.sql', foreground: 'F5A97F' },
+
+			// functions (COUNT, SUM, MAX…)
+			{ token: 'entity.name.function', foreground: 'EED49F' }, // amber
+			{ token: 'support.function', foreground: 'EED49F' },
+
+			// identifiers (tables/columns), quoted names
+			{ token: 'identifier', foreground: 'DCE1EA' },
+			{ token: 'identifier.sql', foreground: 'DCE1EA' },
+			{ token: 'identifier.quote', foreground: 'AAB4CF' },
+
+			// operators / punctuation
+			{ token: 'operator', foreground: 'BAC2DE' },
+			{ token: 'operator.sql', foreground: 'BAC2DE' },
+			{ token: 'delimiter', foreground: '6C7086' },
+			{ token: 'delimiter.sql', foreground: '6C7086' },
+			{ token: 'delimiter.bracket', foreground: 'B4BEFE' },
+
+			// errors (muted)
+			{ token: 'invalid', foreground: 'F38BA8' },
+			{ token: 'invalid.deprecated', foreground: 'F9E2AF' }
 		],
 		colors: {
-			'editor.foreground': '#FFFFFF',
+			// canvas & text
 			'editor.background': '#000000',
-			'editor.selectionBackground': '#35493CE0',
-			'editorCursor.foreground': '#FFFFFF',
-			'editorWhitespace.foreground': '#404040'
+			'editor.foreground': '#E6E9EF',
+
+			// gutter / guides
+			'editorLineNumber.foreground': '#2A3340',
+			'editorLineNumber.activeForeground': '#9DB2CE',
+			'editorIndentGuide.background': '#121212',
+			'editorIndentGuide.activeBackground': '#1E1E1E',
+			'editorWhitespace.foreground': '#202020',
+			editorLineHighlightBackground: '#0A0C10',
+
+			// caret / selection / word highlights
+			'editorCursor.foreground': '#E6E9EF',
+			'editor.selectionBackground': '#1E2A3A',
+			'editor.inactiveSelectionBackground': '#10151C',
+			'editor.wordHighlightBackground': '#0B122066',
+			'editor.wordHighlightStrongBackground': '#0B122099',
+
+			// matches / search
+			'editor.findMatchBackground': '#22D3EE66',
+			'editor.findMatchHighlightBackground': '#6EE7B780',
+			'editor.findRangeHighlightBackground': '#37415166',
+
+			// brackets
+			'editorBracketMatch.background': '#101318',
+			'editorBracketMatch.border': '#2A3646',
+
+			// autocomplete
+			'editorSuggestWidget.background': '#0B0D11',
+			'editorSuggestWidget.border': '#1F2633',
+			'editorSuggestWidget.foreground': '#D7DBE2',
+			'editorSuggestWidget.selectedBackground': '#151B24',
+			'editorSuggestWidget.highlightForeground': '#8CAAEE',
+
+			// hover / peek
+			'editorHoverWidget.background': '#0B0D11',
+			'editorHoverWidget.border': '#1F2633',
+
+			// scrollbar
+			'scrollbarSlider.background': '#2A2A2AAA',
+			'scrollbarSlider.hoverBackground': '#3A3A3AAA',
+			'scrollbarSlider.activeBackground': '#4A4A4AAA',
+
+			// markers
+			'editorError.foreground': '#F38BA8',
+			'editorWarning.foreground': '#EED49F',
+			'editorInfo.foreground': '#8CAAEE'
 		}
 	};
 
-	let {
-		value = $bindable(),
-		selectedQuery = $bindable(),
-		height = '100%',
-		width = '100%',
-		suggestions = $bindable([])
-	} = $props();
-
-	// This effect will run whenever the value changes from outside
+	// External → editor value sync (skip no-ops; keep undo)
 	$effect(() => {
-		const _ = value;
+		const incoming = value;
+		if (!editor || !isInitialized || !model) return;
 
-		// Only update the editor if it exists and is initialized
-		if (editor && isInitialized) {
-			// Prevent infinite loops by checking if the editor value is different from the prop value
-			const currentValue = editor.getValue();
-			if (currentValue !== value) {
-				// Update the editor model with the new value
-				editor.setValue(value);
-			}
-		}
+		const current = model.getValue();
+		if (current === incoming) return;
+
+		const fullRange = model.getFullModelRange();
+		editor.pushUndoStop();
+		editor.executeEdits('propSync', [{ range: fullRange, text: incoming }]);
+		editor.pushUndoStop();
 	});
+
+	// Helper: compute blank-line-delimited block range
+	function calcBlockRange(
+		monaco: typeof import('monaco-editor'),
+		m: MonacoNS.editor.ITextModel,
+		lineNumber: number
+	): MonacoNS.Range {
+		let start = lineNumber;
+		let end = lineNumber;
+		const last = m.getLineCount();
+
+		while (start > 1) {
+			if (m.getLineContent(start - 1).trim() === '') break;
+			start--;
+		}
+		while (end < last) {
+			if (m.getLineContent(end + 1).trim() === '') break;
+			end++;
+		}
+
+		return new monaco.Range(start, 1, end, m.getLineLength(end) + 1);
+	}
+
+	// rAF throttle
+	let rafToken: number | null = null;
+	function schedule(fn: () => void) {
+		if (rafToken != null) cancelAnimationFrame(rafToken);
+		rafToken = requestAnimationFrame(() => {
+			rafToken = null;
+			fn();
+		});
+	}
 
 	onMount(async () => {
 		const monaco = await loader.init();
 
 		monaco.languages.register({ id: 'sql' });
+		monaco.editor.defineTheme('aurora-sql', AuroraSQLTheme);
 
+		// Completion provider (case-insensitive startsWith)
 		completionProviderDisposable = monaco.languages.registerCompletionItemProvider('sql', {
-			provideCompletionItems: (model, position) => {
-				const word = model.getWordAtPosition(position);
-				if (!word) {
-					return { suggestions: [] };
+			triggerCharacters: [' ', '.', '(', '_'],
+			provideCompletionItems: (m, position) => {
+				const word = m.getWordUntilPosition(position);
+				const prefix = (word.word || '').toLowerCase();
+
+				const makeItem = (keyword: string, sortIdx: number) => ({
+					label: keyword,
+					kind: monaco.languages.CompletionItemKind.Keyword,
+					insertText: keyword,
+					sortText: String(sortIdx).padStart(4, '0'),
+					range: {
+						startLineNumber: position.lineNumber,
+						startColumn: word.startColumn,
+						endLineNumber: position.lineNumber,
+						endColumn: word.endColumn
+					}
+				});
+
+				if (!prefix) {
+					return { suggestions: localSuggestions.map((kw, i) => makeItem(kw, i)) };
 				}
 
-				const prefix = word.word.toLowerCase();
-				const filteredSuggestions = suggestions.filter((keyword) =>
-					keyword.toLowerCase().startsWith(prefix)
-				);
-
-				return {
-					suggestions: filteredSuggestions.map((keyword) => ({
-						label: keyword,
-						kind: monaco.languages.CompletionItemKind.Keyword,
-						insertText: keyword,
-						range: {
-							startLineNumber: position.lineNumber,
-							startColumn: position.column - prefix.length,
-							endLineNumber: position.lineNumber,
-							endColumn: position.column
-						}
-					}))
-				};
+				const out: ReturnType<typeof makeItem>[] = [];
+				for (let i = 0; i < localSuggestionsLC.length; i++) {
+					if (localSuggestionsLC[i].startsWith(prefix)) {
+						out.push(makeItem(localSuggestions[i], out.length));
+					}
+				}
+				return { suggestions: out };
 			}
 		});
-
-		monaco.editor.defineTheme('sunburst', UpstreamSunburstTheme);
 
 		editor = monaco.editor.create(editorContainer, {
-			value: value,
-			language: 'graphql',
-			theme: 'sunburst',
+			value,
+			language: 'sql', // ✅ matches provider
+			theme: 'aurora-sql',
+			automaticLayout: true,
 			minimap: { enabled: false },
 			fontSize: 14,
-			automaticLayout: true,
-			glyphMargin: true
+			wordWrap: 'off',
+			scrollBeyondLastLine: false,
+			renderWhitespace: 'none',
+			renderLineHighlight: 'line',
+			glyphMargin: true,
+			quickSuggestions: { other: true, comments: false, strings: true },
+			suggestOnTriggerCharacters: true,
+			fixedOverflowWidgets: true,
+			smoothScrolling: true, // smooth viewport scrolling
+			cursorSmoothCaretAnimation: 'on' as any, // animate left/right caret moves
+			cursorBlinking: 'smooth', // nicer blink animation (optional)
+			stickyTabStops: true, // nicer left/right in leading spaces
+			scrollBeyondLastColumn: 3 // avoids hugging the right edge (optional)
 		});
 
-		const model = editor.getModel();
-		if (!model) return;
+		model = editor.getModel();
+		if (!model) {
+			// extremely unlikely, but guard for TS + runtime
+			isInitialized = true;
+			return;
+		}
 
-		// On initialization
-		let decorationCollection = editor.createDecorationsCollection([]);
+		// Reusable decorations
+		const deco = editor.createDecorationsCollection([]);
 
-		// Select the query on click and highlight it
-		editor.onMouseDown((e) => {
-			const position = editor.getPosition();
-			if (!position) return;
+		function updateQuerySelection() {
+			if (!editor || !model) return;
 
-			let currentLineNumber = position.lineNumber;
-			let queryStartLineNumber = currentLineNumber;
-			let queryEndLineNumber = currentLineNumber;
+			const pos = editor.getPosition();
+			if (!pos) return;
 
-			// Move to the start of the query
-			while (true) {
-				if (currentLineNumber === 1) {
-					queryStartLineNumber = 1;
-					break;
+			const range = calcBlockRange(monaco, model!, pos.lineNumber);
+
+			const existing = deco.getRanges();
+			if (existing.length === 1) {
+				const r = existing[0];
+				if (
+					r.startLineNumber === range.startLineNumber &&
+					r.endLineNumber === range.endLineNumber
+				) {
+					selectedQuery = model!.getValueInRange(range).trim();
+					return;
 				}
-
-				const lineContent = model.getLineContent(currentLineNumber - 1).trim();
-				if (lineContent === '') {
-					queryStartLineNumber = currentLineNumber;
-					break;
-				}
-
-				currentLineNumber--;
 			}
 
-			// Move to the end of the query
-			while (true) {
-				if (currentLineNumber === model.getLineCount()) {
-					queryEndLineNumber = model.getLineCount();
-					break;
-				}
-
-				const lineContent = model.getLineContent(currentLineNumber + 1).trim();
-				if (lineContent === '') {
-					queryEndLineNumber = currentLineNumber;
-					break;
-				}
-
-				currentLineNumber++;
-			}
-
-			const selection = new monaco.Range(
-				queryStartLineNumber,
-				1,
-				queryEndLineNumber,
-				model.getLineLength(queryEndLineNumber) + 1
-			);
-
-			// On each mouse click
-			decorationCollection.set([
+			deco.set([
 				{
-					range: selection,
+					range,
 					options: {
 						isWholeLine: true,
 						className: 'bg-green-100 bg-opacity-5',
@@ -338,115 +289,36 @@
 				}
 			]);
 
-			// Get content from the selection
-			selectedQuery = model.getValueInRange(selection).trim();
-		});
+			selectedQuery = model!.getValueInRange(range).trim();
+		}
 
-		// Select the query when cursor is placed on it using arrow keys
-		editor.onKeyUp((e) => {
-			const position = editor.getPosition();
-			if (!position) return;
+		// Mouse + cursor events (throttled)
+		mouseSub = editor.onMouseDown(() => schedule(updateQuerySelection));
+		cursorSub = editor.onDidChangeCursorPosition(() => schedule(updateQuerySelection));
 
-			let currentLineNumber = position.lineNumber;
-			let queryStartLineNumber = currentLineNumber;
-			let queryEndLineNumber = currentLineNumber;
-
-			// Move to the start of the query
-			while (true) {
-				if (currentLineNumber === 1) {
-					queryStartLineNumber = 1;
-					break;
-				}
-
-				const lineContent = model.getLineContent(currentLineNumber - 1).trim();
-				if (lineContent === '') {
-					queryStartLineNumber = currentLineNumber;
-					break;
-				}
-
-				currentLineNumber--;
-			}
-
-			// Move to the end of the query
-			while (true) {
-				if (currentLineNumber === model.getLineCount()) {
-					queryEndLineNumber = model.getLineCount();
-					break;
-				}
-
-				const lineContent = model.getLineContent(currentLineNumber + 1).trim();
-				if (lineContent === '') {
-					queryEndLineNumber = currentLineNumber;
-					break;
-				}
-
-				currentLineNumber++;
-			}
-
-			const selection = new monaco.Range(
-				queryStartLineNumber,
-				1,
-				queryEndLineNumber,
-				model.getLineLength(queryEndLineNumber) + 1
-			);
-
-			// On each mouse click
-			decorationCollection.set([
-				{
-					range: selection,
-					options: {
-						isWholeLine: true,
-						className: 'bg-green-100 bg-opacity-5',
-						glyphMarginClassName: 'bg-green-500 bg-opacity-20'
-					}
-				}
-			]);
-
-			selectedQuery = model.getValueInRange(selection).trim();
-		});
-
-		// Update value when editor content changes
+		// Keep external value in sync
 		editor.onDidChangeModelContent(() => {
-			value = editor.getValue();
+			value = editor!.getValue();
 		});
 
-		// editor.createDecorationsCollection([
-		// 	{
-		// 		range: new monaco.Range(1, 1, 1, 1),
-		// 		options: {
-		// 			isWholeLine: true,
-		// 			className: 'bg-green-100 bg-opacity-5',
-		// 			glyphMarginClassName: 'bg-green-500 bg-opacity-20'
-		// 		}
-		// 	},
-		// 	{
-		// 		range: new monaco.Range(3, 1, 6, 1),
-		// 		options: {
-		// 			isWholeLine: true,
-		// 			className: 'bg-green-100 bg-opacity-5',
-		// 			glyphMarginClassName: 'bg-green-500 bg-opacity-20'
-		// 		}
-		// 	},
-		// 	{
-		// 		range: new monaco.Range(8, 1, 11, 1),
-		// 		options: {
-		// 			isWholeLine: true,
-		// 			className: 'bg-green-100 bg-opacity-5',
-		// 			glyphMarginClassName: 'bg-green-500 bg-opacity-20'
-		// 		}
-		// 	}
-		// ]);
+		// Nice UX: open suggestions on focus
+		editor.onDidFocusEditorText(() => {
+			editor!.trigger('focus', 'editor.action.triggerSuggest', {});
+		});
 
-		// Mark as initialized after editor is created
 		isInitialized = true;
 	});
 
 	onDestroy(() => {
-		editor?.dispose();
+		cursorSub?.dispose();
+		mouseSub?.dispose();
 		completionProviderDisposable?.dispose();
+		editor?.dispose();
+		editor = null;
+		model = null;
 	});
 
-	// Function to update the state with the selected text
+	// Optional: selecting text outside Monaco (kept from your version)
 	function handleSelection() {
 		const selection = window.getSelection();
 		if (selection && selection.toString().trim() !== '') {
