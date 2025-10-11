@@ -20,6 +20,7 @@
 	let where = $state('');
 	let orderBy = $state('');
 	let groupBy = $state('');
+	let tableColumns = $state([]);
 
 	// Reference to the Tabs component
 	let tabsComponent: Tabs;
@@ -63,6 +64,7 @@
 			bind:where
 			bind:orderBy
 			bind:groupBy
+			bind:tableColumns
 		/>
 	</Sidebar.Inset>
 </Sidebar.Provider>

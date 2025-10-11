@@ -12,6 +12,8 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { LineScale } from 'svelte-spins';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
+	import * as Collapsible from '$lib/components/ui/collapsible/index.js';
 
 	import * as Select from '$lib/components/ui/select/index.js';
 
@@ -63,9 +65,15 @@
 		offset = $bindable(''),
 		where = $bindable(''),
 		orderBy = $bindable(''),
-		groupBy = $bindable('')
+		groupBy = $bindable(''),
+		tableColumns = $bindable([])
 	} = $props();
 	let editor = $state('');
+
+	let isSelectDropdownOpen = $state(false);
+	let isWhereDropdownOpen = $state(false);
+	let isOrderByDropdownOpen = $state(false);
+	let isGroupByDropdownOpen = $state(false);
 
 	// Table view tab state (for Data/Structure/Indexes)
 	let tableViewTab = $state('data');
@@ -102,6 +110,7 @@
 					where = tab.Where;
 					orderBy = tab.OrderBy;
 					groupBy = tab.GroupBy;
+					tableColumns = tab.TableColumnsList;
 
 					editor = tab.Editor;
 
@@ -205,6 +214,7 @@
 				where = tab.Where;
 				orderBy = tab.OrderBy;
 				groupBy = tab.GroupBy;
+				tableColumns = tab.TableColumnsList;
 
 				editor = tab.Editor;
 
@@ -257,6 +267,7 @@
 					where = tab.Where;
 					orderBy = tab.OrderBy;
 					groupBy = tab.GroupBy;
+					tableColumns = tab.TableColumnsList;
 
 					editor = tab.Editor;
 
@@ -329,6 +340,7 @@
 				where = tab.Where;
 				orderBy = tab.OrderBy;
 				groupBy = tab.GroupBy;
+				tableColumns = tab.TableColumnsList;
 
 				editor = tab.Editor;
 
@@ -399,6 +411,8 @@
 
 	function executeQuery() {
 		if ($selectedQuery.trim() == '') {
+			console.log('selected query is empty');
+			console.log($selectedQuery.trim());
 			toast.error('Please select a query to execute', {
 				action: {
 					label: 'OK',
@@ -552,8 +566,10 @@
 		if (event.altKey && event.key === 'Enter') {
 			event.preventDefault();
 			if (tabType == 'table') {
+				console.log('get table data');
 				getTableData();
 			} else {
+				console.log('execute query');
 				executeQuery();
 			}
 		}
@@ -701,68 +717,257 @@
 						{#if tableViewTab === 'data'}
 							<div class="flex h-screen flex-1 flex-col">
 								<div class="h-18 flex flex-col">
-									<div class="flex flex-1 items-center gap-2 p-1">
-										<Label for="select">Select</Label>
-										<Input
-											type="text"
-											id="select"
-											placeholder="Select..."
-											class="w-full focus-visible:ring-0"
-											bind:value={select}
-										/>
-									</div>
-									<div class="flex flex-1 items-center gap-2 p-1">
-										<Label for="where">Where</Label>
-										<Input
-											type="text"
-											id="where"
-											placeholder="Where..."
-											class="w-full focus-visible:ring-0"
-											bind:value={where}
-										/>
-									</div>
-									<div class="flex flex-1 items-center p-1 pt-0">
-										<div class="flex flex-1 items-center gap-2 p-1">
-											<Label for="orderBy">Order</Label>
-											<Input
-												type="text"
-												id="orderBy"
-												placeholder="Order By"
-												class="w-full focus-visible:ring-0"
-												bind:value={orderBy}
-											/>
+									<Collapsible.Root>
+										<div class="flex flex-1 items-center p-1 pt-0">
+											<div class="flex flex-1 items-center gap-2 p-1">
+												<Label for="where">Where</Label>
+												<DropdownMenu.Root bind:open={isWhereDropdownOpen}>
+													<DropdownMenu.Trigger
+														disabled={true}
+														class="flex flex-1 items-center gap-2 p-1"
+													>
+														<Input
+															type="text"
+															id="where"
+															placeholder="Where..."
+															class="w-full focus-visible:ring-0"
+															bind:value={where}
+															onkeyup={(e) => {
+																if (e.key === "'" || e.key === '"') {
+																	where += e.key;
+																}
+																if (e.key === '(') {
+																	where += ')';
+																}
+															}}
+															onkeydown={(e) => {
+																if (e.key === 'Enter' && !e.altKey) {
+																	isWhereDropdownOpen = true;
+																}
+																if (e.key === 'Escape') {
+																	isWhereDropdownOpen = false;
+																}
+															}}
+														/>
+													</DropdownMenu.Trigger>
+													<DropdownMenu.Content align="start" class="w-96 overflow-auto">
+														<DropdownMenu.Group class="max-h-96 overflow-auto">
+															<DropdownMenu.Label>Columns</DropdownMenu.Label>
+															<DropdownMenu.Separator />
+
+															{#each tableColumns as column (column)}
+																<DropdownMenu.Item
+																	onclick={() => {
+																		if (
+																			where.length > 0 &&
+																			!where.endsWith(',') &&
+																			!where.endsWith(', ')
+																		) {
+																			where += ', ';
+																		}
+																		where += column;
+																		isWhereDropdownOpen = false;
+																	}}>{column}</DropdownMenu.Item
+																>
+															{/each}
+														</DropdownMenu.Group>
+													</DropdownMenu.Content>
+												</DropdownMenu.Root>
+											</div>
+											<Collapsible.Trigger>
+												<Button size="sm" variant="secondary">Advanced</Button>
+											</Collapsible.Trigger>
 										</div>
-										<div class="flex flex-1 items-center gap-2 p-1">
-											<Label for="groupBy">Group</Label>
-											<Input
-												type="text"
-												id="groupBy"
-												placeholder="Group By"
-												class="w-full focus-visible:ring-0"
-												bind:value={groupBy}
-											/>
-										</div>
-										<div class="flex items-center gap-2 p-1">
-											<Label for="limit">Limit</Label>
-											<Input
-												type="text"
-												id="limit"
-												placeholder="Limit"
-												class="w-24 focus-visible:ring-0"
-												bind:value={limit}
-											/>
-										</div>
-										<div class="flex items-center gap-2 p-1">
-											<Label for="offset">Offset</Label>
-											<Input
-												type="text"
-												id="offset"
-												placeholder="Offset"
-												class="w-24 focus-visible:ring-0"
-												bind:value={offset}
-											/>
-										</div>
-									</div>
+										<Collapsible.Content>
+											<div class="flex flex-1 items-center gap-2 p-1">
+												<Label for="select">Select</Label>
+												<DropdownMenu.Root bind:open={isSelectDropdownOpen}>
+													<DropdownMenu.Trigger
+														disabled={true}
+														class="flex flex-1 items-center gap-2 p-1"
+													>
+														<Input
+															type="text"
+															id="select"
+															placeholder="Select..."
+															class="w-full focus-visible:ring-0"
+															bind:value={select}
+															onkeyup={(e) => {
+																if (e.key === "'" || e.key === '"') {
+																	select += e.key;
+																}
+																if (e.key === '(') {
+																	select += ')';
+																}
+															}}
+															onkeydown={(e) => {
+																if (e.key === 'Enter' && !e.altKey) {
+																	isSelectDropdownOpen = true;
+																}
+																if (e.key === 'Escape') {
+																	isSelectDropdownOpen = false;
+																}
+															}}
+														/>
+													</DropdownMenu.Trigger>
+													<DropdownMenu.Content align="start" class="w-96 overflow-auto">
+														<DropdownMenu.Group class="max-h-96 overflow-auto">
+															<DropdownMenu.Label>Columns</DropdownMenu.Label>
+															<DropdownMenu.Separator />
+
+															{#each tableColumns as column (column)}
+																<DropdownMenu.Item
+																	onclick={() => {
+																		if (
+																			select.length > 0 &&
+																			!select.endsWith(',') &&
+																			!select.endsWith(', ')
+																		) {
+																			select += ', ';
+																		}
+																		select += column;
+																		isSelectDropdownOpen = false;
+																	}}>{column}</DropdownMenu.Item
+																>
+															{/each}
+														</DropdownMenu.Group>
+													</DropdownMenu.Content>
+												</DropdownMenu.Root>
+											</div>
+											<div class="flex flex-1 items-center p-1 pt-0">
+												<div class="flex flex-1 items-center gap-2 p-1">
+													<Label for="orderBy">Order</Label>
+													<DropdownMenu.Root bind:open={isOrderByDropdownOpen}>
+														<DropdownMenu.Trigger
+															disabled={true}
+															class="flex flex-1 items-center gap-2 p-1"
+														>
+															<Input
+																type="text"
+																id="orderBy"
+																placeholder="Order By"
+																class="w-full focus-visible:ring-0"
+																bind:value={orderBy}
+																onkeyup={(e) => {
+																	if (e.key === "'" || e.key === '"') {
+																		orderBy += e.key;
+																	}
+																	if (e.key === '(') {
+																		orderBy += ')';
+																	}
+																}}
+																onkeydown={(e) => {
+																	if (e.key === 'Enter' && !e.altKey) {
+																		isOrderByDropdownOpen = true;
+																	}
+																	if (e.key === 'Escape') {
+																		isOrderByDropdownOpen = false;
+																	}
+																}}
+															/>
+														</DropdownMenu.Trigger>
+														<DropdownMenu.Content align="start" class="w-96 overflow-auto">
+															<DropdownMenu.Group class="max-h-96 overflow-auto">
+																<DropdownMenu.Label>Columns</DropdownMenu.Label>
+																<DropdownMenu.Separator />
+
+																{#each tableColumns as column (column)}
+																	<DropdownMenu.Item
+																		onclick={() => {
+																			if (
+																				orderBy.length > 0 &&
+																				!orderBy.endsWith(',') &&
+																				!orderBy.endsWith(', ')
+																			) {
+																				orderBy += ', ';
+																			}
+																			orderBy += column;
+																			isOrderByDropdownOpen = false;
+																		}}>{column}</DropdownMenu.Item
+																	>
+																{/each}
+															</DropdownMenu.Group>
+														</DropdownMenu.Content>
+													</DropdownMenu.Root>
+												</div>
+												<div class="flex flex-1 items-center p-1">
+													<Label for="groupBy">Group</Label>
+													<DropdownMenu.Root bind:open={isGroupByDropdownOpen}>
+														<DropdownMenu.Trigger
+															disabled={true}
+															class="flex flex-1 items-center p-1"
+														>
+															<Input
+																type="text"
+																id="groupBy"
+																placeholder="Group By"
+																class="w-full focus-visible:ring-0"
+																bind:value={groupBy}
+																onkeyup={(e) => {
+																	if (e.key === "'" || e.key === '"') {
+																		groupBy += e.key;
+																	}
+																	if (e.key === '(') {
+																		groupBy += ')';
+																	}
+																}}
+																onkeydown={(e) => {
+																	if (e.key === 'Enter' && !e.altKey) {
+																		isGroupByDropdownOpen = true;
+																	}
+																	if (e.key === 'Escape') {
+																		isGroupByDropdownOpen = false;
+																	}
+																}}
+															/>
+														</DropdownMenu.Trigger>
+														<DropdownMenu.Content align="start" class="w-96 overflow-auto">
+															<DropdownMenu.Group class="max-h-96 overflow-auto">
+																<DropdownMenu.Label>Columns</DropdownMenu.Label>
+																<DropdownMenu.Separator />
+
+																{#each tableColumns as column (column)}
+																	<DropdownMenu.Item
+																		onclick={() => {
+																			if (
+																				groupBy.length > 0 &&
+																				!groupBy.endsWith(',') &&
+																				!groupBy.endsWith(', ')
+																			) {
+																				groupBy += ', ';
+																			}
+																			groupBy += column;
+																			isGroupByDropdownOpen = false;
+																		}}>{column}</DropdownMenu.Item
+																	>
+																{/each}
+															</DropdownMenu.Group>
+														</DropdownMenu.Content>
+													</DropdownMenu.Root>
+												</div>
+												<div class="flex items-center gap-2 p-1">
+													<Label for="limit">Limit</Label>
+													<Input
+														type="text"
+														id="limit"
+														placeholder="Limit"
+														class="w-24 focus-visible:ring-0"
+														bind:value={limit}
+													/>
+												</div>
+												<div class="flex items-center gap-2 p-1">
+													<Label for="offset">Offset</Label>
+													<Input
+														type="text"
+														id="offset"
+														placeholder="Offset"
+														class="w-24 focus-visible:ring-0"
+														bind:value={offset}
+													/>
+												</div>
+											</div>
+										</Collapsible.Content>
+									</Collapsible.Root>
 								</div>
 								<div class="flex flex-1 overflow-auto rounded-md border">
 									<div class="h-full w-full overflow-auto">
