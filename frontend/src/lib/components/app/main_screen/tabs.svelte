@@ -4,6 +4,7 @@
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import X from 'lucide-svelte/icons/x';
 	import Plus from 'lucide-svelte/icons/plus';
+	import Chat from 'lucide-svelte/icons/message-circle-more';
 	import * as Resizable from '$lib/components/ui/resizable/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { onMount, type ComponentProps } from 'svelte';
@@ -14,6 +15,7 @@
 	import { LineScale } from 'svelte-spins';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import * as Collapsible from '$lib/components/ui/collapsible/index.js';
+	import { Spinner } from '$lib/components/ui/spinner/index.js';
 
 	import * as Select from '$lib/components/ui/select/index.js';
 
@@ -66,7 +68,8 @@
 		where = $bindable(''),
 		orderBy = $bindable(''),
 		groupBy = $bindable(''),
-		tableColumns = $bindable([])
+		tableColumns = $bindable([]),
+		toggleChatPane
 	} = $props();
 	let editor = $state('');
 
@@ -637,36 +640,53 @@
 	<Tabs.Root value={tabID.toString()} class="flex h-full flex-1 flex-col overflow-hidden">
 		<!-- Tabs visible in the header -->
 		<header class="flex h-12 items-center gap-2 border-b px-4">
-			<Sidebar.Trigger class="-ml-1" />
-			<Separator orientation="vertical" />
-			<Tabs.List class="thin-scrollbar scrollbar-thin overflow-x-auto overflow-y-hidden">
-				{#each Array.from(tabsMap.entries()) as [key, tab]}
-					<div class="mr-2 flex rounded-sm bg-slate-800">
-						<Tabs.Trigger
-							value={tab.ID.toString()}
-							class="flex items-center"
-							onclick={() => setActiveTab(tab.ID)}
-						>
-							{tab.Name}
-						</Tabs.Trigger>
+			<div class="flex w-full items-center justify-between">
+				<div class="-ml-1 flex items-center overflow-x-auto">
+					<Sidebar.Trigger class="-ml-1" />
+					<Separator orientation="vertical" />
+					<Tabs.List class="thin-scrollbar scrollbar-thin overflow-x-auto overflow-y-hidden">
+						{#each Array.from(tabsMap.entries()) as [key, tab]}
+							<div class="mr-2 flex rounded-sm bg-slate-800">
+								<Tabs.Trigger
+									value={tab.ID.toString()}
+									class="flex items-center"
+									onclick={() => setActiveTab(tab.ID)}
+								>
+									{tab.Name}
+								</Tabs.Trigger>
+								<button
+									class="rounded-r-sm bg-slate-900 px-2 py-1 text-slate-300 hover:text-red-700"
+									onclick={() => deleteTab(tab.ID)}
+								>
+									<X size={16} />
+								</button>
+							</div>
+						{/each}
+						{#if tabLoading}
+							<Button variant="outline" size="sm">
+								<Spinner />
+								Processing
+							</Button>
+						{/if}
 						<button
-							class="rounded-r-sm bg-slate-900 px-2 py-1 text-slate-300 hover:text-red-700"
-							onclick={() => deleteTab(tab.ID)}
+							class="ml-2 flex items-center gap-1 text-blue-500 hover:text-blue-700"
+							onclick={() => addTab()}
 						>
-							<X size={16} />
+							<Plus size={16} /> Add Tab
 						</button>
-					</div>
-				{/each}
-				{#if tabLoading}
-					<LineScale color="lightgreen" style="transform: scale(0.5);" />
-				{/if}
-				<button
-					class="ml-2 flex items-center gap-1 text-blue-500 hover:text-blue-700"
-					onclick={() => addTab()}
-				>
-					<Plus size={16} /> Add Tab
-				</button>
-			</Tabs.List>
+					</Tabs.List>
+				</div>
+				<div class="flex">
+					<Button variant="secondary" size="sm" onclick={toggleChatPane}>
+						<Chat size={16} />
+						{#if tabType == 'table'}
+							Chat with {tabName}
+						{:else}
+							Chat with {$selectedDBDisplay}
+						{/if}
+					</Button>
+				</div>
+			</div>
 		</header>
 
 		{#if tabsMap.size > 0}
@@ -1030,9 +1050,6 @@
 										</Select.Group>
 									</Select.Content>
 								</Select.Root>
-								<div class="flex">
-									<Button variant="default" size="sm" onclick={executeQuery}>Execute Query</Button>
-								</div>
 							</div>
 
 							<!-- Resizable Panes for Editor and Output -->
