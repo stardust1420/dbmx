@@ -7,3 +7,4 @@ go.sum
 # built at compile time
 config/database/app.db
 config/database/app.dev.db
+.DS_Store
