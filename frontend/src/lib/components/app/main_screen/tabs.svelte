@@ -167,6 +167,8 @@
 		tableDBPoolID: string = '',
 		postgresConnName: string = ''
 	) {
+		$selectedQuery = '';
+
 		tableViewTab = 'data';
 
 		tabLoading = true;
@@ -242,6 +244,7 @@
 	}
 
 	function deleteTab(id: number) {
+		$selectedQuery = '';
 		// Delete the old tab from the map
 		tabsMap.delete(id);
 		tableViewTab = 'data';
@@ -320,6 +323,7 @@
 	}
 
 	function setActiveTab(id: number) {
+		$selectedQuery = '';
 		tableViewTab = 'data';
 
 		SetActiveTab(id)
