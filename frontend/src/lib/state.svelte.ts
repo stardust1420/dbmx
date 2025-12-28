@@ -23,6 +23,7 @@ export let selectedDBDisplay = writable('Connect to a database');
 export let currentColor = writable('');
 export let activePoolID = writable('');
 
+
 export let selectedQuery = writable('');
 
 export let activeDBs = writable<Array<model.Database>>([]);
