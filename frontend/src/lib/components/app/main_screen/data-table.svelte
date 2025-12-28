@@ -109,11 +109,11 @@
 	<div class="flex h-full flex-col">
 		<div class="position-sticky top-0 flex flex-1 overflow-auto">
 			<Table.Root>
-				<Table.Header class=" bg-purple-500 bg-opacity-20 text-xs font-medium">
+				<Table.Header class="bg-muted text-xs font-medium">
 					{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
 						<Table.Row>
 							{#each headerGroup.headers as header (header.id)}
-								<Table.Head colspan={header.colSpan}>
+								<Table.Head colspan={header.colSpan} class="text-center">
 									{#if !header.isPlaceholder}
 										<FlexRender
 											content={header.column.columnDef.header}
@@ -130,7 +130,7 @@
 						<Table.Row>
 							{#each row.getVisibleCells() as cell (cell.id)}
 								<Table.Cell
-									class="relative"
+									class=""
 									ondblclick={() => {
 										editingCell = cell.id;
 									}}
@@ -170,7 +170,7 @@
 		</div>
 
 		<div
-			class="position-sticky bottom-0 my-0.5 flex w-full items-center justify-between rounded-lg px-4 py-1"
+			class="position-sticky bottom-0 my-0.5 flex w-full items-center justify-between px-4 py-1"
 		>
 			<div class="text-muted-foreground hidden flex-1 text-sm lg:flex">
 				{table.getFilteredRowModel().rows.length} row(s)

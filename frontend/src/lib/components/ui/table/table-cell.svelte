@@ -1,7 +1,6 @@
 <script lang="ts">
-	import type { HTMLTdAttributes } from 'svelte/elements';
-	import type { WithElementRef } from 'bits-ui';
-	import { cn } from '$lib/utils.js';
+	import { cn, type WithElementRef } from "$lib/utils.js";
+	import type { HTMLTdAttributes } from "svelte/elements";
 
 	let {
 		ref = $bindable(null),
@@ -13,8 +12,9 @@
 
 <td
 	bind:this={ref}
+	data-slot="table-cell"
 	class={cn(
-		'px-5 py-3 align-middle [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]',
+		"whitespace-nowrap bg-clip-padding p-2 align-middle [&:has([role=checkbox])]:pe-0",
 		className
 	)}
 	{...restProps}
