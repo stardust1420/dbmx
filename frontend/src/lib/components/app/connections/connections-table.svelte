@@ -395,7 +395,7 @@
 		{@attach ref}
 	>
 		{#each row.getVisibleCells() as cell (cell.id)}
-			<Table.Cell style="width: {cell.column.getSize()}px">
+			<Table.Cell style="width: {cell.column.getSize()}px" class="h-12">
 				<FlexRender
 					attach={handleRef}
 					content={cell.column.columnDef.cell}

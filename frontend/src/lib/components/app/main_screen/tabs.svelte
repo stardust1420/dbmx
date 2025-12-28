@@ -993,7 +993,7 @@
 										</Collapsible.Content>
 									</Collapsible.Root>
 								</div>
-								<div class="flex flex-1 overflow-auto rounded-md border">
+								<div class="flex flex-1 overflow-auto border">
 									<div class="h-full w-full overflow-auto">
 										{#if $columns.length > 0}
 											<DataTable data={$rows} columns={$columns} />
@@ -1077,7 +1077,7 @@
 								<Resizable.Pane
 									defaultSize={outputHeight}
 									minSize={10}
-									class="rsz-pane rounded-md border"
+									class="rsz-pane border"
 								>
 									<div class="h-full">
 										{#if $columns.length > 0}
