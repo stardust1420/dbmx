@@ -7,6 +7,6 @@
     ...restProps
   }: ComponentProps<typeof Checkbox> = $props();
 </script>
-<div class="flex items-center justify-center mr-2">
+<div class="flex items-center justify-center">
   <Checkbox bind:checked={() => checked, onCheckedChange} {...restProps} />
 </div>

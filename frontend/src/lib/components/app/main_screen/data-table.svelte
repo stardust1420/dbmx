@@ -24,6 +24,8 @@
 	import ChevronLeftIcon from '@tabler/icons-svelte/icons/chevron-left';
 	import ChevronRightIcon from '@tabler/icons-svelte/icons/chevron-right';
 	import ChevronsRightIcon from '@tabler/icons-svelte/icons/chevrons-right';
+	import { toast } from 'svelte-sonner';
+
 
 	type DataTableProps<TData, TValue> = {
 		columns: ColumnDef<TData, TValue>[];
@@ -130,30 +132,32 @@
 						<Table.Row>
 							{#each row.getVisibleCells() as cell (cell.id)}
 								<Table.Cell
-									class=""
+									class="h-12 px-4 text-start focus-within:px-2 transition-[padding] w-fit"
 									ondblclick={() => {
 										editingCell = cell.id;
 									}}
 								>
 									{#if editingCell === cell.id}
-										<Input
-											type="text"
-											value={cell.getValue()}
-											onblur={(e) => {
-												// @ts-expect-error - this is fine
-												data[cell.row.index][cell.column.id] = e.target.value;
+										<form
+											onsubmit={(e) => {
+												e.preventDefault();
+												toast.promise(new Promise((resolve) => setTimeout(resolve, 1000)), {
+													loading: `Saving ${cell.getValue()}`,
+													success: 'Done',
+													error: 'Error'
+												});
 												editingCell = null;
 											}}
-											onkeydown={(e) => {
-												if (e.key === 'Enter') {
-													e.currentTarget.blur();
-												} else if (e.key === 'Escape') {
+										>
+											<Input
+												class="hover:bg-input/30 px-2 focus-visible:bg-background dark:hover:bg-input/30 dark:focus-visible:bg-input/30 w-full bg-transparent text-start shadow-none focus-visible:border dark:bg-transparent"
+												value={cell.getValue()}
+												autofocus
+												onfocusout={() => {
 													editingCell = null;
-												}
-											}}
-											class="bg-green-500 bg-opacity-30"
-											autofocus
-										/>
+												}}
+											/>
+										</form>
 									{:else}
 										<FlexRender content={cell.column.columnDef.cell} context={cell.getContext()} />
 									{/if}
