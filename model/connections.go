@@ -1,16 +1,32 @@
 package model
 
-// PostgresConnection represents a row in the postgres table in sqlite3 which represents a connection to a PostgreSQL server
-type PostgresConnection struct {
-	ID       int64
-	Name     string
-	Host     string
-	Port     string
-	Username string
-	Password string
-	Database string
-	Env      string
-	Colour   string
+// Connection represents a row in the connections table in sqlite3 which represents a connection to a database engine server
+type Connection struct {
+	ID          int64
+	Engine      string
+	Host        string
+	Port        string
+	Username    string
+	Password    string
+	Database    string
+	Name        string
+	Env         string
+	Color       string
+	IsAdvanced  bool
+	SSLMode     string
+	ClientKey   []byte
+	ClientCert  []byte
+	RootCACert  []byte
+	OverSSH     bool
+	SSHHost     string
+	SSHPort     string
+	SSHUsername string
+	SSHPassword string
+	UseSSHKey   bool
+	SSHKey      []byte
+
+	// Only set for active connection
+
 	IsActive bool
 }
 
@@ -18,10 +34,10 @@ type Database struct {
 	// ID uniquely identifies the active database within a connection
 	ID string
 	// PostgresConnectionID is the primary key id of the postgres connection in the sqlite3 database
-	PostgresConnectionID   int64
-	PostgresConnectionName string
-	Name                   string
-	Colour                 string
+	ConnectionID   int64
+	ConnectionName string
+	Name           string
+	Color          string
 
 	// Only set for active connection
 

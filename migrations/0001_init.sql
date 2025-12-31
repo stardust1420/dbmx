@@ -11,11 +11,11 @@ CREATE TABLE IF NOT EXISTS "connections" (
   "database" VARCHAR NOT NULL,
   "name" VARCHAR NOT NULL,
   "env" VARCHAR DEFAULT NULL,
-  "colour" VARCHAR DEFAULT NULL,
+  "color" VARCHAR DEFAULT NULL,
   "is_advanced" INTEGER NOT NULL DEFAULT 0,
   "ssl_mode" VARCHAR DEFAULT NULL,
   "client_key" BLOB DEFAULT NULL,
-  "server_cert" BLOB DEFAULT NULL,
+  "client_cert" BLOB DEFAULT NULL,
   "root_ca_cert" BLOB DEFAULT NULL,
   "over_ssh" INTEGER NOT NULL DEFAULT 0,
   "ssh_host" VARCHAR DEFAULT NULL,
@@ -34,11 +34,11 @@ CREATE TABLE IF NOT EXISTS "tabs" (
   "is_active" INTEGER NOT NULL DEFAULT 0,
   "active_db_id" VARCHAR,
   "active_db" VARCHAR,
-  "active_db_colour" VARCHAR,
+  "active_db_color" VARCHAR,
   "type" VARCHAR NOT NULL DEFAULT 'editor',
-  "postgres_conn_id" BIGINT DEFAULT NULL,
+  "connection_id" BIGINT DEFAULT NULL,
   "db_name" VARCHAR DEFAULT NULL,
-  "postgres_conn_name" VARCHAR NOT NULL DEFAULT '',
+  "connection_name" VARCHAR NOT NULL DEFAULT '',
   "select" TEXT NOT NULL DEFAULT '',
   "limit" VARCHAR NOT NULL DEFAULT '',
   "offset" VARCHAR NOT NULL DEFAULT '',
@@ -52,4 +52,4 @@ CREATE INDEX IF NOT EXISTS idx_tabs_is_active ON "tabs" ("is_active");
 
 -- +goose Down
 DROP TABLE IF EXISTS "tabs";
-DROP TABLE IF EXISTS "postgres";
+DROP TABLE IF EXISTS "connections";

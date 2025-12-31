@@ -14,12 +14,68 @@ export namespace model {
 	        this.value = source["value"];
 	    }
 	}
+	export class Connection {
+	    ID: number;
+	    Engine: string;
+	    Host: string;
+	    Port: string;
+	    Username: string;
+	    Password: string;
+	    Database: string;
+	    Name: string;
+	    Env: string;
+	    Color: string;
+	    IsAdvanced: boolean;
+	    SSLMode: string;
+	    ClientKey: number[];
+	    ClientCert: number[];
+	    RootCACert: number[];
+	    OverSSH: boolean;
+	    SSHHost: string;
+	    SSHPort: string;
+	    SSHUsername: string;
+	    SSHPassword: string;
+	    UseSSHKey: boolean;
+	    SSHKey: number[];
+	    IsActive: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new Connection(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.ID = source["ID"];
+	        this.Engine = source["Engine"];
+	        this.Host = source["Host"];
+	        this.Port = source["Port"];
+	        this.Username = source["Username"];
+	        this.Password = source["Password"];
+	        this.Database = source["Database"];
+	        this.Name = source["Name"];
+	        this.Env = source["Env"];
+	        this.Color = source["Color"];
+	        this.IsAdvanced = source["IsAdvanced"];
+	        this.SSLMode = source["SSLMode"];
+	        this.ClientKey = source["ClientKey"];
+	        this.ClientCert = source["ClientCert"];
+	        this.RootCACert = source["RootCACert"];
+	        this.OverSSH = source["OverSSH"];
+	        this.SSHHost = source["SSHHost"];
+	        this.SSHPort = source["SSHPort"];
+	        this.SSHUsername = source["SSHUsername"];
+	        this.SSHPassword = source["SSHPassword"];
+	        this.UseSSHKey = source["UseSSHKey"];
+	        this.SSHKey = source["SSHKey"];
+	        this.IsActive = source["IsActive"];
+	    }
+	}
 	export class Database {
 	    ID: string;
-	    PostgresConnectionID: number;
-	    PostgresConnectionName: string;
+	    ConnectionID: number;
+	    ConnectionName: string;
 	    Name: string;
-	    Colour: string;
+	    Color: string;
 	    PoolID: string;
 	    IsActive: boolean;
 	    Tables: string[];
@@ -32,10 +88,10 @@ export namespace model {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.ID = source["ID"];
-	        this.PostgresConnectionID = source["PostgresConnectionID"];
-	        this.PostgresConnectionName = source["PostgresConnectionName"];
+	        this.ConnectionID = source["ConnectionID"];
+	        this.ConnectionName = source["ConnectionName"];
 	        this.Name = source["Name"];
-	        this.Colour = source["Colour"];
+	        this.Color = source["Color"];
 	        this.PoolID = source["PoolID"];
 	        this.IsActive = source["IsActive"];
 	        this.Tables = source["Tables"];
@@ -105,36 +161,6 @@ export namespace model {
 		    }
 		    return a;
 		}
-	}
-	export class PostgresConnection {
-	    ID: number;
-	    Name: string;
-	    Host: string;
-	    Port: string;
-	    Username: string;
-	    Password: string;
-	    Database: string;
-	    Env: string;
-	    Colour: string;
-	    IsActive: boolean;
-	
-	    static createFrom(source: any = {}) {
-	        return new PostgresConnection(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.ID = source["ID"];
-	        this.Name = source["Name"];
-	        this.Host = source["Host"];
-	        this.Port = source["Port"];
-	        this.Username = source["Username"];
-	        this.Password = source["Password"];
-	        this.Database = source["Database"];
-	        this.Env = source["Env"];
-	        this.Colour = source["Colour"];
-	        this.IsActive = source["IsActive"];
-	    }
 	}
 	export class QueryResult {
 	    ok: boolean;
@@ -324,6 +350,70 @@ export namespace model {
 	        this.structure = this.convertValues(source["structure"], Structure);
 	        this.indexes = this.convertValues(source["indexes"], Indexes);
 	        this.rules = this.convertValues(source["rules"], Rules);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+
+}
+
+export namespace pgx {
+	
+	export class ConnConfig {
+	    Host: string;
+	    Port: number;
+	    Database: string;
+	    User: string;
+	    Password: string;
+	    // Go type: tls
+	    TLSConfig?: any;
+	    ConnectTimeout: number;
+	    RuntimeParams: Record<string, string>;
+	    KerberosSrvName: string;
+	    KerberosSpn: string;
+	    Fallbacks: pgconn.FallbackConfig[];
+	    Tracer: any;
+	    StatementCacheCapacity: number;
+	    DescriptionCacheCapacity: number;
+	    DefaultQueryExecMode: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new ConnConfig(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.Host = source["Host"];
+	        this.Port = source["Port"];
+	        this.Database = source["Database"];
+	        this.User = source["User"];
+	        this.Password = source["Password"];
+	        this.TLSConfig = this.convertValues(source["TLSConfig"], null);
+	        this.ConnectTimeout = source["ConnectTimeout"];
+	        this.RuntimeParams = source["RuntimeParams"];
+	        this.KerberosSrvName = source["KerberosSrvName"];
+	        this.KerberosSpn = source["KerberosSpn"];
+	        this.Fallbacks = this.convertValues(source["Fallbacks"], pgconn.FallbackConfig);
+	        this.Tracer = source["Tracer"];
+	        this.StatementCacheCapacity = source["StatementCacheCapacity"];
+	        this.DescriptionCacheCapacity = source["DescriptionCacheCapacity"];
+	        this.DefaultQueryExecMode = source["DefaultQueryExecMode"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

@@ -1041,14 +1041,14 @@
 												<Select.Item
 													onclick={() =>
 														selectActiveDB(
-															activeDB.PostgresConnectionName + ' - ' + activeDB.Name,
+															activeDB.ConnectionName + ' - ' + activeDB.Name,
 															activeDB.PoolID,
-															activeDB.Colour
+															activeDB.Color
 														)}
-													class="{getColorClass(activeDB.Colour)} bg-opacity-20 hover:bg-opacity-25"
+													class="{getColorClass(activeDB.Color)} bg-opacity-20 hover:bg-opacity-25"
 													value={activeDB.ID}
 													label={activeDB.Name}
-													>{activeDB.PostgresConnectionName} - {activeDB.Name}</Select.Item
+													>{activeDB.ConnectionName} - {activeDB.Name}</Select.Item
 												>
 											{/each}
 										</Select.Group>

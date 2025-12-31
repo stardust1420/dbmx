@@ -6,6 +6,10 @@ export function AddPostgresConnection(arg1) {
   return window['go']['app']['Connections']['AddPostgresConnection'](arg1);
 }
 
+export function BuildPostgresConnConfig(arg1) {
+  return window['go']['app']['Connections']['BuildPostgresConnConfig'](arg1);
+}
+
 export function EstablishPostgresConnection(arg1) {
   return window['go']['app']['Connections']['EstablishPostgresConnection'](arg1);
 }
@@ -18,16 +22,16 @@ export function ExecuteQuery(arg1, arg2, arg3) {
   return window['go']['app']['Connections']['ExecuteQuery'](arg1, arg2, arg3);
 }
 
+export function GetAllConnections() {
+  return window['go']['app']['Connections']['GetAllConnections']();
+}
+
 export function GetAllDatabaseColumns(arg1) {
   return window['go']['app']['Connections']['GetAllDatabaseColumns'](arg1);
 }
 
 export function GetAllPostgresTables(arg1) {
   return window['go']['app']['Connections']['GetAllPostgresTables'](arg1);
-}
-
-export function GetPostgresConnections() {
-  return window['go']['app']['Connections']['GetPostgresConnections']();
 }
 
 export function GetPostgresServerDatabases(arg1, arg2, arg3, arg4, arg5) {

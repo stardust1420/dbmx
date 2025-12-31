@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -20,14 +21,19 @@ func NewPoolManager() *PoolManager {
 	}
 }
 
-func (pm *PoolManager) AddPool(id uuid.UUID, connString string) (*pgxpool.Pool, error) {
+func (pm *PoolManager) AddPool(id uuid.UUID, c *pgx.ConnConfig) (*pgxpool.Pool, error) {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
 
-	pool, err := pgxpool.New(context.Background(), connString)
+	poolConfig := &pgxpool.Config{
+		ConnConfig: c,
+	}
+
+	pool, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
 	if err != nil {
 		return nil, err
 	}
+
 	pm.Pools[id] = pool
 	return pool, nil
 }
