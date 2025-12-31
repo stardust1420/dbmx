@@ -58,6 +58,7 @@
 
 	let overSSH = $state(false);
 	let useSSHKey = $state(false);
+	let isAdvanced = $state(false);
 </script>
 
 <Drawer.Root direction={isMobile.current ? 'bottom' : 'right'}>
@@ -166,72 +167,76 @@
 					</div>
 				</div>
 
-				<h1 class="mb-2 text-2xl font-bold">Advanced</h1>
-
-				<div class="grid grid-cols-2 gap-2">
-					<div class="flex flex-col gap-2 pb-1">
-						<Label for="sslMode">SSL Mode</Label>
-						<Select.Root type="single" name="sslMode" bind:value={sslModeValue}>
-							<Select.Trigger class={sslModeValue + ' w-full bg-opacity-60'}>
-								{triggerSslModeSelect}
-							</Select.Trigger>
-							<Select.Content>
-								<Select.Group>
-									{#each sslModes as c}
-										<Select.Item
-											value={c.sslModeValue}
-											label={c.label}
-											class={c.sslModeValue + ' bg-opacity-60'}
-										>
-											{c.label}
-										</Select.Item>
-									{/each}
-								</Select.Group>
-							</Select.Content>
-						</Select.Root>
-					</div>
-					<div class="flex flex-col gap-2">
-						<Label for="clientKey">Client Key</Label>
-						<Input id="clientKey" type="file" />
-					</div>
-				</div>
-				<div class="grid grid-cols-2 gap-2">
-					<div class="flex flex-col gap-2">
-						<Label for="serverCert">Server Cert</Label>
-						<Input id="serverCert" type="file" />
-					</div>
-					<div class="flex flex-col gap-2">
-						<Label for="rootCACert">Root CA Cert</Label>
-						<Input id="rootCACert" type="file" />
-					</div>
-				</div>
-
 				<div class="flex flex-row items-center gap-4 my-2">
-					<Label for="overSSH">Over SSH</Label>
-					<Switch id="overSSH" bind:checked={overSSH} />
+					<h1 class="mb-2 text-2xl font-bold">Advanced</h1>
+					<Switch id="isAdvanced" class="self-center" bind:checked={isAdvanced} />
 				</div>
 
-				{#if overSSH}
-					<Label for="sshHost">SSH Host</Label>
-					<Input id="sshHost" placeholder="127.0.0.1" />
-					<Label for="sshPort">SSH Port</Label>
-					<Input id="sshPort" placeholder="22" />
-					<Label for="sshUsername">SSH Username</Label>
-					<Input id="sshUsername" placeholder="username" />
-					<Label for="sshPassword">SSH Password</Label>
-					<Input id="sshPassword" placeholder="password" />
+				{#if isAdvanced}
+					<div class="grid grid-cols-2 gap-2">
+						<div class="flex flex-col gap-2 pb-1">
+							<Label for="sslMode">SSL Mode</Label>
+							<Select.Root type="single" name="sslMode" bind:value={sslModeValue}>
+								<Select.Trigger class={sslModeValue + ' w-full bg-opacity-60'}>
+									{triggerSslModeSelect}
+								</Select.Trigger>
+								<Select.Content>
+									<Select.Group>
+										{#each sslModes as c}
+											<Select.Item
+												value={c.sslModeValue}
+												label={c.label}
+												class={c.sslModeValue + ' bg-opacity-60'}
+											>
+												{c.label}
+											</Select.Item>
+										{/each}
+									</Select.Group>
+								</Select.Content>
+							</Select.Root>
+						</div>
+						<div class="flex flex-col gap-2">
+							<Label for="clientKey">Client Key</Label>
+							<Input id="clientKey" type="file" />
+						</div>
+					</div>
+					<div class="grid grid-cols-2 gap-2">
+						<div class="flex flex-col gap-2">
+							<Label for="serverCert">Server Cert</Label>
+							<Input id="serverCert" type="file" />
+						</div>
+						<div class="flex flex-col gap-2">
+							<Label for="rootCACert">Root CA Cert</Label>
+							<Input id="rootCACert" type="file" />
+						</div>
+					</div>
 
 					<div class="flex flex-row items-center gap-4 my-2">
-						<Label for="useSSHKey">Use SSH Key</Label>
-						<Switch id="useSSHKey" bind:checked={useSSHKey} />
+						<Label for="overSSH">Over SSH</Label>
+						<Switch id="overSSH" bind:checked={overSSH} />
 					</div>
 
-					{#if useSSHKey}
-						<Label for="sshKey">SSH Key</Label>
-						<Input id="sshKey" type="file" />
+					{#if overSSH}
+						<Label for="sshHost">SSH Host</Label>
+						<Input id="sshHost" placeholder="127.0.0.1" />
+						<Label for="sshPort">SSH Port</Label>
+						<Input id="sshPort" placeholder="22" />
+						<Label for="sshUsername">SSH Username</Label>
+						<Input id="sshUsername" placeholder="username" />
+						<Label for="sshPassword">SSH Password</Label>
+						<Input id="sshPassword" placeholder="password" />
+
+						<div class="flex flex-row items-center gap-4 my-2">
+							<Label for="useSSHKey">Use SSH Key</Label>
+							<Switch id="useSSHKey" bind:checked={useSSHKey} />
+						</div>
+
+						{#if useSSHKey}
+							<Label for="sshKey">SSH Key</Label>
+							<Input id="sshKey" type="file" />
+						{/if}
 					{/if}
 				{/if}
-
 			</form>
 		</div>
 		<Drawer.Footer>
