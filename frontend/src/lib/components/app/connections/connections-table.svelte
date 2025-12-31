@@ -27,7 +27,6 @@
 		{
 			accessorKey: 'header',
 			header: 'Header',
-			cell: ({ row }) => renderComponent(DataTableCellViewer, { item: row.original }),
 			enableHiding: false,
 		},
 		{
