@@ -2,16 +2,20 @@ package app
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"database/sql"
 	"dbmx/model"
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"golang.org/x/crypto/ssh"
 
 	"github.com/jackc/pgx/v5"
 	_ "github.com/mattn/go-sqlite3"
@@ -41,10 +45,10 @@ func (m *Connections) GetSqlite3Version() string {
 	return sqliteVersion
 }
 
-func (m *Connections) GetPostgresConnections() ([]model.PostgresConnection, error) {
-	// Get all postgres connections
-	var connections []model.PostgresConnection
-	rows, err := m.DB.Query("SELECT * FROM postgres")
+func (m *Connections) GetAllConnections() ([]model.Connection, error) {
+	// Get all connections
+	var connections []model.Connection
+	rows, err := m.DB.Query("SELECT * FROM connections")
 	if err != nil {
 		return nil, err
 	}
@@ -52,17 +56,30 @@ func (m *Connections) GetPostgresConnections() ([]model.PostgresConnection, erro
 	defer rows.Close()
 
 	for rows.Next() {
-		var connection model.PostgresConnection
+		var connection model.Connection
 		err := rows.Scan(
 			&connection.ID,
-			&connection.Name,
+			&connection.Engine,
 			&connection.Host,
 			&connection.Port,
 			&connection.Username,
 			&connection.Password,
-			&connection.Env,
-			&connection.Colour,
 			&connection.Database,
+			&connection.Name,
+			&connection.Env,
+			&connection.Color,
+			&connection.IsAdvanced,
+			&connection.SSLMode,
+			&connection.ClientKey,
+			&connection.ClientCert,
+			&connection.RootCACert,
+			&connection.OverSSH,
+			&connection.SSHHost,
+			&connection.SSHPort,
+			&connection.SSHUsername,
+			&connection.SSHPassword,
+			&connection.UseSSHKey,
+			&connection.SSHKey,
 		)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to read resultant rows into connection variable")
@@ -77,17 +94,103 @@ func (m *Connections) GetPostgresConnections() ([]model.PostgresConnection, erro
 	return connections, nil
 }
 
-func (m *Connections) TestConnectPostgres(p model.PostgresConnection) (bool, error) {
-	if p.Database == "" {
-		p.Database = "postgres"
+func (m *Connections) BuildPostgresConnConfig(c model.Connection) (*pgx.ConnConfig, error) {
+	if c.Database == "" {
+		c.Database = "postgres"
 	}
 
 	// Build connection string using the credentials
-	connString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=require", p.Username, p.Password, p.Host, p.Port, p.Database)
+	connString := fmt.Sprintf(
+		"postgres://%s:%s@%s:%s/%s",
+		c.Username,
+		c.Password,
+		c.Host,
+		c.Port,
+		c.Database,
+	)
+
+	if strings.TrimSpace(c.SSLMode) != "" {
+		connString += fmt.Sprintf("?sslmode=%s", strings.ToLower(c.SSLMode))
+	}
+
+	config, err := pgx.ParseConfig(connString)
+	if err != nil {
+		return nil, err
+	}
+
+	if c.IsAdvanced {
+		tlsConfig := &tls.Config{}
+
+		// Root CA
+		if len(c.RootCACert) > 0 {
+			rootPool := x509.NewCertPool()
+			if !rootPool.AppendCertsFromPEM(c.RootCACert) {
+				return nil, fmt.Errorf("failed to parse root CA cert")
+			}
+			tlsConfig.RootCAs = rootPool
+		}
+
+		// Client cert + key (mutual TLS)
+		if len(c.ClientKey) > 0 && len(c.ClientCert) > 0 {
+			cert, err := tls.X509KeyPair(c.ClientCert, c.ClientKey)
+			if err != nil {
+				return nil, err
+			}
+			tlsConfig.Certificates = []tls.Certificate{cert}
+		}
+
+		config.TLSConfig = tlsConfig
+	}
+
+	if c.OverSSH {
+		var sshClient *ssh.Client
+
+		var authMethods []ssh.AuthMethod
+
+		if c.UseSSHKey {
+			signer, err := ssh.ParsePrivateKey(c.SSHKey)
+			if err != nil {
+				return nil, err
+			}
+			authMethods = append(authMethods, ssh.PublicKeys(signer))
+		} else {
+			authMethods = append(authMethods, ssh.Password(c.SSHPassword))
+		}
+
+		sshConfig := &ssh.ClientConfig{
+			User:            c.SSHUsername,
+			Auth:            authMethods,
+			HostKeyCallback: ssh.InsecureIgnoreHostKey(), // You may want strict checking later
+			Timeout:         10 * time.Second,
+		}
+
+		sshClient, err = ssh.Dial(
+			"tcp",
+			net.JoinHostPort(c.SSHHost, c.SSHPort),
+			sshConfig,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		config.DialFunc = func(ctx context.Context, network, addr string) (net.Conn, error) {
+			return sshClient.Dial(network, addr)
+		}
+	}
+
+	return config, nil
+}
+
+func (m *Connections) TestConnectPostgres(c model.Connection) (bool, error) {
+	config, err := m.BuildPostgresConnConfig(c)
+	if err != nil {
+		return false, err
+	}
 
 	// Establish a connection
 	ctx := context.Background()
-	conn, err := pgx.Connect(ctx, connString)
+
+	conn, err := pgx.ConnectConfig(ctx, config)
 	if err != nil {
 		return false, err
 	}
@@ -106,16 +209,16 @@ func (m *Connections) TestConnectPostgres(p model.PostgresConnection) (bool, err
 	return true, nil
 }
 
-func (c *Connections) AddPostgresConnection(p model.PostgresConnection) (bool, error) {
-	if p.Database == "" {
-		p.Database = "postgres"
+func (m *Connections) AddPostgresConnection(c model.Connection) (bool, error) {
+	if c.Database == "" {
+		c.Database = "postgres"
 	}
 
 	var exists bool
-	query := `SELECT EXISTS(SELECT 1 FROM postgres WHERE name = ?)`
+	query := `SELECT EXISTS(SELECT 1 FROM connections WHERE name = ? AND engine = ? AND env = ?)`
 
 	// Execute the query
-	err := c.DB.QueryRow(query, p.Name).Scan(&exists)
+	err := m.DB.QueryRow(query, c.Name, c.Engine, c.Env).Scan(&exists)
 	if err != nil {
 		return false, err
 	}
@@ -124,14 +227,62 @@ func (c *Connections) AddPostgresConnection(p model.PostgresConnection) (bool, e
 		return false, errors.New("Connection name already exists. Please choose a different name")
 	}
 
-	insertStatement, err := c.DB.Prepare("INSERT INTO postgres (name, host, port, username, password, env, colour, database) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+	query = `
+		INSERT INTO connections(
+			engine,
+			host,
+			port,
+			username,
+			password,
+			database
+			name,
+			env,
+			color,
+			is_advanced,
+			ssl_mode,
+			client_key,
+			client_cert,
+			root_ca_cert,
+			over_ssh,
+			ssh_host,
+			ssh_port,
+			ssh_username,
+			ssh_password,
+			use_ssh_key,
+			ssh_key
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`
+
+	insertStatement, err := m.DB.Prepare(query)
 	if err != nil {
-		return false, errors.Wrap(err, "failed to prepare query to insert new connection in postgres")
+		return false, errors.Wrap(err, "failed to prepare query to insert new connection in connections")
 	}
 
-	_, err = insertStatement.Exec(p.Name, p.Host, p.Port, p.Username, p.Password, p.Env, p.Colour, p.Database)
+	_, err = insertStatement.Exec(
+		c.Engine,
+		c.Host,
+		c.Port,
+		c.Username,
+		c.Password,
+		c.Database,
+		c.Name,
+		c.Env,
+		c.Color,
+		c.IsAdvanced,
+		c.SSLMode,
+		c.ClientKey,
+		c.ClientCert,
+		c.RootCACert,
+		c.OverSSH,
+		c.SSHHost,
+		c.SSHPort,
+		c.SSHUsername,
+		c.SSHPassword,
+		c.UseSSHKey,
+		c.SSHKey,
+	)
 	if err != nil {
-		return false, errors.Wrap(err, "failed to insert new connection in postgres")
+		return false, errors.Wrap(err, "failed to insert new connection in connections")
 	}
 
 	return true, nil
@@ -150,12 +301,12 @@ func (c *Connections) RefreshPostgresDatabase(id int64, dbID, dbName, poolID str
 	}
 
 	return &model.Database{
-		ID:                   dbID,
-		Name:                 dbName,
-		PostgresConnectionID: id,
-		PoolID:               poolID,
-		IsActive:             true,
-		Tables:               tables,
+		ID:           dbID,
+		Name:         dbName,
+		ConnectionID: id,
+		PoolID:       poolID,
+		IsActive:     true,
+		Tables:       tables,
 	}, nil
 }
 
@@ -163,27 +314,45 @@ func (c *Connections) RefreshPostgresDatabase(id int64, dbID, dbName, poolID str
 // id is the postgres connection id primary key in the sqlite3 database
 // dbID uniquely identifies the active database within a connection
 func (c *Connections) EstablishPostgresDatabaseConnection(id int64, dbName string) (*model.Database, error) {
-	// Query for a single row by ID
-	var name, host, port, username, password, colour string
-	row := c.DB.QueryRow("SELECT name, host, port, username, password, colour FROM postgres WHERE id = ?", id)
+	var conn model.Connection
 
-	// Scan the result into variables
-	err := row.Scan(&name, &host, &port, &username, &password, &colour)
+	err := c.DB.QueryRow("SELECT * FROM connections WHERE id = ?", id).Scan(
+		&conn.ID,
+		&conn.Engine,
+		&conn.Host,
+		&conn.Port,
+		&conn.Username,
+		&conn.Password,
+		&conn.Database,
+		&conn.Name,
+		&conn.Env,
+		&conn.Color,
+		&conn.IsAdvanced,
+		&conn.SSLMode,
+		&conn.ClientKey,
+		&conn.ClientCert,
+		&conn.RootCACert,
+		&conn.OverSSH,
+		&conn.SSHHost,
+		&conn.SSHPort,
+		&conn.SSHUsername,
+		&conn.SSHPassword,
+		&conn.UseSSHKey,
+		&conn.SSHKey,
+	)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, errors.Wrap(err, "postgres server not found")
-		} else {
-			return nil, err
-		}
+		return nil, err
 	}
 
-	// Make a connection string
-	connString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=require", username, password, host, port, dbName)
+	cfg, err := c.BuildPostgresConnConfig(conn)
+	if err != nil {
+		return nil, err
+	}
 
 	activePoolID := uuid.New()
 
 	// Establish connection and add pool to active pool manager
-	_, err = c.PM.AddPool(activePoolID, connString)
+	_, err = c.PM.AddPool(activePoolID, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -200,10 +369,10 @@ func (c *Connections) EstablishPostgresDatabaseConnection(id int64, dbName strin
 		return nil, err
 	}
 
-	activeDB := name + " - " + dbName
+	activeDB := conn.Name + " - " + dbName
 
 	// Save the active db properties in all the tabs with type editor if active db properties are null
-	_, err = c.DB.Exec("UPDATE tabs SET active_db_id = ?, active_db = ?, active_db_colour = ? WHERE active_db_id IS NULL AND type = 'editor'", activePoolID.String(), activeDB, colour)
+	_, err = c.DB.Exec("UPDATE tabs SET active_db_id = ?, active_db = ?, active_db_color = ? WHERE active_db_id IS NULL AND type = 'editor'", activePoolID.String(), activeDB, conn.Color)
 	if err != nil {
 		return nil, err
 	}
@@ -211,60 +380,72 @@ func (c *Connections) EstablishPostgresDatabaseConnection(id int64, dbName strin
 	// In case of table rows, find all the rows with type table where
 	// active_db_id is null and postgres_connection_id and database matches
 	// set the active pool id and active db properties in such tabs
-	_, err = c.DB.Exec("UPDATE tabs SET active_db_id = ?, active_db = ?, active_db_colour = ? WHERE active_db_id IS NULL AND type = 'table' AND postgres_conn_id = ? AND db_name = ?", activePoolID.String(), activeDB, colour, id, dbName)
+	_, err = c.DB.Exec("UPDATE tabs SET active_db_id = ?, active_db = ?, active_db_color = ? WHERE active_db_id IS NULL AND type = 'table' AND postgres_conn_id = ? AND db_name = ?", activePoolID.String(), activeDB, conn.Color, id, dbName)
 	if err != nil {
 		return nil, err
 	}
 
 	return &model.Database{
-		Name:                   dbName,
-		PostgresConnectionID:   id,
-		PostgresConnectionName: name,
-		Colour:                 colour,
-		PoolID:                 activePoolID.String(),
-		IsActive:               true,
-		Tables:                 tables,
-		Columns:                columns,
+		Name:           dbName,
+		ConnectionID:   id,
+		ConnectionName: conn.Name,
+		Color:          conn.Color,
+		PoolID:         activePoolID.String(),
+		IsActive:       true,
+		Tables:         tables,
+		Columns:        columns,
 	}, nil
 }
 
 // This func is used to connect to a server
 func (c *Connections) EstablishPostgresConnection(id int64) ([]model.Database, error) {
-	// Query for a single row by ID
-	var name, host, port, username, password, database, colour string
-	row := c.DB.QueryRow("SELECT name, host, port, username, password, database, colour FROM postgres WHERE id = ?", id)
+	var conn model.Connection
 
-	// Scan the result into variables
-	err := row.Scan(&name, &host, &port, &username, &password, &database, &colour)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, errors.Wrap(err, "postgres server not found")
-		} else {
-			return nil, err
-		}
-	}
-
-	database = strings.TrimSpace(database)
-
-	if database == "" {
-		database = "postgres"
-	}
-
-	// Make a connection string
-	connString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=require", username, password, host, port, database)
-
-	activePoolID := uuid.New()
-
-	// Establish connection and add pool to active pool manager
-	_, err = c.PM.AddPool(activePoolID, connString)
+	err := c.DB.QueryRow("SELECT * FROM connections WHERE id = ?", id).Scan(
+		&conn.ID,
+		&conn.Engine,
+		&conn.Host,
+		&conn.Port,
+		&conn.Username,
+		&conn.Password,
+		&conn.Database,
+		&conn.Name,
+		&conn.Env,
+		&conn.Color,
+		&conn.IsAdvanced,
+		&conn.SSLMode,
+		&conn.ClientKey,
+		&conn.ClientCert,
+		&conn.RootCACert,
+		&conn.OverSSH,
+		&conn.SSHHost,
+		&conn.SSHPort,
+		&conn.SSHUsername,
+		&conn.SSHPassword,
+		&conn.UseSSHKey,
+		&conn.SSHKey,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	activeDB := name + " - " + database
+	cfg, err := c.BuildPostgresConnConfig(conn)
+	if err != nil {
+		return nil, err
+	}
+
+	activePoolID := uuid.New()
+
+	// Establish connection and add pool to active pool manager
+	_, err = c.PM.AddPool(activePoolID, cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	activeDB := conn.Name + " - " + conn.Database
 
 	// Save the active db properties in all the tabs with type editor if active db properties are null
-	_, err = c.DB.Exec("UPDATE tabs SET active_db_id = ?, active_db = ?, active_db_colour = ? WHERE active_db_id IS NULL AND type = 'editor'", activePoolID.String(), activeDB, colour)
+	_, err = c.DB.Exec("UPDATE tabs SET active_db_id = ?, active_db = ?, active_db_color = ? WHERE active_db_id IS NULL AND type = 'editor'", activePoolID.String(), activeDB, conn.Color)
 	if err != nil {
 		return nil, err
 	}
@@ -272,16 +453,16 @@ func (c *Connections) EstablishPostgresConnection(id int64) ([]model.Database, e
 	// In case of table rows, find all the rows with type table where
 	// active_db_id is null and postgres_connection_id and database matches
 	// set the active pool id and active db properties in such tabs
-	_, err = c.DB.Exec("UPDATE tabs SET active_db_id = ?, active_db = ?, active_db_colour = ? WHERE active_db_id IS NULL AND type = 'table' AND postgres_conn_id = ? AND db_name = ?", activePoolID.String(), activeDB, colour, id, database)
+	_, err = c.DB.Exec("UPDATE tabs SET active_db_id = ?, active_db = ?, active_db_color = ? WHERE active_db_id IS NULL AND type = 'table' AND postgres_conn_id = ? AND db_name = ?", activePoolID.String(), activeDB, conn.Color, id, conn.Database)
 	if err != nil {
 		return nil, err
 	}
 
-	return c.GetPostgresServerDatabases(id, activePoolID, database, name, colour)
+	return c.GetPostgresServerDatabases(id, activePoolID, conn.Database, conn.Name, conn.Color)
 }
 
 // Here, pool means the active connection to the database server
-func (c *Connections) GetPostgresServerDatabases(postgresConnectionID int64, activePoolID uuid.UUID, activeDatabase, postgresConnectionName, colour string) ([]model.Database, error) {
+func (c *Connections) GetPostgresServerDatabases(connectionID int64, activePoolID uuid.UUID, activeDatabase, connectionName, color string) ([]model.Database, error) {
 	pool, exists := c.PM.GetPool(activePoolID)
 	if !exists {
 		return nil, errors.New("pool doesn't exist")
@@ -317,9 +498,9 @@ func (c *Connections) GetPostgresServerDatabases(postgresConnectionID int64, act
 			return nil, err
 		}
 		database.ID = "db_" + uuid.New().String()
-		database.PostgresConnectionID = postgresConnectionID
-		database.PostgresConnectionName = postgresConnectionName
-		database.Colour = colour
+		database.ConnectionID = connectionID
+		database.ConnectionName = connectionName
+		database.Color = color
 		if database.Name == activeDatabase {
 			database.PoolID = activePoolID.String()
 			database.IsActive = true
@@ -427,7 +608,7 @@ func (c *Connections) TerminatePostgresDatabaseConnection(activePoolID string) (
 	}
 
 	// Remove the pool from all the tabs in which it's saved
-	_, err = c.DB.Exec("UPDATE tabs SET active_db_id = NULL, active_db = NULL, active_db_colour = NULL WHERE active_db_id = ?", activePoolID)
+	_, err = c.DB.Exec("UPDATE tabs SET active_db_id = NULL, active_db = NULL, active_db_color = NULL WHERE active_db_id = ?", activePoolID)
 	if err != nil {
 		return false, err
 	}
@@ -454,7 +635,7 @@ func (c *Connections) TerminateAllDatabaseConnections() error {
 	// Remove the pool from all the tabs in which it's saved
 	// Construct the query
 	query := fmt.Sprintf(
-		"UPDATE tabs SET active_db_id = NULL, active_db = NULL, active_db_colour = NULL WHERE active_db_id IN (%s)",
+		"UPDATE tabs SET active_db_id = NULL, active_db = NULL, active_db_color = NULL WHERE active_db_id IN (%s)",
 		placeholders,
 	)
 

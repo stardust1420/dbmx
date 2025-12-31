@@ -1,7 +1,6 @@
 <script lang="ts">
 	import * as Drawer from '$lib/components/ui/drawer/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import * as Chart from '$lib/components/ui/chart/index.js';
 	import { IsMobile } from '$lib/hooks/is-mobile.svelte.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
@@ -19,9 +18,9 @@
 		{ envValue: 'staging', label: 'Staging' },
 		{ envValue: 'production', label: 'Production' }
 	];
-	let envValue = $state('');
+	let env = $state('');
 	const triggerEnvSelect = $derived(
-		environments.find((e) => e.envValue === envValue)?.label ?? 'Select Env'
+		environments.find((e) => e.envValue === env)?.label ?? 'Select Env'
 	);
 
 	const colors = [
@@ -31,9 +30,9 @@
 		{ colorValue: 'bg-orange-500', label: 'Orange' },
 		{ colorValue: 'bg-green-500', label: 'Green' }
 	];
-	let colorValue = $state('');
+	let color = $state('');
 	const triggerColorSelect = $derived(
-		colors.find((e) => e.colorValue === colorValue)?.label ?? 'Select Color'
+		colors.find((e) => e.colorValue === color)?.label ?? 'Select Color'
 	);
 
 	const sslModes = [
@@ -44,9 +43,9 @@
 		{ sslModeValue: 'VERIFY-CA', label: 'VERIFY-CA' },
 		{ sslModeValue: 'VERIFY-FULL', label: 'VERIFY-FULL' }
 	];
-	let sslModeValue = $state('');
-	const triggerSslModeSelect = $derived(
-		sslModes.find((e) => e.sslModeValue === sslModeValue)?.label ?? 'PREFERRED'
+	let sslMode = $state('');
+	const triggerSSlModeSelect = $derived(
+		sslModes.find((e) => e.sslModeValue === sslMode)?.label ?? 'Select SSL Mode'
 	);
 
 	let name = $state('');
@@ -59,6 +58,238 @@
 	let overSSH = $state(false);
 	let useSSHKey = $state(false);
 	let isAdvanced = $state(false);
+
+	let clientKeyFile = $state<File | null>(null)
+	let clientCertFile = $state<File | null>(null)
+	let rootCACertFile = $state<File | null>(null)
+
+	let sshHost = $state('');
+	let sshPort = $state('');
+	let sshUsername = $state('');
+	let sshPassword = $state('');
+
+	let sshKeyFile = $state<File | null>(null)
+
+		
+	import { AddPostgresConnection, TestConnectPostgres } from '$lib/wailsjs/go/app/Connections';
+	import { toast } from 'svelte-sonner';
+	import { model } from '$lib/wailsjs/go/models';
+
+
+
+	let connectPostgres = async () => {
+		let missingFields = [];
+		if (name.trim() === '') {
+			missingFields.push('name');
+		}
+		if (env.trim() in ['', 'Select Env']) {
+			missingFields.push('env');
+		}
+		if (host.trim() === '') {
+			missingFields.push('host');
+		}
+		if (port.trim() === '') {
+			missingFields.push('port');
+		}
+		if (username.trim() === '') {
+			missingFields.push('username');
+		}
+		if (password.trim() === '') {
+			missingFields.push('password');
+		}
+		if (color.trim() in ['', 'Select Color'] ) {
+			missingFields.push('color');
+		}
+
+		if (missingFields.length > 0) {
+			toast.error('Missing required field(s)', {
+				description: `${missingFields.join(', ')}`,
+				action: {
+					label: 'OK',
+					onClick: () => console.info('OK')
+				}
+			});
+			return;
+		}
+
+		const clientKeyBytes = clientKeyFile
+		? new Uint8Array(await clientKeyFile.arrayBuffer())
+		: null
+
+		const clientCertBytes = clientCertFile
+		? new Uint8Array(await clientCertFile.arrayBuffer())
+		: null
+
+		const rootCACertBytes = rootCACertFile
+		? new Uint8Array(await rootCACertFile.arrayBuffer())
+		: null
+
+		const sshKeyBytes = sshKeyFile
+		? new Uint8Array(await sshKeyFile.arrayBuffer())
+		: null
+
+		const connectPostgresData = new model.Connection({
+			Engine: 'postgresql',
+			Host: host,
+			Port: port,
+			Username: username,
+			Password: password,
+			Database: database,
+			Name: name,
+			Env: env,
+			Color: color,
+			IsAdvanced: isAdvanced,
+			SSLMode: sslMode,
+			ClientKey: clientKeyBytes,
+			ClientCert: clientCertBytes,
+			RootCACert: rootCACertBytes,
+			OverSSH: overSSH,
+			SSHHost: sshHost,
+			SSHPort: sshPort,
+			SSHUsername: sshUsername,
+			SSHPassword: sshPassword,
+			UseSSHKey: useSSHKey,
+			SSHKey: sshKeyBytes
+		});
+		try {
+			// Await the result of the TestConnectPostgres call
+			await AddPostgresConnection(connectPostgresData);
+
+			// If successful, show success message
+			toast.success('Success', {
+				description: 'The connection was saved successfully',
+				action: {
+					label: 'OK',
+					onClick: () => console.info('OK')
+				}
+			});
+		} catch (error) {
+			let errorMessage = 'An error occurred while trying to connect.';
+
+			// Check if error is an instance of Error
+			if (error instanceof Error) {
+				errorMessage = error.message; // Access message property safely
+			} else if (typeof error === 'string') {
+				errorMessage = error; // If it's a string, use it directly
+			}
+			// Handle errors from the TestConnectPostgres call
+			toast.error('Connection Failed', {
+				description: errorMessage,
+				action: {
+					label: 'OK',
+					onClick: () => console.info('OK')
+				}
+			});
+		}
+	};
+
+	let testConnectPostgres = async () => {
+		let missingFields = [];
+		if (name.trim() === '') {
+			missingFields.push('name');
+		}
+		if (env.trim() in ['', 'Select Env']) {
+			missingFields.push('env');
+		}
+		if (host.trim() === '') {
+			missingFields.push('host');
+		}
+		if (port.trim() === '') {
+			missingFields.push('port');
+		}
+		if (username.trim() === '') {
+			missingFields.push('username');
+		}
+		if (password.trim() === '') {
+			missingFields.push('password');
+		}
+		if (color.trim() in ['', 'Select Color'] ) {
+			missingFields.push('color');
+		}
+
+		if (missingFields.length > 0) {
+			toast.error('Missing required field(s)', {
+				description: `${missingFields.join(', ')}`,
+				action: {
+					label: 'OK',
+					onClick: () => console.info('OK')
+				}
+			});
+			return;
+		}
+
+		const clientKeyBytes = clientKeyFile
+		? new Uint8Array(await clientKeyFile.arrayBuffer())
+		: null
+
+		const clientCertBytes = clientCertFile
+		? new Uint8Array(await clientCertFile.arrayBuffer())
+		: null
+
+		const rootCACertBytes = rootCACertFile
+		? new Uint8Array(await rootCACertFile.arrayBuffer())
+		: null
+
+		const sshKeyBytes = sshKeyFile
+		? new Uint8Array(await sshKeyFile.arrayBuffer())
+		: null
+
+		const testConnectPostgresData = new model.Connection({
+			Engine: 'postgresql',
+			Host: host,
+			Port: port,
+			Username: username,
+			Password: password,
+			Database: database,
+			Name: name,
+			Env: env,
+			Color: color,
+			IsAdvanced: isAdvanced,
+			SSLMode: sslMode,
+			ClientKey: clientKeyBytes,
+			ClientCert: clientCertBytes,
+			RootCACert: rootCACertBytes,
+			OverSSH: overSSH,
+			SSHHost: sshHost,
+			SSHPort: sshPort,
+			SSHUsername: sshUsername,
+			SSHPassword: sshPassword,
+			UseSSHKey: useSSHKey,
+			SSHKey: sshKeyBytes
+		});
+		try {
+			// Await the result of the TestConnectPostgres call
+			await TestConnectPostgres(testConnectPostgresData);
+
+			// If successful, show success message
+			toast.success('Test Successful', {
+				description: 'You can successfully connect using the given credentials',
+				action: {
+					label: 'OK',
+					onClick: () => console.info('OK')
+				}
+			});
+		} catch (error) {
+			let errorMessage = 'An error occurred while trying to connect.';
+
+			// Check if error is an instance of Error
+			if (error instanceof Error) {
+				errorMessage = error.message; // Access message property safely
+			} else if (typeof error === 'string') {
+				errorMessage = error; // If it's a string, use it directly
+			}
+			// Handle errors from the TestConnectPostgres call
+			toast.error('Connection Failed', {
+				description: errorMessage,
+				action: {
+					label: 'OK',
+					onClick: () => console.info('OK')
+				}
+			});
+		}
+
+		const result = await TestConnectPostgres(testConnectPostgresData);
+	};
 </script>
 
 <Drawer.Root direction={isMobile.current ? 'bottom' : 'right'}>
@@ -129,7 +360,7 @@
 				<div class="grid grid-cols-2 gap-2">
 					<div class="flex flex-col gap-2 pb-1">
 						<Label for="env">Env</Label>
-						<Select.Root type="single" name="environment" bind:value={envValue}>
+						<Select.Root type="single" name="environment" bind:value={env}>
 							<Select.Trigger class="w-full">
 								{triggerEnvSelect}
 							</Select.Trigger>
@@ -146,8 +377,8 @@
 					</div>
 					<div class="flex flex-col gap-2 pb-1">
 						<Label for="color">Color</Label>
-						<Select.Root type="single" name="color" bind:value={colorValue}>
-							<Select.Trigger class={colorValue + ' w-full bg-opacity-60 '}>
+						<Select.Root type="single" name="color" bind:value={color}>
+							<Select.Trigger class={color + ' w-full bg-opacity-60 '}>
 									{triggerColorSelect}
 							</Select.Trigger>
 							<Select.Content>
@@ -176,9 +407,9 @@
 					<div class="grid grid-cols-2 gap-2">
 						<div class="flex flex-col gap-2 pb-1">
 							<Label for="sslMode">SSL Mode</Label>
-							<Select.Root type="single" name="sslMode" bind:value={sslModeValue}>
-								<Select.Trigger class={sslModeValue + ' w-full bg-opacity-60'}>
-									{triggerSslModeSelect}
+							<Select.Root type="single" name="sslMode" bind:value={sslMode}>
+								<Select.Trigger class={sslMode + ' w-full bg-opacity-60'}>
+									{triggerSSlModeSelect}
 								</Select.Trigger>
 								<Select.Content>
 									<Select.Group>
@@ -196,18 +427,33 @@
 							</Select.Root>
 						</div>
 						<div class="flex flex-col gap-2">
-							<Label for="clientKey">Client Key</Label>
-							<Input id="clientKey" type="file" />
+								<Label for="clientKey">Client Key</Label>
+								<Input id="clientKey" type="file"
+								onchange={(e) => {
+									const input = e.currentTarget as HTMLInputElement
+									clientKeyFile = input.files?.[0] ?? null
+								}}
+							/>
 						</div>
 					</div>
 					<div class="grid grid-cols-2 gap-2">
 						<div class="flex flex-col gap-2">
-							<Label for="serverCert">Server Cert</Label>
-							<Input id="serverCert" type="file" />
+							<Label for="clientCert">Client Cert</Label>
+							<Input id="clientCert" type="file"
+								onchange={(e) => {
+									const input = e.currentTarget as HTMLInputElement
+									clientCertFile = input.files?.[0] ?? null
+								}}
+							/>
 						</div>
 						<div class="flex flex-col gap-2">
 							<Label for="rootCACert">Root CA Cert</Label>
-							<Input id="rootCACert" type="file" />
+							<Input id="rootCACert" type="file"
+								onchange={(e) => {
+									const input = e.currentTarget as HTMLInputElement
+									rootCACertFile = input.files?.[0] ?? null
+								}}
+							/>
 						</div>
 					</div>
 
@@ -218,13 +464,13 @@
 
 					{#if overSSH}
 						<Label for="sshHost">SSH Host</Label>
-						<Input id="sshHost" placeholder="127.0.0.1" />
+						<Input id="sshHost" placeholder="127.0.0.1" bind:value={sshHost}/>
 						<Label for="sshPort">SSH Port</Label>
-						<Input id="sshPort" placeholder="22" />
+						<Input id="sshPort" placeholder="22" bind:value={sshPort}/>
 						<Label for="sshUsername">SSH Username</Label>
-						<Input id="sshUsername" placeholder="username" />
+						<Input id="sshUsername" placeholder="username" bind:value={sshUsername}/>
 						<Label for="sshPassword">SSH Password</Label>
-						<Input id="sshPassword" placeholder="password" />
+						<Input id="sshPassword" placeholder="password" bind:value={sshPassword}/>
 
 						<div class="flex flex-row items-center gap-4 my-2">
 							<Label for="useSSHKey">Use SSH Key</Label>
@@ -233,7 +479,12 @@
 
 						{#if useSSHKey}
 							<Label for="sshKey">SSH Key</Label>
-							<Input id="sshKey" type="file" />
+							<Input id="sshKey" type="file"
+								onchange={(e) => {
+									const input = e.currentTarget as HTMLInputElement
+									sshKeyFile = input.files?.[0] ?? null
+								}}
+							/>
 						{/if}
 					{/if}
 				{/if}
@@ -241,9 +492,12 @@
 		</div>
 		<Drawer.Footer>
 			<div class="flex flex-row gap-2">
-				<Button class="w-96 self-center" variant="secondary">Save</Button>
-				<Button class="w-96 self-center" variant="default">Test</Button>
-				<Button class="w-96 self-center" variant="destructive">Connect</Button>
+				<Button class="w-96 self-center" variant="secondary"
+					onclick={connectPostgres}
+				>Save</Button>
+				<Button class="w-96 self-center" variant="default"
+					onclick={testConnectPostgres}
+				>Test</Button>
 			</div>
 		</Drawer.Footer>
 	</Drawer.Content>
