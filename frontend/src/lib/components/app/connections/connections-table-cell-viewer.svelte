@@ -1,5 +1,4 @@
 <script lang="ts">
-	import TrendingUpIcon from '@tabler/icons-svelte/icons/trending-up';
 	import * as Drawer from '$lib/components/ui/drawer/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Chart from '$lib/components/ui/chart/index.js';
@@ -7,131 +6,240 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
-	import { Separator } from '$lib/components/ui/separator/index.js';
-	import type { Schema } from './schemas.js';
-	const chartData = [
-		{ date: new Date('2024-01-01'), desktop: 186, mobile: 80 },
-		{ date: new Date('2024-02-01'), desktop: 305, mobile: 200 },
-		{ date: new Date('2024-03-01'), desktop: 237, mobile: 120 },
-		{ date: new Date('2024-04-01'), desktop: 73, mobile: 190 },
-		{ date: new Date('2024-05-01'), desktop: 209, mobile: 130 },
-		{ date: new Date('2024-06-01'), desktop: 214, mobile: 140 }
-	];
-	const chartConfig = {
-		desktop: {
-			label: 'Desktop',
-			color: 'var(--primary)'
-		},
-		mobile: {
-			label: 'Mobile',
-			color: 'var(--primary)'
-		}
-	} satisfies Chart.ChartConfig;
+	import { Switch } from '$lib/components/ui/switch/index.js';
+	import Plus from '@lucide/svelte/icons/plus';
+	import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
+
 	const isMobile = new IsMobile();
-	let { item }: { item: Schema } = $props();
-	let type = $state(item.type);
-	let status = $state(item.status);
-	let reviewer = $state(item.reviewer);
+	let { scheme }: { scheme: string } = $props();
+	
+	const environments = [
+		{ envValue: 'local', label: 'Local' },
+		{ envValue: 'feature', label: 'Feature' },
+		{ envValue: 'staging', label: 'Staging' },
+		{ envValue: 'production', label: 'Production' }
+	];
+	let envValue = $state('');
+	const triggerEnvSelect = $derived(
+		environments.find((e) => e.envValue === envValue)?.label ?? 'Select Env'
+	);
+
+	const colors = [
+		{ colorValue: 'bg-red-500', label: 'Red' },
+		{ colorValue: 'bg-purple-500', label: 'Purple' },
+		{ colorValue: 'bg-blue-500', label: 'Blue' },
+		{ colorValue: 'bg-orange-500', label: 'Orange' },
+		{ colorValue: 'bg-green-500', label: 'Green' }
+	];
+	let colorValue = $state('');
+	const triggerColorSelect = $derived(
+		colors.find((e) => e.colorValue === colorValue)?.label ?? 'Select Color'
+	);
+
+	const sslModes = [
+		{ sslModeValue: 'PREFERRED', label: 'PREFERRED' },
+		{ sslModeValue: 'DISABLED', label: 'DISABLED' },
+		{ sslModeValue: 'ALLOW', label: 'ALLOW' },
+		{ sslModeValue: 'REQUIRED', label: 'REQUIRED' },
+		{ sslModeValue: 'VERIFY-CA', label: 'VERIFY-CA' },
+		{ sslModeValue: 'VERIFY-FULL', label: 'VERIFY-FULL' }
+	];
+	let sslModeValue = $state('');
+	const triggerSslModeSelect = $derived(
+		sslModes.find((e) => e.sslModeValue === sslModeValue)?.label ?? 'PREFERRED'
+	);
+
+	let name = $state('');
+	let host = $state('');
+	let port = $state('');
+	let username = $state('');
+	let password = $state('');
+	let database = $state('');
+
+	let overSSH = $state(false);
+	let useSSHKey = $state(false);
 </script>
 
 <Drawer.Root direction={isMobile.current ? 'bottom' : 'right'}>
-	<Drawer.Trigger class="w-full justify-start">
-		{#snippet child({ props })}
-			<Button variant="link" class="text-foreground w-fit px-0 text-start" {...props}>
-				{item.header}
+
+	<DropdownMenu.Root>
+		<DropdownMenu.Trigger class="mr-6">
+			<Button variant="outline">
+				<Plus class="size-4" />
+				New Connection
 			</Button>
-		{/snippet}
-	</Drawer.Trigger>
+		</DropdownMenu.Trigger>
+		<DropdownMenu.Content class="w-40" align="start">
+			<DropdownMenu.Label>Schemes</DropdownMenu.Label>
+				<Drawer.Trigger class="flex w-full">
+
+					<DropdownMenu.Item class="flex w-full">
+						PostgreSQL
+					</DropdownMenu.Item>
+				</Drawer.Trigger>
+			<DropdownMenu.Item>
+				MySQL
+			</DropdownMenu.Item>
+			<DropdownMenu.Item>
+				ClickHouse
+			</DropdownMenu.Item>
+			<DropdownMenu.Item>
+				SQLite
+			</DropdownMenu.Item>
+		</DropdownMenu.Content>
+	</DropdownMenu.Root>
+
 	<Drawer.Content>
-		<Drawer.Header class="gap-1">
-			<Drawer.Title>{item.header}</Drawer.Title>
-			<Drawer.Description>Showing total visitors for the last 6 months</Drawer.Description>
+		<Drawer.Header class="gap-1 font-mono">
+			<Drawer.Title class="text-3xl">PostgreSQL</Drawer.Title>
+			<Drawer.Description>New Connection</Drawer.Description>
 		</Drawer.Header>
-		<div class="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
-			{#if !isMobile.current}
-				<Separator />
-				<div class="grid gap-2">
-					<div class="flex gap-2 font-medium leading-none">
-						Trending up by 5.2% this month
-						<TrendingUpIcon class="size-4" />
+		<div class="flex flex-col gap-2 overflow-y-auto px-4 text-sm font-mono">
+
+			<form class="flex flex-col gap-2">
+				<h1 class="mb-2 text-2xl font-bold">Basic</h1>
+
+				<div class="flex flex-col gap-2">
+					<Label for="host">Host</Label>
+					<Input id="host" placeholder="localhost" value={host}/>
+				</div>
+				<div class="grid grid-cols-2 gap-2">
+					<div class="flex flex-col gap-2">
+						<Label for="port">Port</Label>
+						<Input id="port" placeholder="5432" value={port}/>
 					</div>
-					<div class="text-muted-foreground">
-						Showing total visitors for the last 6 months. This is just some random text to test the
-						layout. It spans multiple lines and should wrap around.
+					<div class="flex flex-col gap-2">
+						<Label for="database">Database</Label>
+						<Input id="database" placeholder="postgres" value={database}/>
 					</div>
 				</div>
-				<Separator />
-			{/if}
-			<form class="flex flex-col gap-4">
-				<div class="flex flex-col gap-3">
-					<Label for="header">Header</Label>
-					<Input id="header" value={item.header} />
+				<div class="flex flex-col gap-2">
+					<Label for="username">Username</Label>
+					<Input id="username" placeholder="username" value={username}/>
 				</div>
-				<div class="grid grid-cols-2 gap-4">
-					<div class="flex flex-col gap-3">
-						<Label for="type">Type</Label>
-						<Select.Root type="single" bind:value={type}>
-							<Select.Trigger id="type" class="w-full">
-								{type ?? 'Select a type'}
+				<div class="flex flex-col gap-2">
+					<Label for="password">Password</Label>
+					<Input id="password" placeholder="password" value={password}/>
+				</div>
+				<div class="flex flex-col gap-2">
+					<Label for="saveAs">Save As</Label>
+					<Input id="saveAs" placeholder="Name your connection" value={name}/>
+				</div>
+				<div class="grid grid-cols-2 gap-2">
+					<div class="flex flex-col gap-2 pb-1">
+						<Label for="env">Env</Label>
+						<Select.Root type="single" name="environment" bind:value={envValue}>
+							<Select.Trigger class="w-full">
+								{triggerEnvSelect}
 							</Select.Trigger>
 							<Select.Content>
-								<Select.Item value="Table of Contents">Table of Contents</Select.Item>
-								<Select.Item value="Executive Summary">Executive Summary</Select.Item>
-								<Select.Item value="Technical Approach">Technical Approach</Select.Item>
-								<Select.Item value="Design">Design</Select.Item>
-								<Select.Item value="Capabilities">Capabilities</Select.Item>
-								<Select.Item value="Focus Documents">Focus Documents</Select.Item>
-								<Select.Item value="Narrative">Narrative</Select.Item>
-								<Select.Item value="Cover Page">Cover Page</Select.Item>
+								<Select.Group>
+									{#each environments as e (e.envValue)}
+										<Select.Item value={e.envValue} label={e.label} class={e.envValue}>
+											{e.label}
+										</Select.Item>
+									{/each}
+								</Select.Group>
 							</Select.Content>
 						</Select.Root>
 					</div>
-					<div class="flex flex-col gap-3">
-						<Label for="status">Status</Label>
-						<Select.Root type="single" bind:value={status}>
-							<Select.Trigger id="status" class="w-full">
-								{status ?? 'Select a status'}
+					<div class="flex flex-col gap-2 pb-1">
+						<Label for="color">Color</Label>
+						<Select.Root type="single" name="color" bind:value={colorValue}>
+							<Select.Trigger class={colorValue + ' w-full bg-opacity-60 '}>
+									{triggerColorSelect}
 							</Select.Trigger>
 							<Select.Content>
-								<Select.Item value="Done">Done</Select.Item>
-								<Select.Item value="In Progress">In Progress</Select.Item>
-								<Select.Item value="Not Started">Not Started</Select.Item>
+								<Select.Group>
+									{#each colors as c}
+										<Select.Item
+											value={c.colorValue}
+											label={c.label}
+											class={c.colorValue + ' bg-opacity-60'}
+										>
+											{c.label}
+										</Select.Item>
+									{/each}
+								</Select.Group>
 							</Select.Content>
 						</Select.Root>
 					</div>
 				</div>
-				<div class="grid grid-cols-2 gap-4">
-					<div class="flex flex-col gap-3">
-						<Label for="target">Target</Label>
-						<Input id="target" value={item.target} />
+
+				<h1 class="mb-2 text-2xl font-bold">Advanced</h1>
+
+				<div class="grid grid-cols-2 gap-2">
+					<div class="flex flex-col gap-2 pb-1">
+						<Label for="sslMode">SSL Mode</Label>
+						<Select.Root type="single" name="sslMode" bind:value={sslModeValue}>
+							<Select.Trigger class={sslModeValue + ' w-full bg-opacity-60'}>
+								{triggerSslModeSelect}
+							</Select.Trigger>
+							<Select.Content>
+								<Select.Group>
+									{#each sslModes as c}
+										<Select.Item
+											value={c.sslModeValue}
+											label={c.label}
+											class={c.sslModeValue + ' bg-opacity-60'}
+										>
+											{c.label}
+										</Select.Item>
+									{/each}
+								</Select.Group>
+							</Select.Content>
+						</Select.Root>
 					</div>
-					<div class="flex flex-col gap-3">
-						<Label for="limit">Limit</Label>
-						<Input id="limit" value={item.limit} />
+					<div class="flex flex-col gap-2">
+						<Label for="clientKey">Client Key</Label>
+						<Input id="clientKey" type="file" />
 					</div>
 				</div>
-				<div class="flex flex-col gap-3">
-					<Label for="reviewer">Reviewer</Label>
-					<Select.Root type="single" bind:value={reviewer}>
-						<Select.Trigger id="reviewer" class="w-full">
-							{reviewer ?? 'Select a reviewer'}
-						</Select.Trigger>
-						<Select.Content>
-							<Select.Item value="Eddie Lake">Eddie Lake</Select.Item>
-							<Select.Item value="Jamik Tashpulatov">Jamik Tashpulatov</Select.Item>
-							<Select.Item value="Emily Whalen">Emily Whalen</Select.Item>
-						</Select.Content>
-					</Select.Root>
+				<div class="grid grid-cols-2 gap-2">
+					<div class="flex flex-col gap-2">
+						<Label for="serverCert">Server Cert</Label>
+						<Input id="serverCert" type="file" />
+					</div>
+					<div class="flex flex-col gap-2">
+						<Label for="rootCACert">Root CA Cert</Label>
+						<Input id="rootCACert" type="file" />
+					</div>
 				</div>
+
+				<div class="flex flex-row items-center gap-4 my-2">
+					<Label for="overSSH">Over SSH</Label>
+					<Switch id="overSSH" bind:checked={overSSH} />
+				</div>
+
+				{#if overSSH}
+					<Label for="sshHost">SSH Host</Label>
+					<Input id="sshHost" placeholder="127.0.0.1" />
+					<Label for="sshPort">SSH Port</Label>
+					<Input id="sshPort" placeholder="22" />
+					<Label for="sshUsername">SSH Username</Label>
+					<Input id="sshUsername" placeholder="username" />
+					<Label for="sshPassword">SSH Password</Label>
+					<Input id="sshPassword" placeholder="password" />
+
+					<div class="flex flex-row items-center gap-4 my-2">
+						<Label for="useSSHKey">Use SSH Key</Label>
+						<Switch id="useSSHKey" bind:checked={useSSHKey} />
+					</div>
+
+					{#if useSSHKey}
+						<Label for="sshKey">SSH Key</Label>
+						<Input id="sshKey" type="file" />
+					{/if}
+				{/if}
+
 			</form>
 		</div>
 		<Drawer.Footer>
-			<Button>Submit</Button>
-			<Drawer.Close>
-				{#snippet child({ props })}
-					<Button variant="outline" {...props}>Done</Button>
-				{/snippet}
-			</Drawer.Close>
+			<div class="flex flex-row gap-2">
+				<Button class="w-96 self-center" variant="secondary">Save</Button>
+				<Button class="w-96 self-center" variant="default">Test</Button>
+				<Button class="w-96 self-center" variant="destructive">Connect</Button>
+			</div>
 		</Drawer.Footer>
 	</Drawer.Content>
 </Drawer.Root>
