@@ -1,16 +1,29 @@
 -- +goose Up
 PRAGMA foreign_keys = ON;
 
-CREATE TABLE IF NOT EXISTS "postgres" (
+CREATE TABLE IF NOT EXISTS "connections" (
   "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-  "name" VARCHAR NOT NULL,
+  "engine" VARCHAR NOT NULL,
   "host" VARCHAR NOT NULL,
   "port" VARCHAR NOT NULL,
   "username" VARCHAR NOT NULL,
   "password" VARCHAR NOT NULL,
+  "database" VARCHAR NOT NULL,
+  "name" VARCHAR NOT NULL,
   "env" VARCHAR DEFAULT NULL,
   "colour" VARCHAR DEFAULT NULL,
-  "database" VARCHAR NOT NULL DEFAULT 'postgres'
+  "is_advanced" INTEGER NOT NULL DEFAULT 0,
+  "ssl_mode" VARCHAR DEFAULT NULL,
+  "client_key" BLOB DEFAULT NULL,
+  "server_cert" BLOB DEFAULT NULL,
+  "root_ca_cert" BLOB DEFAULT NULL,
+  "over_ssh" INTEGER NOT NULL DEFAULT 0,
+  "ssh_host" VARCHAR DEFAULT NULL,
+  "ssh_port" VARCHAR DEFAULT NULL,
+  "ssh_username" VARCHAR DEFAULT NULL,
+  "ssh_password" VARCHAR DEFAULT NULL,
+  "use_ssh_key" INTEGER NOT NULL DEFAULT 0,
+  "ssh_key" BLOB DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS "tabs" (
@@ -40,4 +53,3 @@ CREATE INDEX IF NOT EXISTS idx_tabs_is_active ON "tabs" ("is_active");
 -- +goose Down
 DROP TABLE IF EXISTS "tabs";
 DROP TABLE IF EXISTS "postgres";
-DROP TABLE IF EXISTS "dbmx";
