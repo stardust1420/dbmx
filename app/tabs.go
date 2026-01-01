@@ -22,11 +22,11 @@ func NewTabs(db *sql.DB, pm *PoolManager) *Tabs {
 	}
 }
 
-func (t *Tabs) AddTab(activeDBID, activeDB, activeDBColour, tableName, tabType string, postgresConnID int64, dbName, postgresConnName string) (*model.Tab, error) {
-	var active_db_id, active_db, active_db_colour *string
+func (t *Tabs) AddTab(activeDBID, activeDB, activeDBColor, tableName, tabType string, connID int64, dbName, connName string) (*model.Tab, error) {
+	var active_db_id, active_db, active_db_color *string
 
 	// Required for tab type table
-	var postgres_conn_id *int64
+	var conn_id *int64
 	var db_name *string
 
 	var tableColumnsString string
@@ -35,8 +35,8 @@ func (t *Tabs) AddTab(activeDBID, activeDB, activeDBColour, tableName, tabType s
 	name := "Editor"
 
 	if tabType == "table" {
-		if postgresConnID == 0 {
-			return nil, errors.New("postgres connection id is required for tab type table")
+		if connID == 0 {
+			return nil, errors.New("connection id is required for tab type table")
 		}
 		if dbName == "" {
 			return nil, errors.New("database name is required for tab type table")
@@ -48,7 +48,7 @@ func (t *Tabs) AddTab(activeDBID, activeDB, activeDBColour, tableName, tabType s
 			return nil, errors.New("active db pool id is required for tab type table")
 		}
 
-		postgres_conn_id = &postgresConnID
+		conn_id = &connID
 		db_name = &dbName
 		name = tableName
 
@@ -103,8 +103,8 @@ func (t *Tabs) AddTab(activeDBID, activeDB, activeDBColour, tableName, tabType s
 	if activeDB != "" {
 		active_db = &activeDB
 	}
-	if activeDBColour != "" {
-		active_db_colour = &activeDBColour
+	if activeDBColor != "" {
+		active_db_color = &activeDBColor
 	}
 
 	if !model.IsValidTabType(tabType) {
@@ -112,8 +112,8 @@ func (t *Tabs) AddTab(activeDBID, activeDB, activeDBColour, tableName, tabType s
 	}
 
 	// Insert a new active tab
-	query := `INSERT INTO tabs (name, editor, output, is_active, active_db_id, active_db, active_db_colour, type, postgres_conn_id, db_name, postgres_conn_name, "select", "limit", "offset", "where", "order_by", "group_by", table_columns) VALUES (?, '', '', true, ?, ?, ?, ?, ?, ?, ?, '', '', '', '', '', '', ?);`
-	result, err := t.DB.Exec(query, name, active_db_id, active_db, active_db_colour, tabType, postgres_conn_id, db_name, postgresConnName, tableColumnsString)
+	query := `INSERT INTO tabs (name, editor, output, is_active, active_db_id, active_db, active_db_color, type, connection_id, db_name, connection_name, "select", "limit", "offset", "where", "order_by", "group_by", table_columns) VALUES (?, '', '', true, ?, ?, ?, ?, ?, ?, ?, '', '', '', '', '', '', ?);`
+	result, err := t.DB.Exec(query, name, active_db_id, active_db, active_db_color, tabType, conn_id, db_name, connName, tableColumnsString)
 	if err != nil {
 		return nil, err
 	}
@@ -135,11 +135,11 @@ func (t *Tabs) AddTab(activeDBID, activeDB, activeDBColour, tableName, tabType s
 		IsActive:         true,
 		ActiveDBID:       active_db_id,
 		ActiveDB:         active_db,
-		ActiveDBColor:    active_db_colour,
+		ActiveDBColor:    active_db_color,
 		Type:             tabType,
-		PostgresConnID:   postgres_conn_id,
+		ConnectionID:     conn_id,
 		DBName:           db_name,
-		PostgresConnName: postgresConnName,
+		ConnectionName:   connName,
 		TableColumnsList: tableColumns,
 	}, nil
 }
@@ -156,7 +156,7 @@ func (t *Tabs) SetActiveTab(id int64) (*model.Tab, error) {
 	updateQuery = `UPDATE tabs SET is_active = true WHERE id = ? RETURNING *`
 
 	var tab model.Tab
-	err = t.DB.QueryRow(updateQuery, id).Scan(&tab.ID, &tab.Name, &tab.Editor, &tab.Output, &tab.IsActive, &tab.ActiveDBID, &tab.ActiveDB, &tab.ActiveDBColor, &tab.Type, &tab.PostgresConnID, &tab.DBName, &tab.PostgresConnName, &tab.Select, &tab.Limit, &tab.Offset, &tab.Where, &tab.OrderBy, &tab.GroupBy, &tab.TableColumns)
+	err = t.DB.QueryRow(updateQuery, id).Scan(&tab.ID, &tab.Name, &tab.Editor, &tab.Output, &tab.IsActive, &tab.ActiveDBID, &tab.ActiveDB, &tab.ActiveDBColor, &tab.Type, &tab.ConnectionID, &tab.DBName, &tab.ConnectionName, &tab.Select, &tab.Limit, &tab.Offset, &tab.Where, &tab.OrderBy, &tab.GroupBy, &tab.TableColumns)
 	if err != nil {
 		return nil, err
 	}
@@ -186,7 +186,7 @@ func (t *Tabs) SetActiveTab(id int64) (*model.Tab, error) {
 
 func (t *Tabs) GetAllTabs() ([]model.Tab, error) {
 	// Query for all tabs
-	query := `SELECT id, name, editor, output, is_active, active_db_id, active_db, active_db_colour, type, postgres_conn_id, db_name, postgres_conn_name, "select", "limit", "offset", "where", "order_by", "group_by", table_columns FROM tabs`
+	query := `SELECT id, name, editor, output, is_active, active_db_id, active_db, active_db_color, type, connection_id, db_name, connection_name, "select", "limit", "offset", "where", "order_by", "group_by", table_columns FROM tabs`
 	rows, err := t.DB.Query(query)
 	if err != nil {
 		return nil, err
@@ -196,7 +196,7 @@ func (t *Tabs) GetAllTabs() ([]model.Tab, error) {
 	var tabs []model.Tab
 	for rows.Next() {
 		var tab model.Tab
-		err := rows.Scan(&tab.ID, &tab.Name, &tab.Editor, &tab.Output, &tab.IsActive, &tab.ActiveDBID, &tab.ActiveDB, &tab.ActiveDBColor, &tab.Type, &tab.PostgresConnID, &tab.DBName, &tab.PostgresConnName, &tab.Select, &tab.Limit, &tab.Offset, &tab.Where, &tab.OrderBy, &tab.GroupBy, &tab.TableColumns)
+		err := rows.Scan(&tab.ID, &tab.Name, &tab.Editor, &tab.Output, &tab.IsActive, &tab.ActiveDBID, &tab.ActiveDB, &tab.ActiveDBColor, &tab.Type, &tab.ConnectionID, &tab.DBName, &tab.ConnectionName, &tab.Select, &tab.Limit, &tab.Offset, &tab.Where, &tab.OrderBy, &tab.GroupBy, &tab.TableColumns)
 		if err != nil {
 			return nil, err
 		}
@@ -260,7 +260,7 @@ func (t *Tabs) DeleteTab(id int64) (*model.Tab, error) {
 			query = `UPDATE tabs SET is_active = true WHERE id = (SELECT id FROM tabs WHERE id != ? LIMIT 1) RETURNING *`
 			row := t.DB.QueryRow(query, id)
 
-			err = row.Scan(&tab.ID, &tab.Name, &tab.Editor, &tab.Output, &tab.IsActive, &tab.ActiveDBID, &tab.ActiveDB, &tab.ActiveDBColor, &tab.Type, &tab.PostgresConnID, &tab.DBName, &tab.PostgresConnName, &tab.Select, &tab.Limit, &tab.Offset, &tab.Where, &tab.OrderBy, &tab.GroupBy, &tab.TableColumns)
+			err = row.Scan(&tab.ID, &tab.Name, &tab.Editor, &tab.Output, &tab.IsActive, &tab.ActiveDBID, &tab.ActiveDB, &tab.ActiveDBColor, &tab.Type, &tab.ConnectionID, &tab.DBName, &tab.ConnectionName, &tab.Select, &tab.Limit, &tab.Offset, &tab.Where, &tab.OrderBy, &tab.GroupBy, &tab.TableColumns)
 			if err != nil {
 				return nil, err
 			}
@@ -311,22 +311,22 @@ func (t *Tabs) UpdateTabEditorContent(id int64, editor string, selectQuery, limi
 	return nil
 }
 
-func (t *Tabs) SaveActiveDBProps(id int64, activeDBID, activeDB, activeDBColour string) error {
-	var active_db_id, active_db, active_db_colour *string
+func (t *Tabs) SaveActiveDBProps(id int64, activeDBID, activeDB, activeDBColor string) error {
+	var active_db_id, active_db, active_db_color *string
 	if activeDBID != "" {
 		active_db_id = &activeDBID
 	}
 	if activeDB != "" {
 		active_db = &activeDB
 	}
-	if activeDBColour != "" {
-		active_db_colour = &activeDBColour
+	if activeDBColor != "" {
+		active_db_color = &activeDBColor
 	}
 
 	// NOTE: Only update for tab type editor
 	// Update the active db properties in the tab of type editor
-	query := `UPDATE tabs SET active_db_id = ?, active_db = ?, active_db_colour = ? WHERE id = ? AND type = 'editor'`
-	_, err := t.DB.Exec(query, active_db_id, active_db, active_db_colour, id)
+	query := `UPDATE tabs SET active_db_id = ?, active_db = ?, active_db_color = ? WHERE id = ? AND type = 'editor'`
+	_, err := t.DB.Exec(query, active_db_id, active_db, active_db_color, id)
 	if err != nil {
 		return err
 	}

@@ -16,7 +16,7 @@
 		tabID = $bindable(0),
 		tabName = $bindable(''),
 		tabTableDBPoolID = $bindable(''),
-		tabPostgresConnID = $bindable(0),
+		tabConnID = $bindable(0),
 		tabDBName = $bindable(''),
 		...restProps
 	}: WithElementRef<HTMLAttributes<HTMLDivElement>> & {
@@ -26,7 +26,7 @@
 		tabID?: number;
 		tabName?: string;
 		tabTableDBPoolID?: string;
-		tabPostgresConnID?: number;
+		tabConnID?: number;
 		tabDBName?: string;
 	} = $props();
 

@@ -3,14 +3,12 @@
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import Tabs from '$lib/components/app/main_screen/tabs.svelte';
 	import * as Resizable from '$lib/components/ui/resizable/index.js';
-	import Button from '$lib/components/ui/button/button.svelte';
 	import X from '@lucide/svelte/icons/x';
 	import SquarePen from '@lucide/svelte/icons/square-pen';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Ellipsis from '@lucide/svelte/icons/ellipsis';
 	import Paperclip from '@lucide/svelte/icons/paperclip';
 
-	import BadgePlus from '@lucide/svelte/icons/badge-plus';
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import * as Kbd from '$lib/components/ui/kbd/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
@@ -22,9 +20,9 @@
 
 	// Table tab properties
 	let tabTableDBPoolID = $state('');
-	let tabPostgresConnName = $state('');
+	let tabConnName = $state('');
 	let tabDBName = $state('');
-	let tabPostgresConnID = $state(0);
+	let tabConnID = $state(0);
 
 	let select = $state('');
 	let limit = $state('');
@@ -40,13 +38,13 @@
 	// Function to handle adding a new tab from sidebar
 	function handleAddTab(
 		tableName?: string,
-		postgresConnID?: number,
+		connID?: number,
 		dbName?: string,
 		tableDBPoolID?: string,
-		postgresConnName?: string
+		connName?: string
 	) {
 		if (tabsComponent && tabsComponent.addTab) {
-			tabsComponent.addTab(tableName, postgresConnID, dbName, tableDBPoolID, postgresConnName);
+			tabsComponent.addTab(tableName, connID, dbName, tableDBPoolID, connName);
 		}
 	}
 
@@ -78,7 +76,7 @@
 				bind:tabID
 				bind:tabName
 				bind:tabTableDBPoolID
-				bind:tabPostgresConnID
+				bind:tabConnID
 				bind:tabDBName
 				onAddTab={handleAddTab}
 			/>
@@ -89,9 +87,9 @@
 					bind:tabName
 					bind:tabType
 					bind:tabTableDBPoolID
-					bind:tabPostgresConnName
+					bind:tabConnName
 					bind:tabDBName
-					bind:tabPostgresConnID
+					bind:tabConnID
 					bind:select
 					bind:limit
 					bind:offset
@@ -106,6 +104,7 @@
 	</Resizable.Pane>
 
 	<Resizable.Handle />
+	
 	<Resizable.Pane
 		defaultSize={0}
 		maxSize={40}

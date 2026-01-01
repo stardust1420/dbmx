@@ -9,7 +9,7 @@ export let columns = writable<ColumnDef<RowData, unknown>[]>([]);
 export let rows = writable<RowData[]>([]);
 
 
-export let postgresConnectionsMap = $state(new SvelteMap<number, model.PostgresConnection>());
+export let postgresConnectionsMap = $state(new SvelteMap<number, model.Connection>());
 export let connectionDatabasesMap = $state(new SvelteMap<number, string[]>());
 export let databasesMap = $state(new SvelteMap<string, model.Database>());
 

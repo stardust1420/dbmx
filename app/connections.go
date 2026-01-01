@@ -47,14 +47,13 @@ func (m *Connections) GetSqlite3Version() string {
 
 func (m *Connections) GetAllConnections() ([]model.Connection, error) {
 	// Get all connections
-	var connections []model.Connection
+	connections := []model.Connection{}
+
 	rows, err := m.DB.Query("SELECT * FROM connections")
 	if err != nil {
 		return nil, err
 	}
-
 	defer rows.Close()
-
 	for rows.Next() {
 		var connection model.Connection
 		err := rows.Scan(
@@ -86,7 +85,6 @@ func (m *Connections) GetAllConnections() ([]model.Connection, error) {
 		}
 		connections = append(connections, connection)
 	}
-
 	if row_err := rows.Err(); row_err != nil {
 		return nil, errors.Wrap(row_err, "unable to read rows")
 	}
@@ -234,7 +232,7 @@ func (m *Connections) AddPostgresConnection(c model.Connection) (bool, error) {
 			port,
 			username,
 			password,
-			database
+			database,
 			name,
 			env,
 			color,

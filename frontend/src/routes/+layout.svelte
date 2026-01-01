@@ -14,8 +14,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { toast } from 'svelte-sonner';
-	import { GetPostgresConnections } from '$lib/wailsjs/go/app/Connections';
-	import { GetAllTabs } from '$lib/wailsjs/go/app/Tabs';
+	import { GetAllConnections } from '$lib/wailsjs/go/app/Connections';
 
 	import { postgresConnectionsMap } from '$lib/state.svelte';
 
@@ -23,7 +22,7 @@
 	// This is mounted only for the root layout, so it will only run once
 	// This will also run when the app is reloaded
 	onMount(() => {
-		GetPostgresConnections()
+		GetAllConnections()
 			.then((connections) => {
 				for (let connection of connections) {
 					postgresConnectionsMap.set(connection.ID, connection);

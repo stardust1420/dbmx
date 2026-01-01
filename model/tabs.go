@@ -22,16 +22,16 @@ type Tab struct {
 	Rows    [][]Cell `json:"rows"`
 
 	// Required if type is table
-	PostgresConnID   *int64
-	PostgresConnName string
-	DBName           *string
-	Select           string
-	Limit            string
-	Offset           string
-	Where            string
-	OrderBy          string
-	GroupBy          string
-	TableColumns     string
+	ConnectionID   *int64
+	ConnectionName string
+	DBName         *string
+	Select         string
+	Limit          string
+	Offset         string
+	Where          string
+	OrderBy        string
+	GroupBy        string
+	TableColumns   string
 
 	// To be passed to frontend
 	TableColumnsList []string

@@ -60,8 +60,8 @@
 		tabType = $bindable(''),
 		tabDBName = $bindable(''),
 		tabTableDBPoolID = $bindable(''),
-		tabPostgresConnName = $bindable(''),
-		tabPostgresConnID = $bindable(0),
+		tabConnName = $bindable(''),
+		tabConnID = $bindable(0),
 		select = $bindable(''),
 		limit = $bindable(''),
 		offset = $bindable(''),
@@ -104,8 +104,8 @@
 					// Properties for table view tab
 					tabDBName = tab.DBName || '';
 					tabTableDBPoolID = tab.ActiveDBID || '';
-					tabPostgresConnName = tab.PostgresConnName || '';
-					tabPostgresConnID = tab.PostgresConnID || 0;
+					tabConnName = tab.ConnectionName || '';
+					tabConnID = tab.ConnectionID || 0;
 
 					select = tab.Select;
 					limit = tab.Limit;
@@ -162,10 +162,10 @@
 
 	export function addTab(
 		tableName: string = '',
-		postgresConnID: number = 0,
+		connID: number = 0,
 		dbName: string = '',
 		tableDBPoolID: string = '',
-		postgresConnName: string = ''
+		connName: string = ''
 	) {
 		$selectedQuery = '';
 
@@ -195,9 +195,9 @@
 			$currentColor,
 			tabDisplayName,
 			tableType,
-			postgresConnID,
+			connID,
 			dbName,
-			postgresConnName
+			connName
 		)
 			.then((tab) => {
 				queryLoading = false;
@@ -210,8 +210,8 @@
 				// Properties for table view tab
 				tabDBName = tab.DBName || '';
 				tabTableDBPoolID = tab.ActiveDBID || '';
-				tabPostgresConnName = tab.PostgresConnName || '';
-				tabPostgresConnID = tab.PostgresConnID || 0;
+				tabConnName = tab.ConnectionName || '';
+				tabConnID = tab.ConnectionID || 0;
 
 				select = tab.Select;
 				limit = tab.Limit;
@@ -222,8 +222,6 @@
 				tableColumns = tab.TableColumnsList;
 
 				editor = tab.Editor;
-
-				tabLoading = false;
 			})
 			.catch((error) => {
 				toast.error('Failed to add tab', {
@@ -234,6 +232,8 @@
 					}
 				});
 			});
+		
+		tabLoading = false;
 
 		$selectedDBDisplay = $selectedDBDisplay;
 		$activePoolID = $activePoolID;
@@ -264,8 +264,8 @@
 					// Properties for table view tab
 					tabDBName = tab.DBName || '';
 					tabTableDBPoolID = tab.ActiveDBID || '';
-					tabPostgresConnName = tab.PostgresConnName || '';
-					tabPostgresConnID = tab.PostgresConnID || 0;
+					tabConnName = tab.ConnectionName || '';
+					tabConnID = tab.ConnectionID || 0;
 
 					select = tab.Select;
 					limit = tab.Limit;
@@ -338,8 +338,8 @@
 				// Properties for table view tab
 				tabDBName = tab.DBName || '';
 				tabTableDBPoolID = tab.ActiveDBID || '';
-				tabPostgresConnName = tab.PostgresConnName || '';
-				tabPostgresConnID = tab.PostgresConnID || 0;
+				tabConnName = tab.ConnectionName || '';
+				tabConnID = tab.ConnectionID || 0;
 
 				select = tab.Select;
 				limit = tab.Limit;
@@ -640,20 +640,20 @@
 	});
 </script>
 
-<div class="my-2 flex h-full flex-1 flex-col overflow-hidden rounded-md border">
+<div class="my-2 flex h-full flex-1 flex-col rounded-md">
 	<Tabs.Root value={tabID.toString()} class="flex h-full flex-1 flex-col overflow-hidden">
 		<!-- Tabs visible in the header -->
-		<header class="flex h-12 items-center gap-2 border-b px-4">
+		<header class="flex h-10 items-center justify-center">
 			<div class="flex w-full items-center justify-between">
-				<div class="-ml-1 flex items-center overflow-x-auto">
-					<Sidebar.Trigger class="-ml-1" />
+				<div class="flex h-auto items-center justify-center overflow-x-auto">
+					<Sidebar.Trigger />
 					<Separator orientation="vertical" />
 					<Tabs.List class="thin-scrollbar scrollbar-thin overflow-x-auto overflow-y-hidden">
 						{#each Array.from(tabsMap.entries()) as [key, tab]}
 							<div class="mr-2 flex rounded-sm bg-slate-800">
 								<Tabs.Trigger
 									value={tab.ID.toString()}
-									class="flex items-center"
+									class="flex items-center justify-center h-auto"
 									onclick={() => setActiveTab(tab.ID)}
 								>
 									{tab.Name}
@@ -672,15 +672,15 @@
 								Processing
 							</Button>
 						{/if}
-						<button
-							class="ml-2 flex items-center gap-1 text-blue-500 hover:text-blue-700"
+						<Button
+							variant="outline" size="sm"
 							onclick={() => addTab()}
 						>
-							<Plus size={16} /> Add Tab
-						</button>
+							<Plus size={16} color="white" />
+						</Button>
 					</Tabs.List>
 				</div>
-				<div class="flex">
+				<!-- <div class="flex">
 					<Button variant="secondary" size="sm" onclick={toggleChatPane}>
 						<Chat size={16} />
 						{#if tabType == 'table'}
@@ -689,7 +689,7 @@
 							Chat with {$selectedDBDisplay}
 						{/if}
 					</Button>
-				</div>
+				</div> -->
 			</div>
 		</header>
 
@@ -705,7 +705,7 @@
 								<Breadcrumb.Root>
 									<Breadcrumb.List>
 										<Breadcrumb.Item>
-											<Breadcrumb.Link>{tabPostgresConnName}</Breadcrumb.Link>
+											<Breadcrumb.Link>{tabConnName}</Breadcrumb.Link>
 										</Breadcrumb.Item>
 										<Breadcrumb.Separator />
 										<Breadcrumb.Item>
@@ -1023,15 +1023,15 @@
 				</div>
 			{:else}
 				<div class="flex h-screen flex-1 flex-col rounded-md">
-					<Tabs.Content value={tabID.toString()} class="flex-1 overflow-hidden">
+					<Tabs.Content value={tabID.toString()} class="flex flex-col flex-1 overflow-hidden">
 						<div class="flex h-full flex-col">
 							<!-- Active DB Selector and Execute Query Button -->
-							<div class="flex items-center justify-between">
+							<div class="flex items-center justify-between h-10 mb-2">
 								<Select.Root type="single" name="activeDatabase">
 									<Select.Trigger
 										class="{getColorClass(
 											$currentColor
-										)} prevent:default w-auto bg-opacity-20 hover:bg-opacity-25"
+										)} prevent:default w-auto bg-opacity-20 hover:bg-opacity-25 mt-0.5 ml-0.5"
 									>
 										{$selectedDBDisplay}
 									</Select.Trigger>
@@ -1062,7 +1062,7 @@
 								<Resizable.Pane
 									defaultSize={editorHeight}
 									minSize={10}
-									class="rsz-pane my-3 overflow-hidden rounded-md border"
+									class="rsz-pane"
 								>
 									<SqlEditor
 										bind:value={editor}
@@ -1077,7 +1077,7 @@
 								<Resizable.Pane
 									defaultSize={outputHeight}
 									minSize={10}
-									class="rsz-pane border"
+									class="rsz-pane"
 								>
 									<div class="h-full">
 										{#if $columns.length > 0}
