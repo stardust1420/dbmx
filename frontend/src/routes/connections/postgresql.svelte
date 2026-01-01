@@ -50,7 +50,7 @@
 	let username = $state('');
 	let password = $state('');
 	let database = $state('');
-	let colour = $state('');
+	let color = $state('');
 
 	let overSSH = $state(false);
 	let useSSHKey = $state(false);

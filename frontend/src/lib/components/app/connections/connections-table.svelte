@@ -1,5 +1,5 @@
 <script lang="ts" module>
-	export const columns: ColumnDef<Schema>[] = [
+	export const columns: ColumnDef<model.Connection>[] = [
 		{
 			id: 'drag',
 			cell: () => renderSnippet(DragHandle),
@@ -25,36 +25,59 @@
 			size: 50
 		},
 		{
-			accessorKey: 'header',
-			header: 'Header',
+			accessorKey: 'name',
+			header: 'Name',
 			enableHiding: false,
 		},
 		{
-			accessorKey: 'type',
-			header: 'Section Type',
-			cell: ({ row }) => renderSnippet(DataTableType, { row })
+			accessorKey: 'env',
+			header: 'Env',
+			enableHiding: false,
 		},
 		{
-			accessorKey: 'status',
-			header: 'Status',
-			cell: ({ row }) => renderSnippet(DataTableStatus, { row })
+			accessorKey: 'engine',
+			header: 'Engine',
+			enableHiding: false,
 		},
 		{
-			accessorKey: 'target',
-			header: 'Target',
-			cell: ({ row }) => renderSnippet(DataTableTarget, { row }),
-			size: 100
+			accessorKey: 'host',
+			header: 'Host',
+			enableHiding: false,
 		},
 		{
-			accessorKey: 'limit',
-			header: 'Limit',
-			cell: ({ row }) => renderSnippet(DataTableLimit, { row }),
-			size: 100
+			accessorKey: 'port',
+			header: 'Port',
+			enableHiding: false,
 		},
 		{
-			accessorKey: 'reviewer',
-			header: 'Reviewer',
-			cell: ({ row }) => renderComponent(DataTableReviewer, { row })
+			accessorKey: 'username',
+			header: 'Username',
+			enableHiding: false,
+		},
+		{
+			accessorKey: 'password',
+			header: 'Password',
+			enableHiding: false,
+		},
+		{
+			accessorKey: 'database',
+			header: 'Database',
+			enableHiding: false,
+		},
+		{
+			accessorKey: 'isAdvanced',
+			header: 'Is Advanced',
+			enableHiding: false,
+		},
+		{
+			accessorKey: 'overSSH',
+			header: 'Over SSH',
+			enableHiding: false,
+		},
+		{
+			accessorKey: 'useSSHKey',
+			header: 'Use SSH Key',
+			enableHiding: false,
 		},
 		{
 			id: 'actions',
@@ -98,10 +121,7 @@
 		renderComponent,
 		renderSnippet
 	} from '$lib/components/ui/data-table/index.js';
-	import LayoutColumnsIcon from '@tabler/icons-svelte/icons/layout-columns';
 	import GripVerticalIcon from '@tabler/icons-svelte/icons/grip-vertical';
-	import ChevronDownIcon from '@tabler/icons-svelte/icons/chevron-down';
-	import PlusIcon from '@tabler/icons-svelte/icons/plus';
 	import ChevronsLeftIcon from '@tabler/icons-svelte/icons/chevrons-left';
 	import ChevronLeftIcon from '@tabler/icons-svelte/icons/chevron-left';
 	import ChevronRightIcon from '@tabler/icons-svelte/icons/chevron-right';
@@ -111,13 +131,12 @@
 	import DotsVerticalIcon from '@tabler/icons-svelte/icons/dots-vertical';
 	import { toast } from 'svelte-sonner';
 	import DataTableCheckbox from './connections-table-checkbox.svelte';
-	import DataTableCellViewer from './connections-table-cell-viewer.svelte';
-	import { createRawSnippet } from 'svelte';
-	import DataTableReviewer from './connections-table-reviewer.svelte';
-	import { DragDropProvider } from '@dnd-kit-svelte/svelte';
-	import { move } from '@dnd-kit/helpers';
+	import { GetAllConnections } from '$lib/wailsjs/go/app/Connections.js';
 	import { useSortable } from '@dnd-kit-svelte/svelte/sortable';
-	let { data }: { data: Schema[] } = $props();
+	import type { model } from '$lib/wailsjs/go/models.js';
+	import { onMount } from 'svelte';
+
+	let data = $state<model.Connection[]>([]);
 	let pagination = $state<PaginationState>({ pageIndex: 0, pageSize: 10 });
 	let sorting = $state<SortingState>([]);
 	let columnFilters = $state<ColumnFiltersState>([]);
@@ -145,7 +164,7 @@
 				return columnFilters;
 			}
 		},
-		getRowId: (row) => row.id.toString(),
+		getRowId: (row) => row.ID.toString(),
 		enableRowSelection: true,
 		getCoreRowModel: getCoreRowModel(),
 		getPaginationRowModel: getPaginationRowModel(),
@@ -191,48 +210,57 @@
 		enableColumnResizing: true,
 		columnResizeMode: 'onChange', // or 'onEnd'
 	});
+
+	onMount(() => {
+		// Get All Connections
+		GetAllConnections()
+			.then((connections) => {
+				data = connections;
+			})
+			.catch((error) => {
+				toast.error('Failed to get connections', {
+					description: error.message,
+					action: {
+						label: 'OK',
+						onClick: () => console.info('OK')
+					}
+				});
+			});
+	});
 </script>
 
 <div class="overflow-auto border">
-	<DragDropProvider
-		modifiers={[
-			// @ts-expect-error @dnd-kit/abstract types are botched atm
-			RestrictToVerticalAxis
-		]}
-		onDragEnd={(e) => (data = move(data, e))}
-	>
-		<Table.Root>
-			<Table.Header class="bg-muted sticky top-0 z-10">
-				{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
-					<Table.Row>
-						{#each headerGroup.headers as header (header.id)}
-							<Table.Head colspan={header.colSpan} style="width: {header.getSize()}px" class="text-center">
-								{#if !header.isPlaceholder}
-									<FlexRender
-										content={header.column.columnDef.header}
-										context={header.getContext()}
-									/>
-								{/if}
-							</Table.Head>
-						{/each}
-					</Table.Row>
-				{/each}
-			</Table.Header>
-			<Table.Body class="**:data-[slot=table-cell]:first:w-8">
-				{#if table.getRowModel().rows?.length}
-					{#each table.getRowModel().rows as row, index (row.id)}
-						{@render DraggableRow({ row, index })}
+	<Table.Root>
+		<Table.Header class="bg-muted sticky top-0 z-10">
+			{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
+				<Table.Row>
+					{#each headerGroup.headers as header (header.id)}
+						<Table.Head colspan={header.colSpan} style="width: {header.getSize()}px" class="text-center">
+							{#if !header.isPlaceholder}
+								<FlexRender
+									content={header.column.columnDef.header}
+									context={header.getContext()}
+								/>
+							{/if}
+						</Table.Head>
 					{/each}
-				{:else}
-					<Table.Row>
-						<Table.Cell colspan={columns.length} class="h-24 text-center">
-							No results.
-						</Table.Cell>
-					</Table.Row>
-				{/if}
-			</Table.Body>
-		</Table.Root>
-	</DragDropProvider>
+				</Table.Row>
+			{/each}
+		</Table.Header>
+		<Table.Body class="**:data-[slot=table-cell]:first:w-8">
+			{#if table.getRowModel().rows?.length}
+				{#each table.getRowModel().rows as row, index (row.id)}
+					{@render DraggableRow({ row, index })}
+				{/each}
+			{:else}
+				<Table.Row>
+					<Table.Cell colspan={columns.length} class="h-24 text-center">
+						No results.
+					</Table.Cell>
+				</Table.Row>
+			{/if}
+		</Table.Body>
+	</Table.Root>
 </div>
 <div class="flex gap-10 items-center justify-center p-2">
 	<div class="text-muted-foreground hidden flex-1 text-sm lg:flex">
@@ -374,17 +402,14 @@
 			{/snippet}
 		</DropdownMenu.Trigger>
 		<DropdownMenu.Content align="end" class="w-32">
-			<DropdownMenu.Item>Edit</DropdownMenu.Item>
-			<DropdownMenu.Item>Make a copy</DropdownMenu.Item>
-			<DropdownMenu.Item>Favorite</DropdownMenu.Item>
-			<DropdownMenu.Separator />
+			<DropdownMenu.Item>Update</DropdownMenu.Item>
 			<DropdownMenu.Item>Delete</DropdownMenu.Item>
 		</DropdownMenu.Content>
 	</DropdownMenu.Root>
 {/snippet}
-{#snippet DraggableRow({ row, index }: { row: Row<Schema>; index: number })}
+{#snippet DraggableRow({ row, index }: { row: Row<model.Connection>; index: number })}
 	{@const { ref, isDragging, handleRef } = useSortable({
-		id: row.original.id,
+		id: row.original.ID,
 		index: () => index
 	})}
 	<Table.Row

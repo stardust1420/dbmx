@@ -3,14 +3,18 @@
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import ChevronRight from 'lucide-svelte/icons/chevron-right';
 	import Plus from 'lucide-svelte/icons/plus';
-	import Settings from 'lucide-svelte/icons/settings';
 	import Activity from 'lucide-svelte/icons/activity';
 	import Table2 from 'lucide-svelte/icons/table-2';
 	import RefreshCw from 'lucide-svelte/icons/refresh-cw';
-	import SettingsDialog from '$lib/components/app/sidebar/settings-dialog.svelte';
 	import { type ComponentProps } from 'svelte';
 	import * as ContextMenu from '$lib/components/ui/context-menu/index.js';
 	import NavUser from './user.svelte';
+	import { goto } from '$app/navigation';
+
+	function goToRoute(route: string) {
+		goto(route);
+	}
+
 
 	let userData = {
 		name: 'Stardust',
@@ -23,17 +27,17 @@
 		tabID = $bindable(0),
 		tabName = $bindable(''),
 		tabTableDBPoolID = $bindable(''),
-		tabPostgresConnID = $bindable(0),
+		tabConnID = $bindable(0),
 		tabDBName = $bindable(''),
 		onAddTab,
 		...restProps
 	}: ComponentProps<typeof Sidebar.Root> & {
 		onAddTab?: (
 			tableName?: string,
-			postgresConnID?: number,
+			connID?: number,
 			dbName?: string,
 			tableDBPoolID?: string,
-			postgresConnName?: string
+			connName?: string
 		) => void;
 	} = $props();
 
@@ -53,17 +57,16 @@
 	import {
 		EstablishPostgresConnection,
 		EstablishPostgresDatabaseConnection,
-		GetPostgresConnections,
+		GetAllConnections,
 		RefreshPostgresDatabase,
 		TerminatePostgresDatabaseConnection
 	} from '$lib/wailsjs/go/app/Connections';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { toast } from 'svelte-sonner';
-	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import { SaveActiveDBProps } from '$lib/wailsjs/go/app/Tabs';
 
 	const refresh = () => {
-		GetPostgresConnections()
+		GetAllConnections()
 			.then((connections) => {
 				for (let connection of connections) {
 					postgresConnectionsMap.set(connection.ID, connection);
@@ -128,12 +131,12 @@
 
 				// If the server and database to which connection was established is the current table's database
 				// Set the tab table db pool id so that it's connected
-				if (tabPostgresConnID === db.PostgresConnectionID && tabDBName === db.Name) {
+				if (tabConnID === db.ConnectionID && tabDBName === db.Name) {
 					tabTableDBPoolID = db.PoolID;
 				}
 
-				$selectedDBDisplay = db.PostgresConnectionName + ' - ' + db.Name;
-				$currentColor = db.Colour;
+				$selectedDBDisplay = db.ConnectionName + ' - ' + db.Name;
+				$currentColor = db.Color;
 				$activePoolID = db.PoolID;
 				SaveActiveDBProps(tabID, $activePoolID, $selectedDBDisplay, $currentColor);
 
@@ -185,13 +188,13 @@
 
 						// If the server and database to which connection was established is the current table's database
 						// Set the tab table db pool id so that it's connected
-						if (tabPostgresConnID === db.PostgresConnectionID && tabDBName === db.Name) {
+						if (tabConnID === db.ConnectionID && tabDBName === db.Name) {
 							tabTableDBPoolID = db.PoolID;
 						}
 
 						// Set active DB
-						$selectedDBDisplay = db.PostgresConnectionName + ' - ' + db.Name;
-						$currentColor = db.Colour;
+						$selectedDBDisplay = db.ConnectionName + ' - ' + db.Name;
+						$currentColor = db.Color;
 						$activePoolID = db.PoolID;
 						SaveActiveDBProps(tabID, $activePoolID, $selectedDBDisplay, $currentColor);
 
@@ -285,8 +288,8 @@
 						$activePoolID = '';
 					} else {
 						// Set first db as active DB
-						$selectedDBDisplay = $activeDBs[0].PostgresConnectionName + ' - ' + $activeDBs[0].Name;
-						$currentColor = $activeDBs[0].Colour;
+						$selectedDBDisplay = $activeDBs[0].ConnectionName + ' - ' + $activeDBs[0].Name;
+						$currentColor = $activeDBs[0].Color;
 						$activePoolID = $activeDBs[0].PoolID;
 					}
 
@@ -316,7 +319,7 @@
 		}
 
 		// Establish connection
-		RefreshPostgresDatabase(db.PostgresConnectionID, dbID, db.Name, db.PoolID)
+		RefreshPostgresDatabase(db.ConnectionID, dbID, db.Name, db.PoolID)
 			.then((db) => {
 				dbLoadingMap.set(dbID, false);
 				databasesMap.set(db.ID, db);
@@ -337,13 +340,13 @@
 	// Function to handle adding a new tab
 	function handleAddTab(
 		tableName?: string,
-		postgresConnID?: number,
+		connID?: number,
 		dbName?: string,
 		tableDBPoolID?: string,
-		postgresConnName?: string
+		connName?: string
 	) {
 		if (onAddTab) {
-			onAddTab(tableName, postgresConnID, dbName, tableDBPoolID, postgresConnName);
+			onAddTab(tableName, connID, dbName, tableDBPoolID, connName);
 		}
 	}
 </script>
@@ -353,7 +356,7 @@
 	{tabID}
 	{tabName}
 	{tabTableDBPoolID}
-	{tabPostgresConnID}
+	{tabConnID}
 	{tabDBName}
 	{...restProps}
 	variant="floating"
@@ -364,9 +367,6 @@
 				<div class="flex w-full items-center justify-between">
 					Connections
 					<div class="flex gap-1">
-						<Button size="sm" variant="ghost" onclick={() => handleAddTab()}>
-							<Plus />
-						</Button>
 						<Button size="sm" variant="ghost" onclick={() => refresh()}>
 							<RefreshCw />
 						</Button>
@@ -375,111 +375,121 @@
 			</Sidebar.GroupLabel>
 			<Sidebar.GroupContent>
 				<Sidebar.Menu>
-					{#each Array.from(postgresConnectionsMap.entries()) as [key, connection]}
-						<Sidebar.MenuItem
-							class="{getColorClass(connection.Colour)} bg-opacity-20 hover:bg-opacity-25"
-						>
-							<Collapsible.Root>
-								<Collapsible.Trigger onclick={() => establishConnection(connection.ID)}>
-									<Sidebar.MenuButton class="transform-none select-none transition-none">
-										<ChevronRight className="transition-transform" />
-
-										{connection.Name}
-									</Sidebar.MenuButton>
-								</Collapsible.Trigger>
-								<Collapsible.Content>
-									<Sidebar.MenuSub>
-										{#if loadingMap.get(connection.ID)}
-											<Sidebar.MenuSkeleton />
-											<Sidebar.MenuSkeleton />
-											<Sidebar.MenuSkeleton />
-											<Sidebar.MenuSkeleton />
-										{:else if (connectionDatabasesMap.get(connection.ID) || []).length > 0}
-											{#each connectionDatabasesMap.get(connection.ID) || [] as databaseID}
-												<Collapsible.Root open={databasesMap.get(databaseID)?.IsActive}>
-													<Collapsible.Trigger
-														onclick={() => establishDatabaseConnection(connection.ID, databaseID)}
-													>
-														<ContextMenu.Root>
-															<ContextMenu.Trigger>
-																<Sidebar.MenuButton
-																	class="transform-none select-none transition-none"
-																	aria-disabled={!databasesMap.get(databaseID)?.IsActive}
-																>
-																	<ChevronRight className="transition-transform" />
-																	{databasesMap.get(databaseID)?.Name}
-																	{#if databasesMap.get(databaseID)?.IsActive}
-																		<Activity color="#4fff4d" />
-																	{/if}
-																</Sidebar.MenuButton>
-															</ContextMenu.Trigger>
-															<ContextMenu.Content>
-																<ContextMenu.Item onclick={() => terminateDBConnection(databaseID)}
-																	>Disconnect
-																</ContextMenu.Item>
-																<ContextMenu.Item onclick={() => refreshDB(databaseID)}
-																	>Refresh
-																</ContextMenu.Item>
-															</ContextMenu.Content>
-														</ContextMenu.Root>
-													</Collapsible.Trigger>
-													<Collapsible.Content>
-														<Sidebar.MenuSub>
-															{#if dbLoadingMap.get(databaseID)}
-																<Sidebar.MenuSkeleton />
-																<Sidebar.MenuSkeleton />
-																<Sidebar.MenuSkeleton />
-																<Sidebar.MenuSkeleton />
-															{:else if (databasesMap.get(databaseID)?.Tables || []).length > 0}
-																{#each databasesMap.get(databaseID)?.Tables || [] as table}
-																	<ContextMenu.Root>
-																		<ContextMenu.Trigger>
-																			<Sidebar.MenuButton
-																				ondblclick={() =>
-																					handleAddTab(
-																						table,
-																						connection.ID,
-																						databasesMap.get(databaseID)?.Name,
-																						databasesMap.get(databaseID)?.PoolID,
-																						connection.Name
-																					)}
-																			>
-																				<Table2 color="#fd6868" strokeWidth={2} size={25} />
-																				<p>{table}</p>
-																			</Sidebar.MenuButton>
-																		</ContextMenu.Trigger>
-																		<ContextMenu.Content>
-																			<ContextMenu.Item
-																				onclick={() =>
-																					handleAddTab(
-																						table,
-																						connection.ID,
-																						databasesMap.get(databaseID)?.Name,
-																						databasesMap.get(databaseID)?.PoolID,
-																						connection.Name
-																					)}
-																			>
-																				<Plus class="mr-2 h-4 w-4" />
-																				Open in New Tab
-																			</ContextMenu.Item>
-																		</ContextMenu.Content>
-																	</ContextMenu.Root>
-																{/each}
-															{:else}
-																No tables found
-															{/if}
-														</Sidebar.MenuSub>
-													</Collapsible.Content>
-												</Collapsible.Root>
-											{/each}
-										{:else}
-											No databases found
-										{/if}
-									</Sidebar.MenuSub>
-								</Collapsible.Content>
-							</Collapsible.Root>
+					<!-- Check if postgresConnectionsMap is empty -->
+					{#if postgresConnectionsMap.size === 0}
+						<Sidebar.MenuItem class="h-96 flex flex-col items-center justify-center">
+							No connections found
+							<Button size="sm" variant="link" onclick={() => goToRoute('/connections')}>
+								<Plus /> Add Connection
+							</Button>
 						</Sidebar.MenuItem>
-					{/each}
+					{:else}
+						{#each Array.from(postgresConnectionsMap.entries()) as [key, connection]}
+							<Sidebar.MenuItem
+								class="{getColorClass(connection.Color)} bg-opacity-20 hover:bg-opacity-25"
+							>
+								<Collapsible.Root>
+									<Collapsible.Trigger onclick={() => establishConnection(connection.ID)}>
+										<Sidebar.MenuButton class="transform-none select-none transition-none">
+											<ChevronRight className="transition-transform" />
+
+											{connection.Name}
+										</Sidebar.MenuButton>
+									</Collapsible.Trigger>
+									<Collapsible.Content>
+										<Sidebar.MenuSub>
+											{#if loadingMap.get(connection.ID)}
+												<Sidebar.MenuSkeleton />
+												<Sidebar.MenuSkeleton />
+												<Sidebar.MenuSkeleton />
+												<Sidebar.MenuSkeleton />
+											{:else if (connectionDatabasesMap.get(connection.ID) || []).length > 0}
+												{#each connectionDatabasesMap.get(connection.ID) || [] as databaseID}
+													<Collapsible.Root open={databasesMap.get(databaseID)?.IsActive}>
+														<Collapsible.Trigger
+															onclick={() => establishDatabaseConnection(connection.ID, databaseID)}
+														>
+															<ContextMenu.Root>
+																<ContextMenu.Trigger>
+																	<Sidebar.MenuButton
+																		class="transform-none select-none transition-none"
+																		aria-disabled={!databasesMap.get(databaseID)?.IsActive}
+																	>
+																		<ChevronRight className="transition-transform" />
+																		{databasesMap.get(databaseID)?.Name}
+																		{#if databasesMap.get(databaseID)?.IsActive}
+																			<Activity color="#4fff4d" />
+																		{/if}
+																	</Sidebar.MenuButton>
+																</ContextMenu.Trigger>
+																<ContextMenu.Content>
+																	<ContextMenu.Item onclick={() => terminateDBConnection(databaseID)}
+																		>Disconnect
+																	</ContextMenu.Item>
+																	<ContextMenu.Item onclick={() => refreshDB(databaseID)}
+																		>Refresh
+																	</ContextMenu.Item>
+																</ContextMenu.Content>
+															</ContextMenu.Root>
+														</Collapsible.Trigger>
+														<Collapsible.Content>
+															<Sidebar.MenuSub>
+																{#if dbLoadingMap.get(databaseID)}
+																	<Sidebar.MenuSkeleton />
+																	<Sidebar.MenuSkeleton />
+																	<Sidebar.MenuSkeleton />
+																	<Sidebar.MenuSkeleton />
+																{:else if (databasesMap.get(databaseID)?.Tables || []).length > 0}
+																	{#each databasesMap.get(databaseID)?.Tables || [] as table}
+																		<ContextMenu.Root>
+																			<ContextMenu.Trigger>
+																				<Sidebar.MenuButton
+																					ondblclick={() =>
+																						handleAddTab(
+																							table,
+																							connection.ID,
+																							databasesMap.get(databaseID)?.Name,
+																							databasesMap.get(databaseID)?.PoolID,
+																							connection.Name
+																						)}
+																				>
+																					<Table2 color="#fd6868" strokeWidth={2} size={25} />
+																					<p>{table}</p>
+																				</Sidebar.MenuButton>
+																			</ContextMenu.Trigger>
+																			<ContextMenu.Content>
+																				<ContextMenu.Item
+																					onclick={() =>
+																						handleAddTab(
+																							table,
+																							connection.ID,
+																							databasesMap.get(databaseID)?.Name,
+																							databasesMap.get(databaseID)?.PoolID,
+																							connection.Name
+																						)}
+																				>
+																					<Plus class="mr-2 h-4 w-4" />
+																					Open in New Tab
+																				</ContextMenu.Item>
+																			</ContextMenu.Content>
+																		</ContextMenu.Root>
+																	{/each}
+																{:else}
+																	No tables found
+																{/if}
+															</Sidebar.MenuSub>
+														</Collapsible.Content>
+													</Collapsible.Root>
+												{/each}
+											{:else}
+												No databases found
+											{/if}
+										</Sidebar.MenuSub>
+									</Collapsible.Content>
+								</Collapsible.Root>
+							</Sidebar.MenuItem>
+						{/each}
+					{/if}
 				</Sidebar.Menu>
 			</Sidebar.GroupContent>
 		</Sidebar.Group>

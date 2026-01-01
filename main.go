@@ -49,7 +49,7 @@ func main() {
 		// Frameless:         runtime.GOOS != "darwin",
 		StartHidden:       false,
 		HideWindowOnClose: false,
-		// BackgroundColour:  &options.RGBA{R: 255, G: 255, B: 255, A: 255},
+		// BackgroundColor:  &options.RGBA{R: 255, G: 255, B: 255, A: 255},
 		AssetServer: &assetserver.Options{
 			Assets:     assets,
 			Handler:    nil,
