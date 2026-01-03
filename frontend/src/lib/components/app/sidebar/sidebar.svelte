@@ -84,6 +84,13 @@
 			});
 	};
 
+	import { onMount } from 'svelte';
+
+
+	onMount(async () => {
+		refresh();
+	});
+
 	function establishDatabaseConnection(id: number, dbID: string) {
 		let db = databasesMap.get(dbID);
 

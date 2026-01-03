@@ -30,6 +30,10 @@ export function GetAllPostgresTables(arg1) {
   return window['go']['app']['Connections']['GetAllPostgresTables'](arg1);
 }
 
+export function GetConnection(arg1) {
+  return window['go']['app']['Connections']['GetConnection'](arg1);
+}
+
 export function GetPostgresServerDatabases(arg1, arg2, arg3, arg4, arg5) {
   return window['go']['app']['Connections']['GetPostgresServerDatabases'](arg1, arg2, arg3, arg4, arg5);
 }
@@ -64,6 +68,10 @@ export function TestConnectPostgres(arg1) {
 
 export function TypeConnectionTable() {
   return window['go']['app']['Connections']['TypeConnectionTable']();
+}
+
+export function UpdateConnection(arg1) {
+  return window['go']['app']['Connections']['UpdateConnection'](arg1);
 }
 
 export function UpdateTabOutput(arg1, arg2) {

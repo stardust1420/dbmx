@@ -1,4 +1,9 @@
 <script lang="ts" module>
+	import * as Drawer from '$lib/components/ui/drawer/index.js';
+	import DataTableCellViewer from '$lib/components/app/connections/connections-table-cell-viewer.svelte';
+
+	let data = $state<model.ConnectionTable[]>([]);
+
 	export const columns: ColumnDef<model.ConnectionTable>[] = [
 		{
 			accessorKey: 'ID',
@@ -88,11 +93,9 @@
 	import DataTableCheckbox from './connections-table-checkbox.svelte';
 	import { GetAllConnections } from '$lib/wailsjs/go/app/Connections.js';
 	import { useSortable } from '@dnd-kit-svelte/svelte/sortable';
-	import type { model } from '$lib/wailsjs/go/models.js';
+	import { model } from '$lib/wailsjs/go/models.js';
 	import { onMount } from 'svelte';
 
-	// Get data from props
-	let { data }: { data: model.ConnectionTable[] } = $props();
 
 	let pagination = $state<PaginationState>({ pageIndex: 0, pageSize: 10 });
 	let sorting = $state<SortingState>([]);
@@ -204,31 +207,48 @@
 				</Table.Row>
 			{/each}
 		</Table.Header>
+
 		<Table.Body class="**:data-[slot=table-cell]:first:w-8 overflow-auto">
-			{#if table.getRowModel().rows?.length}
-				{#each table.getRowModel().rows as row, index (row.id)}
-					<Table.Row
-							data-state={row.getIsSelected() && 'selected'}
-							class="hover:bg-muted/50"
-						>
-							{#each row.getVisibleCells() as cell (cell.id)}
-								<Table.Cell style="width: {cell.column.getSize()}px" class="h-12">
-									<FlexRender
-										content={cell.column.columnDef.cell}
-										context={cell.getContext()}
-									/>
-								</Table.Cell>
-							{/each}
-					</Table.Row>
-				{/each}
-			{:else}
-				<Table.Row>
-					<Table.Cell colspan={columns.length} class="h-24 text-center">
+				{#if table.getRowModel().rows?.length}
+					{#each table.getRowModel().rows as row (row.id)}
+						<Drawer.Root direction="right">
+							<Table.Row data-state={row.getIsSelected() && 'selected'}>
+								{#each row.getVisibleCells() as cell (cell.id)}
+									<Table.Cell
+										style="width: {cell.column.getSize()}px"
+										class="h-12 group hover:bg-muted"
+									>
+									<!-- Single trigger: clicking any cell opens the one global drawer -->
+									<Drawer.Trigger class="w-full">
+										<span class="group-hover:underline">
+										<FlexRender
+											content={cell.column.columnDef.cell}
+											context={cell.getContext()}
+										/>
+										</span>
+									</Drawer.Trigger>
+									</Table.Cell>
+								{/each}
+							</Table.Row>
+
+							<DataTableCellViewer
+								connectionID={row.getValue('ID')}
+								newConnection={false}
+								title={String(row.getValue('Name'))}
+								description="View Connection Details"
+							/>
+						</Drawer.Root>
+
+					{/each}
+				{:else}
+					<Table.Row>
+						<Table.Cell colspan={columns.length} class="h-24 text-center">
 						No Connections Found. Add a new connection.
-					</Table.Cell>
-				</Table.Row>
-			{/if}
+						</Table.Cell>
+					</Table.Row>
+				{/if}
 		</Table.Body>
+
 	</Table.Root>
 </div>
 <div class="flex gap-10 items-center justify-center p-2">
