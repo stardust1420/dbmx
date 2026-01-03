@@ -1,11 +1,8 @@
 <script lang="ts">
-	import NewConnection from './new/+page.svelte';
-	import data from './data.ts';
 	import ConnectionsTable from '$lib/components/app/connections/connections-table.svelte';
-	import { Button } from '$lib/components/ui/button/index.js';
-	import Plus from 'lucide-svelte/icons/plus';
 
 	import DataTableCellViewer from '$lib/components/app/connections/connections-table-cell-viewer.svelte';
+	import { data } from './data';
 
 </script>
 
@@ -17,7 +14,7 @@
 		<div class="flex flex-[1] items-center justify-end mx-36">
 			<DataTableCellViewer scheme="postgres" />
 		</div>
-		<div class="flex w-full flex-col flex-[15] items-center justify-between mb-4 overflow-auto">
+		<div class="flex flex-col h-full flex-[15] items-center justify-between mb-4 mx-12 overflow-auto">
 			<ConnectionsTable {data} />
 		</div>
 	</div>

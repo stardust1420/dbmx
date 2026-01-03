@@ -34,6 +34,10 @@ func NewConnections(db *sql.DB, pm *PoolManager) *Connections {
 	}
 }
 
+func (c *Connections) TypeConnectionTable() *model.ConnectionTable {
+	return &model.ConnectionTable{}
+}
+
 func (m *Connections) GetSqlite3Version() string {
 	// Get the version of SQLite
 	var sqliteVersion string
@@ -92,7 +96,7 @@ func (m *Connections) GetAllConnections() ([]model.Connection, error) {
 	return connections, nil
 }
 
-func (m *Connections) BuildPostgresConnConfig(c model.Connection) (*pgx.ConnConfig, error) {
+func BuildPostgresConnConfig(c model.Connection) (*pgx.ConnConfig, error) {
 	if c.Database == "" {
 		c.Database = "postgres"
 	}
@@ -180,7 +184,7 @@ func (m *Connections) BuildPostgresConnConfig(c model.Connection) (*pgx.ConnConf
 }
 
 func (m *Connections) TestConnectPostgres(c model.Connection) (bool, error) {
-	config, err := m.BuildPostgresConnConfig(c)
+	config, err := BuildPostgresConnConfig(c)
 	if err != nil {
 		return false, err
 	}
@@ -342,7 +346,7 @@ func (c *Connections) EstablishPostgresDatabaseConnection(id int64, dbName strin
 		return nil, err
 	}
 
-	cfg, err := c.BuildPostgresConnConfig(conn)
+	cfg, err := BuildPostgresConnConfig(conn)
 	if err != nil {
 		return nil, err
 	}
@@ -427,7 +431,7 @@ func (c *Connections) EstablishPostgresConnection(id int64) ([]model.Database, e
 		return nil, err
 	}
 
-	cfg, err := c.BuildPostgresConnConfig(conn)
+	cfg, err := BuildPostgresConnConfig(conn)
 	if err != nil {
 		return nil, err
 	}
