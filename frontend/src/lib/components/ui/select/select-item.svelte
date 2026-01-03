@@ -17,7 +17,7 @@
 	bind:ref
 	{value}
 	class={cn(
-		' relative flex w-full cursor-default select-none items-center py-1.5 pl-2 pr-8 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+		' relative flex w-full cursor-default select-none items-center py-1.5 pl-2 pr-8 text-sm outline-none data-[disabled]:pointer-events-none',
 		className
 	)}
 	{...restProps}

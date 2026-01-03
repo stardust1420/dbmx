@@ -96,6 +96,61 @@ func (m *Connections) GetAllConnections() ([]model.Connection, error) {
 	return connections, nil
 }
 
+func (m *Connections) GetConnection(id int64) (model.Connection, error) {
+	var connection model.Connection
+
+	err := m.DB.QueryRow("SELECT * FROM connections WHERE id = ?", id).Scan(
+		&connection.ID,
+		&connection.Engine,
+		&connection.Host,
+		&connection.Port,
+		&connection.Username,
+		&connection.Password,
+		&connection.Database,
+		&connection.Name,
+		&connection.Env,
+		&connection.Color,
+		&connection.IsAdvanced,
+		&connection.SSLMode,
+		&connection.ClientKey,
+		&connection.ClientCert,
+		&connection.RootCACert,
+		&connection.OverSSH,
+		&connection.SSHHost,
+		&connection.SSHPort,
+		&connection.SSHUsername,
+		&connection.SSHPassword,
+		&connection.UseSSHKey,
+		&connection.SSHKey,
+	)
+	if err != nil {
+		return connection, err
+	}
+
+	return connection, nil
+}
+
+func (m *Connections) UpdateConnection(c model.Connection) (bool, error) {
+	// Check if the connection exists
+	var exists bool
+	err := m.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM connections WHERE id = ?)", c.ID).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+
+	if !exists {
+		return false, errors.New("connection does not exist")
+	}
+
+	// Update the connection
+	_, err = m.DB.Exec("UPDATE connections SET engine = ?, host = ?, port = ?, username = ?, password = ?, database = ?, name = ?, env = ?, color = ?, is_advanced = ?, ssl_mode = ?, client_key = ?, client_cert = ?, root_ca_cert = ?, over_ssh = ?, ssh_host = ?, ssh_port = ?, ssh_username = ?, ssh_password = ?, use_ssh_key = ?, ssh_key = ? WHERE id = ?", c.Engine, c.Host, c.Port, c.Username, c.Password, c.Database, c.Name, c.Env, c.Color, c.IsAdvanced, c.SSLMode, c.ClientKey, c.ClientCert, c.RootCACert, c.OverSSH, c.SSHHost, c.SSHPort, c.SSHUsername, c.SSHPassword, c.UseSSHKey, c.SSHKey, c.ID)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
 func BuildPostgresConnConfig(c model.Connection) (*pgx.ConnConfig, error) {
 	if c.Database == "" {
 		c.Database = "postgres"
