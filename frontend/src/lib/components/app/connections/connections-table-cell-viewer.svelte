@@ -302,9 +302,8 @@
 			</Button>
 		</DropdownMenu.Trigger>
 		<DropdownMenu.Content class="w-40" align="start">
-			<DropdownMenu.Label>Schemes</DropdownMenu.Label>
+			<DropdownMenu.Label>Engines</DropdownMenu.Label>
 				<Drawer.Trigger class="flex w-full">
-
 					<DropdownMenu.Item class="flex w-full">
 						PostgreSQL
 					</DropdownMenu.Item>

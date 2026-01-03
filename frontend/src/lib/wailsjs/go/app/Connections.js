@@ -6,10 +6,6 @@ export function AddPostgresConnection(arg1) {
   return window['go']['app']['Connections']['AddPostgresConnection'](arg1);
 }
 
-export function BuildPostgresConnConfig(arg1) {
-  return window['go']['app']['Connections']['BuildPostgresConnConfig'](arg1);
-}
-
 export function EstablishPostgresConnection(arg1) {
   return window['go']['app']['Connections']['EstablishPostgresConnection'](arg1);
 }
@@ -64,6 +60,10 @@ export function TerminatePostgresDatabaseConnection(arg1) {
 
 export function TestConnectPostgres(arg1) {
   return window['go']['app']['Connections']['TestConnectPostgres'](arg1);
+}
+
+export function TypeConnectionTable() {
+  return window['go']['app']['Connections']['TypeConnectionTable']();
 }
 
 export function UpdateTabOutput(arg1, arg2) {

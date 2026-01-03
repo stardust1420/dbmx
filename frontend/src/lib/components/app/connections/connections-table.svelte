@@ -1,82 +1,37 @@
 <script lang="ts" module>
-	export const columns: ColumnDef<model.Connection>[] = [
+	export const columns: ColumnDef<model.ConnectionTable>[] = [
 		{
-			id: 'drag',
-			cell: () => renderSnippet(DragHandle),
-			enableResizing: false,
-			size: 50
-		},
-		{
-			id: 'select',
-			header: ({ table }) =>
-				renderComponent(DataTableCheckbox, {
-					checked: table.getIsAllPageRowsSelected(),
-					indeterminate: table.getIsSomePageRowsSelected() && !table.getIsAllPageRowsSelected(),
-					onCheckedChange: (value?: boolean) => table.toggleAllPageRowsSelected(!!value),
-					'aria-label': 'Select all'
-				}),
-			cell: ({ row }) =>
-				renderComponent(DataTableCheckbox, {
-					checked: row.getIsSelected(),
-					onCheckedChange: (value?: boolean) => row.toggleSelected(!!value),
-					'aria-label': 'Select row'
-				}),
+			accessorKey: 'ID',
+			header: '#',
 			enableHiding: false,
 			size: 50
 		},
 		{
-			accessorKey: 'name',
+			accessorKey: 'Name',
 			header: 'Name',
 			enableHiding: false,
+			size: 200
 		},
 		{
-			accessorKey: 'env',
+			accessorKey: 'Env',
 			header: 'Env',
 			enableHiding: false,
+			size: 150
 		},
 		{
-			accessorKey: 'engine',
+			accessorKey: 'Engine',
 			header: 'Engine',
 			enableHiding: false,
 		},
 		{
-			accessorKey: 'host',
+			accessorKey: 'Host',
 			header: 'Host',
 			enableHiding: false,
+			size: 300
 		},
 		{
-			accessorKey: 'port',
-			header: 'Port',
-			enableHiding: false,
-		},
-		{
-			accessorKey: 'username',
-			header: 'Username',
-			enableHiding: false,
-		},
-		{
-			accessorKey: 'password',
-			header: 'Password',
-			enableHiding: false,
-		},
-		{
-			accessorKey: 'database',
+			accessorKey: 'Database',
 			header: 'Database',
-			enableHiding: false,
-		},
-		{
-			accessorKey: 'isAdvanced',
-			header: 'Is Advanced',
-			enableHiding: false,
-		},
-		{
-			accessorKey: 'overSSH',
-			header: 'Over SSH',
-			enableHiding: false,
-		},
-		{
-			accessorKey: 'useSSHKey',
-			header: 'Use SSH Key',
 			enableHiding: false,
 		},
 		{
@@ -136,7 +91,9 @@
 	import type { model } from '$lib/wailsjs/go/models.js';
 	import { onMount } from 'svelte';
 
-	let data = $state<model.Connection[]>([]);
+	// Get data from props
+	let { data }: { data: model.ConnectionTable[] } = $props();
+
 	let pagination = $state<PaginationState>({ pageIndex: 0, pageSize: 10 });
 	let sorting = $state<SortingState>([]);
 	let columnFilters = $state<ColumnFiltersState>([]);
@@ -211,27 +168,27 @@
 		columnResizeMode: 'onChange', // or 'onEnd'
 	});
 
-	onMount(() => {
-		// Get All Connections
-		GetAllConnections()
-			.then((connections) => {
-				data = connections;
-			})
-			.catch((error) => {
-				toast.error('Failed to get connections', {
-					description: error.message,
-					action: {
-						label: 'OK',
-						onClick: () => console.info('OK')
-					}
-				});
-			});
-	});
+	// onMount(() => {
+	// 	// Get All Connections
+	// 	GetAllConnections()
+	// 		.then((connections) => {
+	// 			data = connections;
+	// 		})
+	// 		.catch((error) => {
+	// 			toast.error('Failed to get connections', {
+	// 				description: error.message,
+	// 				action: {
+	// 					label: 'OK',
+	// 					onClick: () => console.info('OK')
+	// 				}
+	// 			});
+	// 		});
+	// });
 </script>
 
-<div class="overflow-auto border">
-	<Table.Root>
-		<Table.Header class="bg-muted sticky top-0 z-10">
+<div class="overflow-auto">
+	<Table.Root class="border">
+		<Table.Header class="bg-muted sticky top-0 z-10 overflow-auto">
 			{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
 				<Table.Row>
 					{#each headerGroup.headers as header (header.id)}
@@ -247,10 +204,22 @@
 				</Table.Row>
 			{/each}
 		</Table.Header>
-		<Table.Body class="**:data-[slot=table-cell]:first:w-8">
+		<Table.Body class="**:data-[slot=table-cell]:first:w-8 overflow-auto">
 			{#if table.getRowModel().rows?.length}
 				{#each table.getRowModel().rows as row, index (row.id)}
-					{@render DraggableRow({ row, index })}
+					<Table.Row
+							data-state={row.getIsSelected() && 'selected'}
+							class="hover:bg-muted/50"
+						>
+							{#each row.getVisibleCells() as cell (cell.id)}
+								<Table.Cell style="width: {cell.column.getSize()}px" class="h-12">
+									<FlexRender
+										content={cell.column.columnDef.cell}
+										context={cell.getContext()}
+									/>
+								</Table.Cell>
+							{/each}
+					</Table.Row>
 				{/each}
 			{:else}
 				<Table.Row>
@@ -335,106 +304,19 @@
 		</div>
 	</div>
 </div>
-		
-{#snippet DataTableLimit({ row }: { row: Row<Schema> })}
-	<form
-		onsubmit={(e) => {
-			e.preventDefault();
-			toast.promise(new Promise((resolve) => setTimeout(resolve, 1000)), {
-				loading: `Saving ${row.original.header}`,
-				success: 'Done',
-				error: 'Error'
-			});
-		}}
-	>
-		<Label for="{row.original.id}-limit" class="sr-only">Limit</Label>
-		<Input
-			class="hover:bg-input/30 focus-visible:bg-background dark:hover:bg-input/30 dark:focus-visible:bg-input/30 h-8 w-full border-transparent bg-transparent text-end shadow-none focus-visible:border dark:bg-transparent"
-			value={row.original.limit}
-			id="{row.original.id}-limit"
-		/>
-	</form>
-{/snippet}
-{#snippet DataTableTarget({ row }: { row: Row<Schema> })}
-	<form
-		onsubmit={(e) => {
-			e.preventDefault();
-			toast.promise(new Promise((resolve) => setTimeout(resolve, 1000)), {
-				loading: `Saving ${row.original.header}`,
-				success: 'Done',
-				error: 'Error'
-			});
-		}}
-	>
-		<Label for="{row.original.id}-target" class="sr-only">Target</Label>
-		<Input
-			class="hover:bg-input/30 focus-visible:bg-background dark:hover:bg-input/30 dark:focus-visible:bg-input/30 h-8 w-full border-transparent bg-transparent text-end shadow-none focus-visible:border dark:bg-transparent"
-			value={row.original.target}
-			id="{row.original.id}-target"
-		/>
-	</form>
-{/snippet}
-{#snippet DataTableType({ row }: { row: Row<Schema> })}
-	<div class="w-32">
-		<Badge variant="outline" class="text-muted-foreground px-1.5">
-			{row.original.type}
-		</Badge>
-	</div>
-{/snippet}
-{#snippet DataTableStatus({ row }: { row: Row<Schema> })}
-	<Badge variant="outline" class="text-muted-foreground px-1.5">
-		{#if row.original.status === 'Done'}
-			<CircleCheckFilledIcon class="fill-green-500 dark:fill-green-400" />
-		{:else}
-			<LoaderIcon />
-		{/if}
-		{row.original.status}
-	</Badge>
-{/snippet}
+
 {#snippet DataTableActions()}
 	<DropdownMenu.Root>
 		<DropdownMenu.Trigger class="data-[state=open]:bg-muted text-muted-foreground flex size-8">
 			{#snippet child({ props })}
 				<Button variant="ghost" size="icon" {...props}>
 					<DotsVerticalIcon />
-					<span class="sr-only">Open menu</span>
 				</Button>
 			{/snippet}
 		</DropdownMenu.Trigger>
-		<DropdownMenu.Content align="end" class="w-32">
+		<DropdownMenu.Content align="start" class="w-32">
 			<DropdownMenu.Item>Update</DropdownMenu.Item>
 			<DropdownMenu.Item>Delete</DropdownMenu.Item>
 		</DropdownMenu.Content>
 	</DropdownMenu.Root>
-{/snippet}
-{#snippet DraggableRow({ row, index }: { row: Row<model.Connection>; index: number })}
-	{@const { ref, isDragging, handleRef } = useSortable({
-		id: row.original.ID,
-		index: () => index
-	})}
-	<Table.Row
-		data-state={row.getIsSelected() && 'selected'}
-		data-dragging={isDragging.current}
-		class="relative z-0 data-[dragging=true]:z-10 data-[dragging=true]:opacity-80"
-		{@attach ref}
-	>
-		{#each row.getVisibleCells() as cell (cell.id)}
-			<Table.Cell style="width: {cell.column.getSize()}px" class="h-12">
-				<FlexRender
-					attach={handleRef}
-					content={cell.column.columnDef.cell}
-					context={cell.getContext()}
-				/>
-			</Table.Cell>
-		{/each}
-	</Table.Row>
-{/snippet}
-{#snippet DragHandle({ attach }: { attach: Attachment })}
-	<Button
-		{@attach attach}
-		variant="ghost"
-		class="text-muted-foreground hover:bg-transparent size-5"
-	>
-		<GripVerticalIcon class="text-muted-foreground size-3" />
-	</Button>
 {/snippet}

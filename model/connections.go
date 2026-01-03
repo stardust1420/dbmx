@@ -30,6 +30,15 @@ type Connection struct {
 	IsActive bool
 }
 
+type ConnectionTable struct {
+	ID       int64
+	Name     string
+	Env      string
+	Engine   string
+	Host     string
+	Database string
+}
+
 type Database struct {
 	// ID uniquely identifies the active database within a connection
 	ID string

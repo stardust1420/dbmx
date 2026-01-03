@@ -70,6 +70,28 @@ export namespace model {
 	        this.IsActive = source["IsActive"];
 	    }
 	}
+	export class ConnectionTable {
+	    ID: number;
+	    Name: string;
+	    Env: string;
+	    Engine: string;
+	    Host: string;
+	    Database: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ConnectionTable(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.ID = source["ID"];
+	        this.Name = source["Name"];
+	        this.Env = source["Env"];
+	        this.Engine = source["Engine"];
+	        this.Host = source["Host"];
+	        this.Database = source["Database"];
+	    }
+	}
 	export class Database {
 	    ID: string;
 	    ConnectionID: number;
@@ -350,70 +372,6 @@ export namespace model {
 	        this.structure = this.convertValues(source["structure"], Structure);
 	        this.indexes = this.convertValues(source["indexes"], Indexes);
 	        this.rules = this.convertValues(source["rules"], Rules);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-
-}
-
-export namespace pgx {
-	
-	export class ConnConfig {
-	    Host: string;
-	    Port: number;
-	    Database: string;
-	    User: string;
-	    Password: string;
-	    // Go type: tls
-	    TLSConfig?: any;
-	    ConnectTimeout: number;
-	    RuntimeParams: Record<string, string>;
-	    KerberosSrvName: string;
-	    KerberosSpn: string;
-	    Fallbacks: pgconn.FallbackConfig[];
-	    Tracer: any;
-	    StatementCacheCapacity: number;
-	    DescriptionCacheCapacity: number;
-	    DefaultQueryExecMode: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new ConnConfig(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Host = source["Host"];
-	        this.Port = source["Port"];
-	        this.Database = source["Database"];
-	        this.User = source["User"];
-	        this.Password = source["Password"];
-	        this.TLSConfig = this.convertValues(source["TLSConfig"], null);
-	        this.ConnectTimeout = source["ConnectTimeout"];
-	        this.RuntimeParams = source["RuntimeParams"];
-	        this.KerberosSrvName = source["KerberosSrvName"];
-	        this.KerberosSpn = source["KerberosSpn"];
-	        this.Fallbacks = this.convertValues(source["Fallbacks"], pgconn.FallbackConfig);
-	        this.Tracer = source["Tracer"];
-	        this.StatementCacheCapacity = source["StatementCacheCapacity"];
-	        this.DescriptionCacheCapacity = source["DescriptionCacheCapacity"];
-	        this.DefaultQueryExecMode = source["DefaultQueryExecMode"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
