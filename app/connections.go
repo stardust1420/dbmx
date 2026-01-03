@@ -111,8 +111,10 @@ func BuildPostgresConnConfig(c model.Connection) (*pgx.ConnConfig, error) {
 		c.Database,
 	)
 
-	if strings.TrimSpace(c.SSLMode) != "" {
-		connString += fmt.Sprintf("?sslmode=%s", strings.ToLower(c.SSLMode))
+	sslMode := strings.ToLower(strings.TrimSpace(c.SSLMode))
+
+	if sslMode != "" {
+		connString += fmt.Sprintf("?sslmode=%s", sslMode)
 	}
 
 	config, err := pgx.ParseConfig(connString)
@@ -382,7 +384,7 @@ func (c *Connections) EstablishPostgresDatabaseConnection(id int64, dbName strin
 	// In case of table rows, find all the rows with type table where
 	// active_db_id is null and postgres_connection_id and database matches
 	// set the active pool id and active db properties in such tabs
-	_, err = c.DB.Exec("UPDATE tabs SET active_db_id = ?, active_db = ?, active_db_color = ? WHERE active_db_id IS NULL AND type = 'table' AND postgres_conn_id = ? AND db_name = ?", activePoolID.String(), activeDB, conn.Color, id, dbName)
+	_, err = c.DB.Exec("UPDATE tabs SET active_db_id = ?, active_db = ?, active_db_color = ? WHERE active_db_id IS NULL AND type = 'table' AND connection_id = ? AND db_name = ?", activePoolID.String(), activeDB, conn.Color, id, dbName)
 	if err != nil {
 		return nil, err
 	}
@@ -455,7 +457,7 @@ func (c *Connections) EstablishPostgresConnection(id int64) ([]model.Database, e
 	// In case of table rows, find all the rows with type table where
 	// active_db_id is null and postgres_connection_id and database matches
 	// set the active pool id and active db properties in such tabs
-	_, err = c.DB.Exec("UPDATE tabs SET active_db_id = ?, active_db = ?, active_db_color = ? WHERE active_db_id IS NULL AND type = 'table' AND postgres_conn_id = ? AND db_name = ?", activePoolID.String(), activeDB, conn.Color, id, conn.Database)
+	_, err = c.DB.Exec("UPDATE tabs SET active_db_id = ?, active_db = ?, active_db_color = ? WHERE active_db_id IS NULL AND type = 'table' AND connection_id = ? AND db_name = ?", activePoolID.String(), activeDB, conn.Color, id, conn.Database)
 	if err != nil {
 		return nil, err
 	}

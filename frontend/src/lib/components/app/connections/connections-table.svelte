@@ -168,22 +168,22 @@
 		columnResizeMode: 'onChange', // or 'onEnd'
 	});
 
-	// onMount(() => {
-	// 	// Get All Connections
-	// 	GetAllConnections()
-	// 		.then((connections) => {
-	// 			data = connections;
-	// 		})
-	// 		.catch((error) => {
-	// 			toast.error('Failed to get connections', {
-	// 				description: error.message,
-	// 				action: {
-	// 					label: 'OK',
-	// 					onClick: () => console.info('OK')
-	// 				}
-	// 			});
-	// 		});
-	// });
+	onMount(() => {
+		// Get All Connections
+		GetAllConnections()
+			.then((connections) => {
+				data = connections;
+			})
+			.catch((error) => {
+				toast.error('Failed to get connections', {
+					description: error,
+					action: {
+						label: 'OK',
+						onClick: () => console.info('OK')
+					}
+				});
+			});
+	});
 </script>
 
 <div class="overflow-auto">
@@ -224,7 +224,7 @@
 			{:else}
 				<Table.Row>
 					<Table.Cell colspan={columns.length} class="h-24 text-center">
-						No results.
+						No Connections Found. Add a new connection.
 					</Table.Cell>
 				</Table.Row>
 			{/if}
@@ -232,10 +232,6 @@
 	</Table.Root>
 </div>
 <div class="flex gap-10 items-center justify-center p-2">
-	<div class="text-muted-foreground hidden flex-1 text-sm lg:flex">
-		{table.getFilteredSelectedRowModel().rows.length} of
-		{table.getFilteredRowModel().rows.length} row(s) selected
-	</div>
 	<div class="flex w-full items-center gap-8 lg:w-fit">
 		<div class="hidden items-center gap-2 lg:flex">
 			<Label for="rows-per-page" class="text-sm font-medium">Rows per page</Label>
