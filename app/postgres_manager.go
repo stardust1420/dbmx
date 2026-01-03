@@ -25,9 +25,11 @@ func (pm *PoolManager) AddPool(id uuid.UUID, c *pgx.ConnConfig) (*pgxpool.Pool, 
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
 
-	poolConfig := &pgxpool.Config{
-		ConnConfig: c,
+	poolConfig, err := pgxpool.ParseConfig(c.ConnString())
+	if err != nil {
+		return nil, err
 	}
+	poolConfig.ConnConfig = c
 
 	pool, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
 	if err != nil {

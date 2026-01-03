@@ -110,7 +110,7 @@
 <div class="h-full overflow-auto">
 	<div class="flex h-full flex-col">
 		<div class="position-sticky top-0 flex flex-1 overflow-auto">
-			<Table.Root>
+			<Table.Root class="border">
 				<Table.Header class="bg-muted text-xs font-medium">
 					{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
 						<Table.Row>
@@ -132,7 +132,7 @@
 						<Table.Row>
 							{#each row.getVisibleCells() as cell (cell.id)}
 								<Table.Cell
-									class="h-12 px-4 text-start focus-within:px-2 transition-[padding] w-fit"
+									class="h-12 px-4 text-start focus-within:px-2 transition-[padding] w-fit hover:bg-muted"
 									ondblclick={() => {
 										editingCell = cell.id;
 									}}

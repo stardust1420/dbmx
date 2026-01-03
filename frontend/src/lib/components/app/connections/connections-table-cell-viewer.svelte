@@ -332,29 +332,29 @@
 
 				<div class="flex flex-col gap-2">
 					<Label for="host">Host</Label>
-					<Input id="host" placeholder="localhost" value={host}/>
+					<Input id="host" placeholder="localhost" bind:value={host}/>
 				</div>
 				<div class="grid grid-cols-2 gap-2">
 					<div class="flex flex-col gap-2">
 						<Label for="port">Port</Label>
-						<Input id="port" placeholder="5432" value={port}/>
+						<Input id="port" placeholder="5432" bind:value={port}/>
 					</div>
 					<div class="flex flex-col gap-2">
 						<Label for="database">Database</Label>
-						<Input id="database" placeholder="postgres" value={database}/>
+						<Input id="database" placeholder="postgres" bind:value={database}/>
 					</div>
 				</div>
 				<div class="flex flex-col gap-2">
 					<Label for="username">Username</Label>
-					<Input id="username" placeholder="username" value={username}/>
+					<Input id="username" placeholder="username" bind:value={username}/>
 				</div>
 				<div class="flex flex-col gap-2">
 					<Label for="password">Password</Label>
-					<Input id="password" placeholder="password" value={password}/>
+					<Input id="password" placeholder="password" bind:value={password}/>
 				</div>
 				<div class="flex flex-col gap-2">
 					<Label for="saveAs">Save As</Label>
-					<Input id="saveAs" placeholder="Name your connection" value={name}/>
+					<Input id="saveAs" placeholder="Name your connection" bind:value={name}/>
 				</div>
 				<div class="grid grid-cols-2 gap-2">
 					<div class="flex flex-col gap-2 pb-1">
@@ -491,12 +491,12 @@
 		</div>
 		<Drawer.Footer>
 			<div class="flex flex-row gap-2">
-				<Button class="w-96 self-center" variant="secondary"
-					onclick={connectPostgres}
-				>Save</Button>
-				<Button class="w-96 self-center" variant="default"
+				<Button class="w-96 self-center bg-blue-700 hover:bg-blue-800" variant="outline"
 					onclick={testConnectPostgres}
 				>Test</Button>
+				<Button class="w-96 self-center bg-green-700 hover:bg-green-800" variant="outline"
+					onclick={connectPostgres}
+				>Save</Button>
 			</div>
 		</Drawer.Footer>
 	</Drawer.Content>

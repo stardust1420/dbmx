@@ -225,7 +225,7 @@
 			})
 			.catch((error) => {
 				toast.error('Failed to add tab', {
-					description: error.message,
+					description: error,
 					action: {
 						label: 'OK',
 						onClick: () => console.info('OK')
@@ -310,7 +310,7 @@
 			})
 			.catch((error) => {
 				toast.error('Failed to delete tab', {
-					description: error.message,
+					description: error,
 					action: {
 						label: 'OK',
 						onClick: () => console.info('OK')
@@ -389,7 +389,7 @@
 			})
 			.catch((error) => {
 				toast.error('Failed to set active tab', {
-					description: error.message,
+					description: error,
 					action: {
 						label: 'OK',
 						onClick: () => console.info('OK')
@@ -485,7 +485,7 @@
 				queryLoading = false;
 				// Handle errors from the ExecuteQuery call
 				toast.error('Query Failed', {
-					description: error.message,
+					description: error,
 					action: {
 						label: 'OK',
 						onClick: () => console.info('OK')
@@ -556,7 +556,7 @@
 				queryLoading = false;
 				// Handle errors from the ExecuteQuery call
 				toast.error('Query Failed', {
-					description: error.message,
+					description: error,
 					action: {
 						label: 'OK',
 						onClick: () => console.info('OK')
@@ -726,10 +726,10 @@
 							<div class="flex px-2">
 								<Tabs.Root value={tableViewTab}>
 									<Tabs.List class="flex items-center justify-center gap-2">
-										<Tabs.Trigger value="data" onclick={() => (tableViewTab = 'data')}
+										<Tabs.Trigger class="h-8" value="data" onclick={() => (tableViewTab = 'data')}
 											>Data</Tabs.Trigger
 										>
-										<Tabs.Trigger value="manage" onclick={() => (tableViewTab = 'manage')}
+										<Tabs.Trigger class="h-8" value="manage" onclick={() => (tableViewTab = 'manage')}
 											>Manage</Tabs.Trigger
 										>
 									</Tabs.List>

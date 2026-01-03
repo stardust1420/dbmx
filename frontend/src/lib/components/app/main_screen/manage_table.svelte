@@ -135,7 +135,7 @@
 			})
 			.catch((error) => {
 				toast.error('Failed to get table info', {
-					description: error.message,
+					description: error,
 					action: {
 						label: 'OK',
 						onClick: () => console.info('OK')
