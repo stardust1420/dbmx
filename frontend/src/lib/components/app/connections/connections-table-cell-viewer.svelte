@@ -43,10 +43,10 @@
 	);
 
 	const sslModes = [
-		{ sslModeValue: 'PREFERRED', label: 'PREFERRED' },
-		{ sslModeValue: 'DISABLED', label: 'DISABLED' },
+		{ sslModeValue: 'PREFER', label: 'PREFER' },
+		{ sslModeValue: 'DISABLE', label: 'DISABLE' },
 		{ sslModeValue: 'ALLOW', label: 'ALLOW' },
-		{ sslModeValue: 'REQUIRED', label: 'REQUIRED' },
+		{ sslModeValue: 'REQUIRE', label: 'REQUIRE' },
 		{ sslModeValue: 'VERIFY-CA', label: 'VERIFY-CA' },
 		{ sslModeValue: 'VERIFY-FULL', label: 'VERIFY-FULL' }
 	];

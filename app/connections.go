@@ -177,7 +177,7 @@ func BuildPostgresConnConfig(c model.Connection) (*pgx.ConnConfig, error) {
 		return nil, err
 	}
 
-	if c.IsAdvanced {
+	if c.IsAdvanced && (len(c.RootCACert) > 0 || len(c.ClientKey) > 0 || len(c.ClientCert) > 0) {
 		tlsConfig := &tls.Config{}
 
 		// Root CA
@@ -402,6 +402,8 @@ func (c *Connections) EstablishPostgresDatabaseConnection(id int64, dbName strin
 	if err != nil {
 		return nil, err
 	}
+
+	conn.Database = dbName
 
 	cfg, err := BuildPostgresConnConfig(conn)
 	if err != nil {
