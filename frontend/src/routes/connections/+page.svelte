@@ -8,6 +8,7 @@
 	import Plus from '@lucide/svelte/icons/plus';
 
 	let engine = $state('PostgreSQL');
+	let connectionsTable: any;
 
 </script>
 
@@ -17,7 +18,7 @@
 			<h1 class="font-mono text-6xl font-bold">Connections</h1>
 		</div>
 		<div class="flex flex-[1] items-center justify-end mx-36">
-			<Drawer.Root direction="right">
+			<Drawer.Root direction="right" onOpenChange={(open) => { if (!open) connectionsTable.getAllConnections() }}>
 				<DropdownMenu.Root>
 					<DropdownMenu.Trigger class="mr-6">
 						<Button variant="outline">
@@ -49,7 +50,7 @@
 
 		</div>
 		<div class="flex flex-col h-full flex-[15] items-center justify-between mb-4 mx-12 overflow-auto">
-			<ConnectionsTable />
+			<ConnectionsTable bind:this={connectionsTable} />
 		</div>
 	</div>
 </div>
