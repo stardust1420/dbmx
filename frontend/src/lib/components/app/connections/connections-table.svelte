@@ -6,6 +6,7 @@
 	let data = $state<model.ConnectionTable[]>([]);
 
 	let dialogOpen = $state(false);
+	let connectionToDelete = $state<number | null>(null);
 
 	export const columns: ColumnDef<model.ConnectionTable>[] = [
 		{
@@ -45,7 +46,7 @@
 		{
 			id: 'actions',
 			header: 'Actions',
-			cell: (props) => renderSnippet(DataTableActions, props.row.getValue('ID')),
+			cell: (props) => renderSnippet(DataTableActions, { connectionID: props.row.getValue('ID') as number }),
 			size: 30
 		}
 	];
@@ -176,7 +177,8 @@
 		columnResizeMode: 'onChange', // or 'onEnd'
 	});
 
-	onMount(() => {
+	function getAllConnections() {
+		console.log('getAllConnections');
 		// Get All Connections
 		GetAllConnections()
 			.then((connections) => {
@@ -191,6 +193,10 @@
 					}
 				});
 			});
+	}
+
+	onMount(() => {
+		getAllConnections();
 	});
 </script>
 
@@ -216,22 +222,29 @@
 		<Table.Body class="**:data-[slot=table-cell]:first:w-8 overflow-auto">
 				{#if table.getRowModel().rows?.length}
 					{#each table.getRowModel().rows as row (row.id)}
-						<Drawer.Root direction="right">
+						<Drawer.Root direction="right" onOpenChange={(open) => { if (!open) getAllConnections() }}>
 							<Table.Row data-state={row.getIsSelected() && 'selected'}>
 								{#each row.getVisibleCells() as cell (cell.id)}
 									<Table.Cell
 										style="width: {cell.column.getSize()}px"
 										class="h-12 group hover:bg-muted"
 									>
-									<!-- Single trigger: clicking any cell opens the one global drawer -->
-									<Drawer.Trigger class="w-full">
-										<span class="group-hover:underline">
+									{#if cell.column.id === 'actions'}
 										<FlexRender
 											content={cell.column.columnDef.cell}
 											context={cell.getContext()}
 										/>
-										</span>
-									</Drawer.Trigger>
+									{:else}
+										<!-- Single trigger: clicking any cell opens the one global drawer -->
+										<Drawer.Trigger class="w-full">
+											<span class="group-hover:underline">
+											<FlexRender
+												content={cell.column.columnDef.cell}
+												context={cell.getContext()}
+											/>
+											</span>
+										</Drawer.Trigger>
+									{/if}
 									</Table.Cell>
 								{/each}
 							</Table.Row>
@@ -326,28 +339,30 @@
 	</div>
 </div>
 
-{#snippet DataTableActions(connectionID: number)}
-	<Dialog.Root bind:open={dialogOpen}>
-		<Dialog.Trigger>
-			<Button variant="destructive" size="icon">
-				<Trash2Icon  size={16}/>
-			</Button>
-		</Dialog.Trigger>
-		<Dialog.Content>
-			<Dialog.Header>
-				<Dialog.Title>Are you absolutely sure?</Dialog.Title>
-				<Dialog.Description>
-					This action cannot be undone. This will permanently delete this connection.
-				</Dialog.Description>
-			</Dialog.Header>
-			<Dialog.Footer>
-				<Button variant="outline" onclick={() => (dialogOpen = false)}>
-					Cancel
-				</Button>
-				<Button variant="destructive" onclick={() => console.log('Delete')}>
-					Delete
-				</Button>
-			</Dialog.Footer>
-		</Dialog.Content>
-	</Dialog.Root>
+{#snippet DataTableActions({ connectionID }: { connectionID: number })}
+	<Button variant="destructive" size="icon" onclick={() => {
+		connectionToDelete = connectionID;
+		dialogOpen = true;
+	}}>
+		<Trash2Icon  size={16}/>
+	</Button>
 {/snippet}
+
+<Dialog.Root bind:open={dialogOpen}>
+	<Dialog.Content>
+		<Dialog.Header>
+			<Dialog.Title>Are you absolutely sure?</Dialog.Title>
+			<Dialog.Description>
+				This action cannot be undone. This will permanently delete this connection.
+			</Dialog.Description>
+		</Dialog.Header>
+		<Dialog.Footer>
+			<Button variant="outline" onclick={() => (dialogOpen = false)}>
+				Cancel
+			</Button>
+			<Button variant="destructive" onclick={() => console.log(connectionToDelete)}>
+				Delete
+			</Button>
+		</Dialog.Footer>
+	</Dialog.Content>
+</Dialog.Root>
