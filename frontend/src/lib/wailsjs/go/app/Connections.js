@@ -6,6 +6,10 @@ export function AddPostgresConnection(arg1) {
   return window['go']['app']['Connections']['AddPostgresConnection'](arg1);
 }
 
+export function DeleteConnection(arg1) {
+  return window['go']['app']['Connections']['DeleteConnection'](arg1);
+}
+
 export function EstablishPostgresConnection(arg1) {
   return window['go']['app']['Connections']['EstablishPostgresConnection'](arg1);
 }
@@ -58,8 +62,8 @@ export function TerminateAllDatabaseConnections() {
   return window['go']['app']['Connections']['TerminateAllDatabaseConnections']();
 }
 
-export function TerminatePostgresDatabaseConnection(arg1) {
-  return window['go']['app']['Connections']['TerminatePostgresDatabaseConnection'](arg1);
+export function TerminatePostgresDatabaseConnection(arg1, arg2) {
+  return window['go']['app']['Connections']['TerminatePostgresDatabaseConnection'](arg1, arg2);
 }
 
 export function TestConnectPostgres(arg1) {

@@ -142,8 +142,39 @@ func (m *Connections) UpdateConnection(c model.Connection) (bool, error) {
 		return false, errors.New("connection does not exist")
 	}
 
+	// Check if the connection is active
+	if numPools, exists := m.PM.ActiveConns[c.ID]; exists {
+		return false, errors.New(fmt.Sprintf("This connection has %d active instance(s). Please close all instances before updating", numPools))
+	}
+
 	// Update the connection
 	_, err = m.DB.Exec("UPDATE connections SET engine = ?, host = ?, port = ?, username = ?, password = ?, database = ?, name = ?, env = ?, color = ?, is_advanced = ?, ssl_mode = ?, client_key = ?, client_cert = ?, root_ca_cert = ?, over_ssh = ?, ssh_host = ?, ssh_port = ?, ssh_username = ?, ssh_password = ?, use_ssh_key = ?, ssh_key = ? WHERE id = ?", c.Engine, c.Host, c.Port, c.Username, c.Password, c.Database, c.Name, c.Env, c.Color, c.IsAdvanced, c.SSLMode, c.ClientKey, c.ClientCert, c.RootCACert, c.OverSSH, c.SSHHost, c.SSHPort, c.SSHUsername, c.SSHPassword, c.UseSSHKey, c.SSHKey, c.ID)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (m *Connections) DeleteConnection(id int64) (bool, error) {
+	// Check if the connection exists
+	var exists bool
+	err := m.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM connections WHERE id = ?)", id).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+
+	if !exists {
+		return false, errors.New("connection does not exist")
+	}
+
+	// Check if the connection is active
+	if numPools, exists := m.PM.ActiveConns[id]; exists {
+		return false, errors.New(fmt.Sprintf("This connection has %d active instance(s). Please close all instances before deleting", numPools))
+	}
+
+	// Delete the connection
+	_, err = m.DB.Exec("DELETE FROM connections WHERE id = ?", id)
 	if err != nil {
 		return false, err
 	}
@@ -413,7 +444,7 @@ func (c *Connections) EstablishPostgresDatabaseConnection(id int64, dbName strin
 	activePoolID := uuid.New()
 
 	// Establish connection and add pool to active pool manager
-	_, err = c.PM.AddPool(activePoolID, cfg)
+	_, err = c.PM.AddPool(activePoolID, cfg, id)
 	if err != nil {
 		return nil, err
 	}
@@ -498,7 +529,7 @@ func (c *Connections) EstablishPostgresConnection(id int64) ([]model.Database, e
 	activePoolID := uuid.New()
 
 	// Establish connection and add pool to active pool manager
-	_, err = c.PM.AddPool(activePoolID, cfg)
+	_, err = c.PM.AddPool(activePoolID, cfg, id)
 	if err != nil {
 		return nil, err
 	}
@@ -657,13 +688,13 @@ func (c *Connections) GetAllDatabaseColumns(activePoolID uuid.UUID) ([]string, e
 	return columns, nil
 }
 
-func (c *Connections) TerminatePostgresDatabaseConnection(activePoolID string) (bool, error) {
+func (c *Connections) TerminatePostgresDatabaseConnection(activePoolID string, id int64) (bool, error) {
 	activePoolIDUUID, err := uuid.Parse(activePoolID)
 	if err != nil {
 		return false, err
 	}
 	// Remove the db pool from active pools
-	err = c.PM.DeletePool(activePoolIDUUID)
+	err = c.PM.DeletePool(activePoolIDUUID, id)
 	if err != nil {
 		return false, err
 	}

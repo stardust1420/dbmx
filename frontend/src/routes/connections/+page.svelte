@@ -28,11 +28,11 @@
 					</DropdownMenu.Trigger>
 					<DropdownMenu.Content class="w-40" align="start">
 						<DropdownMenu.Label>Engines</DropdownMenu.Label>
+						<Drawer.Trigger class="flex w-full">
 						<DropdownMenu.Item class="flex w-full" onclick={() => engine = 'PostgreSQL'}>
-							<Drawer.Trigger class="flex w-full">
 								PostgreSQL
-							</Drawer.Trigger>
-						</DropdownMenu.Item>
+							</DropdownMenu.Item>
+						</Drawer.Trigger>
 						<DropdownMenu.Item onclick={() => engine = 'MySQL'}>
 							MySQL
 						</DropdownMenu.Item>
