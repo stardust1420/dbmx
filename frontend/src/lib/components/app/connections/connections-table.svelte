@@ -1,8 +1,11 @@
 <script lang="ts" module>
 	import * as Drawer from '$lib/components/ui/drawer/index.js';
 	import DataTableCellViewer from '$lib/components/app/connections/connections-table-cell-viewer.svelte';
+	import * as Dialog from "$lib/components/ui/dialog/index.js";
 
 	let data = $state<model.ConnectionTable[]>([]);
+
+	let dialogOpen = $state(false);
 
 	export const columns: ColumnDef<model.ConnectionTable>[] = [
 		{
@@ -42,7 +45,7 @@
 		{
 			id: 'actions',
 			header: 'Actions',
-			cell: () => renderSnippet(DataTableActions),
+			cell: (props) => renderSnippet(DataTableActions, props.row.getValue('ID')),
 			size: 30
 		}
 	];
@@ -89,6 +92,8 @@
 	import CircleCheckFilledIcon from '@tabler/icons-svelte/icons/circle-check-filled';
 	import LoaderIcon from '@tabler/icons-svelte/icons/loader';
 	import DotsVerticalIcon from '@tabler/icons-svelte/icons/dots-vertical';
+	import Trash2Icon from 'lucide-svelte/icons/trash-2';
+
 	import { toast } from 'svelte-sonner';
 	import DataTableCheckbox from './connections-table-checkbox.svelte';
 	import { GetAllConnections } from '$lib/wailsjs/go/app/Connections.js';
@@ -321,18 +326,28 @@
 	</div>
 </div>
 
-{#snippet DataTableActions()}
-	<DropdownMenu.Root>
-		<DropdownMenu.Trigger class="data-[state=open]:bg-muted text-muted-foreground flex size-8">
-			{#snippet child({ props })}
-				<Button variant="ghost" size="icon" {...props}>
-					<DotsVerticalIcon />
+{#snippet DataTableActions(connectionID: number)}
+	<Dialog.Root bind:open={dialogOpen}>
+		<Dialog.Trigger>
+			<Button variant="destructive" size="icon">
+				<Trash2Icon  size={16}/>
+			</Button>
+		</Dialog.Trigger>
+		<Dialog.Content>
+			<Dialog.Header>
+				<Dialog.Title>Are you absolutely sure?</Dialog.Title>
+				<Dialog.Description>
+					This action cannot be undone. This will permanently delete this connection.
+				</Dialog.Description>
+			</Dialog.Header>
+			<Dialog.Footer>
+				<Button variant="outline" onclick={() => (dialogOpen = false)}>
+					Cancel
 				</Button>
-			{/snippet}
-		</DropdownMenu.Trigger>
-		<DropdownMenu.Content align="start" class="w-32">
-			<DropdownMenu.Item>Update</DropdownMenu.Item>
-			<DropdownMenu.Item>Delete</DropdownMenu.Item>
-		</DropdownMenu.Content>
-	</DropdownMenu.Root>
+				<Button variant="destructive" onclick={() => console.log('Delete')}>
+					Delete
+				</Button>
+			</Dialog.Footer>
+		</Dialog.Content>
+	</Dialog.Root>
 {/snippet}
