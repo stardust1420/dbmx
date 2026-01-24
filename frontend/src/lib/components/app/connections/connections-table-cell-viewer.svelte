@@ -441,6 +441,9 @@
 				}
 			});
 		}
+
+		checked = !checked;
+		disabled = !disabled;
 	};
 </script>
 
