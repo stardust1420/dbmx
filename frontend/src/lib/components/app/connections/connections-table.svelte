@@ -177,7 +177,7 @@
 		columnResizeMode: 'onChange', // or 'onEnd'
 	});
 
-	function getAllConnections() {
+	export function getAllConnections() {
 		console.log('getAllConnections');
 		// Get All Connections
 		GetAllConnections()
@@ -344,7 +344,7 @@
 		connectionToDelete = connectionID;
 		dialogOpen = true;
 	}}>
-		<Trash2Icon  size={16}/>
+		<Trash2Icon size={16}/>
 	</Button>
 {/snippet}
 
