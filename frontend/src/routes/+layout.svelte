@@ -24,8 +24,18 @@
 	onMount(() => {
 		GetAllConnections()
 			.then((connections) => {
+				// Save a local set of connections returned
+				let existingConnectionsMap = new Map(connections.map((connection) => [connection.ID, connection]));
+
 				for (let connection of connections) {
 					postgresConnectionsMap.set(connection.ID, connection);
+				}
+
+				// Check if any connection from the postgresConnectionsMap is not present in the existingConnectionsMap
+				for (let connection of postgresConnectionsMap) {
+					if (!existingConnectionsMap.has(connection[0])) {
+						postgresConnectionsMap.delete(connection[0]);
+					}
 				}
 			})
 			.catch((error) => {

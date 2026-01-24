@@ -5,6 +5,8 @@ import {uuid} from '../models';
 
 export function AddPostgresConnection(arg1:model.Connection):Promise<boolean>;
 
+export function DeleteConnection(arg1:number):Promise<boolean>;
+
 export function EstablishPostgresConnection(arg1:number):Promise<Array<model.Database>>;
 
 export function EstablishPostgresDatabaseConnection(arg1:number,arg2:string):Promise<model.Database>;
@@ -31,7 +33,7 @@ export function RefreshPostgresDatabase(arg1:number,arg2:string,arg3:string,arg4
 
 export function TerminateAllDatabaseConnections():Promise<void>;
 
-export function TerminatePostgresDatabaseConnection(arg1:string):Promise<boolean>;
+export function TerminatePostgresDatabaseConnection(arg1:string,arg2:number):Promise<boolean>;
 
 export function TestConnectPostgres(arg1:model.Connection):Promise<boolean>;
 

@@ -415,6 +415,9 @@
 			// Await the result of the UpdateConnection call
 			await UpdateConnection(updateConnectionData);
 
+			checked = !checked;
+			disabled = !disabled;
+
 			// If successful, show success message
 			toast.success('Success', {
 				description: 'The connection was updated successfully',
@@ -441,9 +444,6 @@
 				}
 			});
 		}
-
-		checked = !checked;
-		disabled = !disabled;
 	};
 </script>
 

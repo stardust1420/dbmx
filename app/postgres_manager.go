@@ -11,17 +11,19 @@ import (
 )
 
 type PoolManager struct {
-	Pools map[uuid.UUID]*pgxpool.Pool
-	mu    sync.RWMutex
+	mu          sync.RWMutex
+	Pools       map[uuid.UUID]*pgxpool.Pool
+	ActiveConns map[int64]int64
 }
 
 func NewPoolManager() *PoolManager {
 	return &PoolManager{
-		Pools: make(map[uuid.UUID]*pgxpool.Pool),
+		Pools:       make(map[uuid.UUID]*pgxpool.Pool),
+		ActiveConns: make(map[int64]int64),
 	}
 }
 
-func (pm *PoolManager) AddPool(id uuid.UUID, c *pgx.ConnConfig) (*pgxpool.Pool, error) {
+func (pm *PoolManager) AddPool(id uuid.UUID, c *pgx.ConnConfig, connID int64) (*pgxpool.Pool, error) {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
 
@@ -37,6 +39,11 @@ func (pm *PoolManager) AddPool(id uuid.UUID, c *pgx.ConnConfig) (*pgxpool.Pool, 
 	}
 
 	pm.Pools[id] = pool
+
+	// Add the connection ID to the map
+	// This is used to track the count of the number of active pools for a connection
+	pm.ActiveConns[connID] += 1
+
 	return pool, nil
 }
 
@@ -47,9 +54,14 @@ func (pm *PoolManager) GetPool(id uuid.UUID) (*pgxpool.Pool, bool) {
 	return pool, exists
 }
 
-func (pm *PoolManager) DeletePool(id uuid.UUID) error {
+func (pm *PoolManager) DeletePool(id uuid.UUID, connID int64) error {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
+
+	// Check if the connection ID exists
+	if _, exists := pm.ActiveConns[connID]; !exists {
+		return errors.New("connection does not exist")
+	}
 
 	pool, exists := pm.Pools[id]
 	if !exists {
@@ -59,8 +71,18 @@ func (pm *PoolManager) DeletePool(id uuid.UUID) error {
 	// Close the pool before deleting it
 	pool.Close()
 
-	// Remove the pool from the map
+	// Remove the pool from the pools map
 	delete(pm.Pools, id)
+
+	// Get the number of active pools for the connection
+	activeConns := pm.ActiveConns[connID]
+
+	// If the number of active pools is 0, remove the connection ID from the map
+	if activeConns-1 == 0 {
+		delete(pm.ActiveConns, connID)
+	} else {
+		pm.ActiveConns[connID] -= 1
+	}
 
 	return nil
 }

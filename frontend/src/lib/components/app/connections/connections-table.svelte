@@ -97,7 +97,7 @@
 
 	import { toast } from 'svelte-sonner';
 	import DataTableCheckbox from './connections-table-checkbox.svelte';
-	import { GetAllConnections } from '$lib/wailsjs/go/app/Connections.js';
+	import { DeleteConnection, GetAllConnections } from '$lib/wailsjs/go/app/Connections.js';
 	import { useSortable } from '@dnd-kit-svelte/svelte/sortable';
 	import { model } from '$lib/wailsjs/go/models.js';
 	import { onMount } from 'svelte';
@@ -198,6 +198,28 @@
 	onMount(() => {
 		getAllConnections();
 	});
+
+	let deleteConnection = (id: number) => {
+		DeleteConnection(id)
+			.then((success) => {
+				if (success) {
+					toast.success('Connection deleted successfully');
+					getAllConnections();
+				}
+			})
+			.catch((error) => {
+				toast.error('Failed to delete connection', {
+					description: error,
+					action: {
+						label: 'OK',
+						onClick: () => console.info('OK')
+					}
+				});
+			});
+		
+		getAllConnections();
+	};
+
 </script>
 
 <div class="overflow-auto">
@@ -360,7 +382,15 @@
 			<Button variant="outline" onclick={() => (dialogOpen = false)}>
 				Cancel
 			</Button>
-			<Button variant="destructive" onclick={() => console.log(connectionToDelete)}>
+			<Button
+				variant="destructive"
+				onclick={() => {
+					if (connectionToDelete !== null) {
+						deleteConnection(connectionToDelete);
+						dialogOpen = false;
+					}
+				}}
+			>
 				Delete
 			</Button>
 		</Dialog.Footer>
