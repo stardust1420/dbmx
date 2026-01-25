@@ -216,63 +216,11 @@ func (t *Tabs) GetAllTabs() ([]model.Tab, error) {
 }
 
 func (t *Tabs) DeleteTab(id int64) (*model.Tab, error) {
-	// Check if the tab is active
-	query := `SELECT is_active FROM tabs WHERE id = ?`
-	var isActive bool
-	err := t.DB.QueryRow(query, id).Scan(&isActive)
-	if err != nil {
-		return nil, err
-	}
-
-	// Tab to be returned
-	var tab model.Tab
-
-	var isLastTab bool
-
-	// If the tab is active, set the first tab as active where id != id and return that tab
-	if isActive {
-		// Check for the count of tabs to find if it's the last tab
-		query = `SELECT COUNT(*) FROM tabs`
-		var count int64
-		err := t.DB.QueryRow(query).Scan(&count)
-		if err != nil {
-			return nil, err
-		}
-
-		// If it's not the last tab, set the first tab as active
-		if count > 1 {
-			query = `UPDATE tabs SET is_active = true WHERE id = (SELECT id FROM tabs WHERE id != ? LIMIT 1) RETURNING *`
-			row := t.DB.QueryRow(query, id)
-
-			err = row.Scan(&tab.ID, &tab.Name, &tab.Editor, &tab.Output, &tab.IsActive, &tab.ActiveDBID, &tab.ActiveDB, &tab.ActiveDBColor, &tab.Type, &tab.ConnectionID, &tab.DBName, &tab.ConnectionName, &tab.Select, &tab.Limit, &tab.Offset, &tab.Where, &tab.OrderBy, &tab.GroupBy, &tab.TableColumns)
-			if err != nil {
-				return nil, err
-			}
-
-			if len(tab.TableColumns) > 0 {
-				err = json.Unmarshal([]byte(tab.TableColumns), &tab.TableColumnsList)
-				if err != nil {
-					return nil, err
-				}
-			}
-
-			if len(tab.Output) > 0 {
-				// Don't load output from DB
-			}
-		} else {
-			isLastTab = true
-		}
-	}
-
 	// Delete the tab
-	query = `DELETE FROM tabs WHERE id = ?`
-	_, err = t.DB.Exec(query, id)
+	query := `DELETE FROM tabs WHERE id = ?`
+	_, err := t.DB.Exec(query, id)
 	if err != nil {
 		return nil, err
-	}
-
-	if isActive && !isLastTab {
-		return &tab, nil
 	}
 
 	return nil, nil

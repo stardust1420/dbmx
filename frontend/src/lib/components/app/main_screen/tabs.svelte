@@ -246,68 +246,39 @@
 
 	function deleteTab(id: number) {
 		$selectedQuery = '';
+
+		let wasActive = (id === tabID);
+
 		// Delete the old tab from the map
 		tabsMap.delete(id);
-		tableViewTab = 'data';
+
+		// If the tab was active, switch to another tab
+		if (wasActive) {
+			if (tabsMap.size > 0) {
+				// Get the first available tab
+				const firstTabID = tabsMap.keys().next().value;
+				if (firstTabID) {
+					setActiveTab(firstTabID);
+				}
+			} else {
+				// No tabs left
+				tabID = 0;
+				tabName = '';
+				editor = '';
+				columns.set([]);
+				rows.set([]);
+				$selectedDBDisplay = 'Connect to a database';
+				$currentColor = '';
+				$activePoolID = '';
+			}
+		} else {
+			// If not active, just ensure UI state is clean if needed, 
+			// but we didn't change the active view so do nothing.
+		}
 
 		DeleteTab(id)
-			.then((tab) => {
-				if (tab) {
-					queryLoading = false;
-
-					// Set the new tab as active
-					tabsMap.set(tab.ID, tab);
-
-					tabID = tab.ID;
-					tabName = tab.Name;
-					tabType = tab.Type;
-
-					// Properties for table view tab
-					tabDBName = tab.DBName || '';
-					tabTableDBPoolID = tab.ActiveDBID || '';
-					tabConnName = tab.ConnectionName || '';
-					tabConnID = tab.ConnectionID || 0;
-
-					select = tab.Select;
-					limit = tab.Limit;
-					offset = tab.Offset;
-					where = tab.Where;
-					orderBy = tab.OrderBy;
-					groupBy = tab.GroupBy;
-					tableColumns = tab.TableColumnsList;
-
-					editor = tab.Editor;
-
-					$selectedDBDisplay = tab.ActiveDB || 'Connect to a database';
-					$activePoolID = tab.ActiveDBID || '';
-					$currentColor = tab.ActiveDBColor || '';
-
-					// Update columns
-					if (tab.columns) {
-						for (const column of tab.columns) {
-							columns.set([
-								...$columns,
-								{
-									accessorKey: column,
-									header: column
-								}
-							]);
-						}
-					}
-
-					// Update rows
-					if (tab.rows) {
-						for (const row of tab.rows) {
-							let cell: Record<string, any> = {};
-								for (const resultCell of row) {
-									if (resultCell.column && resultCell.value) {
-										cell[resultCell.column] = resultCell.value;
-									}
-								}
-							rows.set([...$rows, cell]);
-							}
-						}
-				}
+			.then(() => {
+				// Backend delete successful
 			})
 			.catch((error) => {
 				toast.error('Failed to delete tab', {
@@ -318,9 +289,6 @@
 					}
 				});
 			});
-
-		columns.set([]);
-		rows.set([]);
 	}
 
 	function setActiveTab(id: number) {
@@ -363,15 +331,14 @@
 			// Update columns
 			columns.set([]);
 			if (tab.columns) {
+				let newColumns: any[] = [];
 				for (const column of tab.columns) {
-					columns.set([
-						...$columns,
-						{
-							accessorKey: column,
-							header: column
-						}
-					]);
+					newColumns.push({
+						accessorKey: column,
+						header: column
+					});
 				}
+				columns.set(newColumns);
 			}
 
 			// Update rows
@@ -1052,7 +1019,9 @@
 								<div class="flex flex-1 overflow-auto border">
 									<div class="h-full w-full overflow-auto">
 										{#if $columns.length > 0}
-											<DataTable data={$rows} columns={$columns} />
+											{#key tabID}
+												<DataTable data={$rows} columns={$columns} />
+											{/key}
 										{:else if queryLoading}
 											<Skeleton class="my-3 h-[40px] w-full" />
 											<Skeleton class="my-3 h-[40px] w-full" />
@@ -1137,7 +1106,9 @@
 								>
 									<div class="h-full">
 										{#if $columns.length > 0}
-											<DataTable data={$rows} columns={$columns} />
+											{#key tabID}
+												<DataTable data={$rows} columns={$columns} />
+											{/key}
 										{:else if queryLoading}
 											<Skeleton class="my-3 h-[40px] w-full" />
 											<Skeleton class="my-3 h-[40px] w-full" />
