@@ -97,6 +97,7 @@
 
 				// Set active tab properties
 				if (tab.IsActive) {
+					console.log('Active tab', tab);
 					tabID = tab.ID;
 					tabName = tab.Name;
 					tabType = tab.Type;
@@ -128,30 +129,30 @@
 					}
 
 					// Update columns
-					if (tab.columns) {
-						for (const column of tab.columns) {
-							columns.set([
-								...$columns,
-								{
-									accessorKey: column,
-									header: column
-								}
-							]);
-						}
-					}
+					// if (tab.columns) {
+					// 	for (const column of tab.columns) {
+					// 		columns.set([
+					// 			...$columns,
+					// 			{
+					// 				accessorKey: column,
+					// 				header: column
+					// 			}
+					// 		]);
+					// 	}
+					// }
 
 					// Update rows
-					if (tab.rows) {
-						for (const row of tab.rows) {
-							let cell: Record<string, any> = {};
-							for (const resultCell of row) {
-								if (resultCell.column && resultCell.value) {
-									cell[resultCell.column] = resultCell.value;
-								}
-							}
-							rows.set([...$rows, cell]);
-						}
-					}
+					// if (tab.rows) {
+					// 	for (const row of tab.rows) {
+					// 		let cell: Record<string, any> = {};
+					// 		for (const resultCell of row) {
+					// 			if (resultCell.column && resultCell.value) {
+					// 				cell[resultCell.column] = resultCell.value;
+					// 			}
+					// 		}
+					// 		rows.set([...$rows, cell]);
+					// 	}
+					// }
 				}
 			}
 		});
@@ -298,14 +299,14 @@
 					if (tab.rows) {
 						for (const row of tab.rows) {
 							let cell: Record<string, any> = {};
-							for (const resultCell of row) {
-								if (resultCell.column && resultCell.value) {
-									cell[resultCell.column] = resultCell.value;
+								for (const resultCell of row) {
+									if (resultCell.column && resultCell.value) {
+										cell[resultCell.column] = resultCell.value;
+									}
 								}
-							}
 							rows.set([...$rows, cell]);
+							}
 						}
-					}
 				}
 			})
 			.catch((error) => {
@@ -326,66 +327,96 @@
 		$selectedQuery = '';
 		tableViewTab = 'data';
 
-		SetActiveTab(id)
-			.then((tab) => {
-				queryLoading = false;
-				tabsMap.set(tab.ID, tab);
+		// Set the active tab from the map
+		const tab = tabsMap.get(id);
+		if (tab) {
+			tabID = tab.ID;
+			tabName = tab.Name;
+			tabType = tab.Type;
 
-				tabID = tab.ID;
-				tabName = tab.Name;
-				tabType = tab.Type;
+			// Properties for table view tab
+			tabDBName = tab.DBName || '';
+			tabTableDBPoolID = tab.ActiveDBID || '';
+			tabConnName = tab.ConnectionName || '';
+			tabConnID = tab.ConnectionID || 0;
 
-				// Properties for table view tab
-				tabDBName = tab.DBName || '';
-				tabTableDBPoolID = tab.ActiveDBID || '';
-				tabConnName = tab.ConnectionName || '';
-				tabConnID = tab.ConnectionID || 0;
+			select = tab.Select;
+			limit = tab.Limit;
+			offset = tab.Offset;
+			where = tab.Where;
+			orderBy = tab.OrderBy;
+			groupBy = tab.GroupBy;
+			tableColumns = tab.TableColumnsList;
 
-				select = tab.Select;
-				limit = tab.Limit;
-				offset = tab.Offset;
-				where = tab.Where;
-				orderBy = tab.OrderBy;
-				groupBy = tab.GroupBy;
-				tableColumns = tab.TableColumnsList;
+			editor = tab.Editor;
 
-				editor = tab.Editor;
+			if ($activeDBs.length == 0) {
+				$selectedDBDisplay = 'Connect to a database';
+				$currentColor = '';
+				$activePoolID = '';
+			} else {
+				$selectedDBDisplay = tab.ActiveDB || 'Connect to a database';
+				$activePoolID = tab.ActiveDBID || '';
+				$currentColor = tab.ActiveDBColor || '';
+			}
 
-				if ($activeDBs.length == 0) {
-					$selectedDBDisplay = 'Connect to a database';
-					$currentColor = '';
-					$activePoolID = '';
-				} else {
-					$selectedDBDisplay = tab.ActiveDB || 'Connect to a database';
-					$activePoolID = tab.ActiveDBID || '';
-					$currentColor = tab.ActiveDBColor || '';
+			// Update columns
+			columns.set([]);
+			if (tab.columns) {
+				for (const column of tab.columns) {
+					columns.set([
+						...$columns,
+						{
+							accessorKey: column,
+							header: column
+						}
+					]);
 				}
+			}
 
-				// Update columns
-				if (tab.columns) {
-					for (const column of tab.columns) {
-						columns.set([
-							...$columns,
-							{
-								accessorKey: column,
-								header: column
-							}
-						]);
-					}
-				}
+			// Update rows
+			rows.set([]);
+			if (tab.rows) {
+				rows.set(tab.rows); // We are storing the processed row objects directly in tabsMap now (see executeQuery changes)
+				// Or if we still store raw response rows, we need to process them.
+				// Based on model.ts, Tab.rows is Cell[][].
+				// The frontend seems to convert Cell[][] into Record<string, any>[] for the table component.
+				// Let's check how we save it.
+				// In previous code it was converting Cell[][] to object list.
+				// To keep it consistent, let's store the raw Cell[][] in Tab object (as per TS definition)
+				// AND convert it here for the UI store.
 
-				// Update rows
-				if (tab.rows) {
-					for (const row of tab.rows) {
-						let cell: Record<string, any> = {};
+				// WAIT! In TS definition: rows: Cell[][];
+				// BUT in the logic below, rows.set([...$rows, cell]); -> rows store expects objects.
+				// So when we read from `tab.rows`, it is Cell[][].
+				// We need to convert it.
+
+				const processedRows: any[] = [];
+				for (const row of tab.rows) {
+					let cell: Record<string, any> = {};
+					// Check if row is array of cells or already processed object (if we changed storage format)
+					// Let's stick to the Tab model which is Cell[][].
+					if (Array.isArray(row)) {
 						for (const resultCell of row) {
 							if (resultCell.column && resultCell.value) {
 								cell[resultCell.column] = resultCell.value;
 							}
 						}
-						rows.set([...$rows, cell]);
-					}
+						processedRows.push(cell);
+					} else {
+             // Fallback if somehow we stored processed rows
+             processedRows.push(row)
+          }
 				}
+				rows.set(processedRows);
+			}
+		}
+
+		SetActiveTab(id)
+			.then((tab) => {
+				// We don't update UI from this response anymore as it's slow/empty
+				queryLoading = false;
+				// Maybe update metadata if needed, but tabsMap already has it from GetAllTabs or local updates
 			})
 			.catch((error) => {
 				toast.error('Failed to set active tab', {
@@ -396,9 +427,6 @@
 					}
 				});
 			});
-
-		columns.set([]);
-		rows.set([]);
 	}
 
 	function getColorClass(color: string): string {
@@ -467,8 +495,9 @@
 					}
 				}
 
-				// Update rows
+				// Update rows. Also update the in-memory tabsMap!
 				if (result.rows) {
+					let newRows: any[] = [];
 					for (const row of result.rows) {
 						let cell: Record<string, any> = {};
 						for (const resultCell of row) {
@@ -476,7 +505,16 @@
 								cell[resultCell.column] = resultCell.value;
 							}
 						}
-						rows.set([...$rows, cell]);
+						newRows.push(cell);
+					}
+					rows.set(newRows);
+
+					// Update the map
+					let currentTab = tabsMap.get(tabID);
+					if (currentTab) {
+						currentTab.columns = result.columns;
+						currentTab.rows = result.rows; // result.rows is Cell[][]
+						tabsMap.set(tabID, currentTab);
 					}
 				}
 				queryLoading = false;
@@ -538,8 +576,9 @@
 					}
 				}
 
-				// Update rows
+				// Update rows and map
 				if (result.rows) {
+					let newRows: any[] = [];
 					for (const row of result.rows) {
 						let cell: Record<string, any> = {};
 						for (const resultCell of row) {
@@ -547,7 +586,16 @@
 								cell[resultCell.column] = resultCell.value;
 							}
 						}
-						rows.set([...$rows, cell]);
+						newRows.push(cell);
+					}
+					rows.set(newRows);
+
+					// Update the map
+					let currentTab = tabsMap.get(tabID);
+					if (currentTab) {
+						currentTab.columns = result.columns;
+						currentTab.rows = result.rows; // result.rows is Cell[][]
+						tabsMap.set(tabID, currentTab);
 					}
 				}
 				queryLoading = false;
@@ -613,7 +661,7 @@
 	let editorUpdateTimer: any;
 	$effect(() => {
 		// Explicitly reference editor to ensure reactivity
-		const _ = editor;
+		const currentEditorContent = editor;
 		const selectQuery = select;
 		const limitQuery = limit;
 		const offsetQuery = offset;
@@ -621,12 +669,20 @@
 		const orderByQuery = orderBy;
 		const groupByQuery = groupBy;
 
+		// Update local map instantly
+		let currentTab = tabsMap.get(tabID);
+		if (currentTab) {
+			currentTab.Editor = currentEditorContent;
+			// Update other properties if needed, though they seem bound to local state anyway
+			tabsMap.set(tabID, currentTab);
+		}
+
 		// Clear any existing timeout to debounce rapid changes
 		if (editorUpdateTimer) clearTimeout(editorUpdateTimer);
 
 		// Set a new timeout to update the content after typing stops
 		editorUpdateTimer = setTimeout(() => {
-			UpdateTabEditorContent(tabID, editor, select, limit, offset, where, orderBy, groupBy);
+			UpdateTabEditorContent(tabID, currentEditorContent, selectQuery, limitQuery, offsetQuery, whereQuery, orderByQuery, groupByQuery);
 		}, 500);
 	});
 

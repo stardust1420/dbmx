@@ -40,5 +40,3 @@ export function TestConnectPostgres(arg1:model.Connection):Promise<boolean>;
 export function TypeConnectionTable():Promise<model.ConnectionTable>;
 
 export function UpdateConnection(arg1:model.Connection):Promise<boolean>;
-
-export function UpdateTabOutput(arg1:number,arg2:model.Output):Promise<void>;
