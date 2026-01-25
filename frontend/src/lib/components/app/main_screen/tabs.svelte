@@ -614,6 +614,15 @@
 		$activePoolID = poolID;
 		$currentColor = activeDBColor;
 
+		// Update tabsMap to persist state across tab switches
+		let currentTab = tabsMap.get(tabID);
+		if (currentTab) {
+			currentTab.ActiveDB = activeDBDisplay;
+			currentTab.ActiveDBID = poolID;
+			currentTab.ActiveDBColor = activeDBColor;
+			tabsMap.set(tabID, currentTab);
+		}
+
 		SaveActiveDBProps(tabID, $activePoolID, $selectedDBDisplay, $currentColor);
 	}
 
