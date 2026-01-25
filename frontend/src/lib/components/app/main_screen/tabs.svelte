@@ -141,18 +141,30 @@
 					// 	}
 					// }
 
-					// Update rows
-					// if (tab.rows) {
-					// 	for (const row of tab.rows) {
-					// 		let cell: Record<string, any> = {};
-					// 		for (const resultCell of row) {
-					// 			if (resultCell.column && resultCell.value) {
-					// 				cell[resultCell.column] = resultCell.value;
-					// 			}
-					// 		}
-					// 		rows.set([...$rows, cell]);
-					// 	}
-					// }
+					// Process rows once and cache them
+					if (tab.rows) {
+						let processedRows: any[] = [];
+						for (const row of tab.rows) {
+							let cell: Record<string, any> = {};
+							if (Array.isArray(row)) {
+								for (const resultCell of row) {
+									if (resultCell.column && resultCell.value) {
+										cell[resultCell.column] = resultCell.value;
+									}
+								}
+								processedRows.push(cell);
+							}
+						}
+						// Cache the processed rows in the tab object
+						// We need to cast to any to avoid TS error if model definition isn't updated instantly in IDE
+						(tab as any).processedRows = processedRows;
+						tabsMap.set(tab.ID, tab);
+					}
+
+					// Update active rows from cache
+					if ((tab as any).processedRows) {
+						rows.set((tab as any).processedRows);
+					}
 				}
 			}
 		});
@@ -341,41 +353,27 @@
 				columns.set(newColumns);
 			}
 
-			// Update rows
+			// Update rows using cached data (O(1))
 			rows.set([]);
-			if (tab.rows) {
-				rows.set(tab.rows); // We are storing the processed row objects directly in tabsMap now (see executeQuery changes)
-				// Or if we still store raw response rows, we need to process them.
-				// Based on model.ts, Tab.rows is Cell[][].
-				// The frontend seems to convert Cell[][] into Record<string, any>[] for the table component.
-				// Let's check how we save it.
-				// In previous code it was converting Cell[][] to object list.
-				// To keep it consistent, let's store the raw Cell[][] in Tab object (as per TS definition)
-				// AND convert it here for the UI store.
-
-				// WAIT! In TS definition: rows: Cell[][];
-				// BUT in the logic below, rows.set([...$rows, cell]); -> rows store expects objects.
-				// So when we read from `tab.rows`, it is Cell[][].
-				// We need to convert it.
-
-				const processedRows: any[] = [];
+			if ((tab as any).processedRows) {
+				rows.set((tab as any).processedRows);
+			} else if (tab.rows) {
+				// Fallback: If not cached yet (legacy/first load edge case), process and cache now
+				let newRows: any[] = [];
 				for (const row of tab.rows) {
 					let cell: Record<string, any> = {};
-					// Check if row is array of cells or already processed object (if we changed storage format)
-					// Let's stick to the Tab model which is Cell[][].
 					if (Array.isArray(row)) {
 						for (const resultCell of row) {
 							if (resultCell.column && resultCell.value) {
 								cell[resultCell.column] = resultCell.value;
 							}
 						}
-						processedRows.push(cell);
-					} else {
-             // Fallback if somehow we stored processed rows
-             processedRows.push(row)
-          }
+						newRows.push(cell);
+					}
 				}
-				rows.set(processedRows);
+				(tab as any).processedRows = newRows;
+				tabsMap.set(tabID, tab);
+				rows.set(newRows);
 			}
 		}
 
@@ -476,11 +474,12 @@
 					}
 					rows.set(newRows);
 
-					// Update the map
+					// Update the map with cached rows
 					let currentTab = tabsMap.get(tabID);
 					if (currentTab) {
 						currentTab.columns = result.columns;
 						currentTab.rows = result.rows; // result.rows is Cell[][]
+						(currentTab as any).processedRows = newRows; // Cache it!
 						tabsMap.set(tabID, currentTab);
 					}
 				}
@@ -557,11 +556,12 @@
 					}
 					rows.set(newRows);
 
-					// Update the map
+					// Update the map with cached rows
 					let currentTab = tabsMap.get(tabID);
 					if (currentTab) {
 						currentTab.columns = result.columns;
 						currentTab.rows = result.rows; // result.rows is Cell[][]
+						(currentTab as any).processedRows = newRows; // Cache it!
 						tabsMap.set(tabID, currentTab);
 					}
 				}

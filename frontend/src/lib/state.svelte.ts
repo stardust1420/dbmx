@@ -17,7 +17,7 @@ export let loadingMap = $state<SvelteMap<number, boolean>>(new SvelteMap<number,
 export let dbLoadingMap = $state<SvelteMap<string, boolean>>(new SvelteMap<string, boolean>());
 
 // Declare tabsMap as a reactive state variable
-export let tabsMap = $state<SvelteMap<number, model.Tab>>(new SvelteMap<number, model.Tab>());
+export let tabsMap = $state<SvelteMap<number, model.Tab & { processedRows?: any[] }>>(new SvelteMap<number, model.Tab & { processedRows?: any[] }>());
 
 export let selectedDBDisplay = writable('Connect to a database');
 export let currentColor = writable('');
