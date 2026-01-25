@@ -51,7 +51,8 @@
 		suggestions,
 		selectedDBDisplay,
 		currentColor,
-		activePoolID
+		activePoolID,
+		tabsMap
 	} from '$lib/state.svelte';
 
 	import {
@@ -157,6 +158,15 @@
 				$activePoolID = db.PoolID;
 				SaveActiveDBProps(tabID, $activePoolID, $selectedDBDisplay, $currentColor);
 
+				// Update tabsMap
+				let currentTab = tabsMap.get(tabID);
+				if (currentTab) {
+					currentTab.ActiveDB = $selectedDBDisplay;
+					currentTab.ActiveDBID = $activePoolID;
+					currentTab.ActiveDBColor = $currentColor;
+					tabsMap.set(tabID, currentTab);
+				}
+
 				toast.success('Connected to ' + db.Name, {});
 			})
 			.catch((error) => {
@@ -214,6 +224,15 @@
 						$currentColor = db.Color;
 						$activePoolID = db.PoolID;
 						SaveActiveDBProps(tabID, $activePoolID, $selectedDBDisplay, $currentColor);
+
+						// Update tabsMap
+						let currentTab = tabsMap.get(tabID);
+						if (currentTab) {
+							currentTab.ActiveDB = $selectedDBDisplay;
+							currentTab.ActiveDBID = $activePoolID;
+							currentTab.ActiveDBColor = $currentColor;
+							tabsMap.set(tabID, currentTab);
+						}
 
 						toast.success('Connected to ' + db.Name, {});
 					}
@@ -311,6 +330,15 @@
 					}
 
 					SaveActiveDBProps(tabID, $activePoolID, $selectedDBDisplay, $currentColor);
+
+					// Update tabsMap
+					let currentTab = tabsMap.get(tabID);
+					if (currentTab) {
+						currentTab.ActiveDB = $selectedDBDisplay;
+						currentTab.ActiveDBID = $activePoolID;
+						currentTab.ActiveDBColor = $currentColor;
+						tabsMap.set(tabID, currentTab);
+					}
 
 					toast.success('Disconnected ' + db.Name, {});
 				}
