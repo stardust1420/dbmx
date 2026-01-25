@@ -172,15 +172,6 @@ func (t *Tabs) SetActiveTab(id int64) (*model.Tab, error) {
 		return &tab, nil
 	}
 
-	var output model.Output
-	err = json.Unmarshal([]byte(tab.Output), &output)
-	if err != nil {
-		return nil, err
-	}
-
-	tab.Columns = output.Columns
-	tab.Rows = output.Rows
-
 	return &tab, nil
 }
 
@@ -210,14 +201,7 @@ func (t *Tabs) GetAllTabs() ([]model.Tab, error) {
 			}
 
 			if len(tab.Output) > 0 {
-				var output model.Output
-				err = json.Unmarshal([]byte(tab.Output), &output)
-				if err != nil {
-					return nil, err
-				}
-
-				tab.Columns = output.Columns
-				tab.Rows = output.Rows
+				// Don't load output from DB, frontend will handle it
 			}
 		}
 
@@ -273,14 +257,7 @@ func (t *Tabs) DeleteTab(id int64) (*model.Tab, error) {
 			}
 
 			if len(tab.Output) > 0 {
-				var output model.Output
-				err = json.Unmarshal([]byte(tab.Output), &output)
-				if err != nil {
-					return nil, err
-				}
-
-				tab.Columns = output.Columns
-				tab.Rows = output.Rows
+				// Don't load output from DB
 			}
 		} else {
 			isLastTab = true

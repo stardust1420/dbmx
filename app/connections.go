@@ -6,7 +6,6 @@ import (
 	"crypto/x509"
 	"database/sql"
 	"dbmx/model"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net"
@@ -855,13 +854,6 @@ func (c *Connections) ExecuteQuery(activePoolID uuid.UUID, query string, tabID i
 		response.Rows = rows
 	}
 
-	output := &model.Output{
-		Columns: response.Columns,
-		Rows:    response.Rows,
-	}
-
-	go c.UpdateTabOutput(tabID, output)
-
 	return response
 }
 
@@ -970,27 +962,7 @@ func (c *Connections) GetTableData(activePoolID uuid.UUID, tabID int64, tableNam
 
 	response.Rows = rows
 
-	output := &model.Output{
-		Columns: response.Columns,
-		Rows:    response.Rows,
-	}
-
-	go c.UpdateTabOutput(tabID, output)
-
 	return response
-}
-
-func (c *Connections) UpdateTabOutput(tabID int64, output *model.Output) {
-	jsonOutput, err := json.Marshal(output)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	query := `UPDATE tabs SET output = ? WHERE id = ?`
-	_, err = c.DB.Exec(query, string(jsonOutput), tabID)
-	if err != nil {
-		fmt.Println(err)
-	}
 }
 
 func (c *Connections) GetTableInfo(activePoolID uuid.UUID, tableName string) (*model.TableInfo, error) {
