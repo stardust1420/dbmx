@@ -13,6 +13,7 @@ import (
 
 	a "dbmx/app"
 	"dbmx/config/database"
+	"dbmx/config/env"
 )
 
 //go:embed all:frontend/build
@@ -23,6 +24,7 @@ var icon []byte
 
 func main() {
 	// Create an instance of the app structure
+	env := env.GetEnv()
 	db, err := database.NewSqlite3DB(context.Background())
 	if err != nil {
 		log.Fatal(err)
@@ -33,7 +35,7 @@ func main() {
 
 	conn := a.NewConnections(db.DB, pm)
 	tabs := a.NewTabs(db.DB, pm)
-	auth := a.NewAuth(db.DB)
+	auth := a.InitAuth(db.DB, env.SupabaseConfig)
 	app := NewApp(conn)
 
 	// Create application with options
