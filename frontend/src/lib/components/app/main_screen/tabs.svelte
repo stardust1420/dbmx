@@ -185,6 +185,7 @@
 		tableViewTab = 'data';
 
 		tabLoading = true;
+		console.log('tab loading true');
 		let tableType = 'editor';
 		let tabDisplayName = 'Editor';
 
@@ -235,6 +236,7 @@
 				tableColumns = tab.TableColumnsList;
 
 				editor = tab.Editor;
+				tabLoading = false;
 			})
 			.catch((error) => {
 				toast.error('Failed to add tab', {
@@ -244,9 +246,9 @@
 						onClick: () => console.info('OK')
 					}
 				});
+				tabLoading = false;
 			});
-		
-		tabLoading = false;
+			
 
 		$selectedDBDisplay = $selectedDBDisplay;
 		$activePoolID = $activePoolID;
@@ -685,7 +687,7 @@
 							<div class="mr-2 flex rounded-sm bg-slate-800">
 								<Tabs.Trigger
 									value={tab.ID.toString()}
-									class="flex items-center justify-center h-auto"
+									class="flex items-center justify-center h-auto opacity-70 data-[state=active]:opacity-100 data-[state=active]:bg-slate-700"
 									onclick={() => setActiveTab(tab.ID)}
 								>
 									{tab.Name}
