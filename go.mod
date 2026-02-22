@@ -8,6 +8,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.24
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/viper v1.19.0
+	github.com/supabase-community/auth-go v1.5.0
 	github.com/wailsapp/wails/v2 v2.10.1
 	golang.org/x/crypto v0.33.0
 )
@@ -43,7 +44,6 @@ require (
 	github.com/spf13/cast v1.6.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
-	github.com/supabase-community/auth-go v1.5.0 // indirect
 	github.com/tkrajina/go-reflector v0.5.8 // indirect
 	github.com/tomnomnom/linkheader v0.0.0-20180905144013-02ca5825eb80 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect

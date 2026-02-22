@@ -1,10 +1,15 @@
 package env
 
 import (
+	"bytes"
+	"embed"
 	"log"
 
 	"github.com/spf13/viper"
 )
+
+//go:embed *.toml
+var configFiles embed.FS
 
 type Env struct {
 	Sqlite3        Sqlite3        `mapstructure:"sqlite3"`
@@ -27,22 +32,26 @@ func GetEnv() *Env {
 
 // GetEnvFromFile returns configuration from specific file object
 func GetEnvFromFile(fileName string) *Env {
-	// looking for filename `default` inside `src/server` dir with `.toml` extension
-	viper.SetConfigName(fileName)
-	viper.AddConfigPath("../config/env/")
-	viper.AddConfigPath("../../config/env/")
-	viper.AddConfigPath(".")
-	viper.AddConfigPath("./config/env/")
 	viper.SetConfigType("toml")
 
-	err := viper.ReadInConfig()
+	// 1. Read the file dynamically from the embedded file system
+	// This replaces all the viper.AddConfigPath calls
+	fileBytes, err := configFiles.ReadFile(fileName + ".toml")
 	if err != nil {
-		log.Println("failed to load config")
+		log.Printf("failed to find %s.toml in embedded files: %v\n", fileName, err)
+		return &Env{}
 	}
+
+	// 2. Pass the bytes directly to viper
+	err = viper.ReadConfig(bytes.NewReader(fileBytes))
+	if err != nil {
+		log.Printf("failed to parse config: %s\n", err)
+	}
+
 	config := &Env{}
 	err = viper.Unmarshal(&config)
 	if err != nil {
-		log.Printf("couldn't read config: %s", err)
+		log.Printf("couldn't unmarshal config: %s\n", err)
 	}
 
 	return config
