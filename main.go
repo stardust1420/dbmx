@@ -33,6 +33,7 @@ func main() {
 
 	conn := a.NewConnections(db.DB, pm)
 	tabs := a.NewTabs(db.DB, pm)
+	auth := a.NewAuth(db.DB)
 	app := NewApp(conn)
 
 	// Create application with options
@@ -67,6 +68,7 @@ func main() {
 			app,
 			conn,
 			tabs,
+			auth,
 		},
 		// Mac platform specific options
 		Mac: &mac.Options{
