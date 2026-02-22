@@ -18,7 +18,7 @@
 	let tabName = $state('');
 	let tabType = $state('');
 
-	// Table tab properties
+	// Table tab active db properties
 	let tabTableDBPoolID = $state('');
 	let tabConnName = $state('');
 	let tabDBName = $state('');

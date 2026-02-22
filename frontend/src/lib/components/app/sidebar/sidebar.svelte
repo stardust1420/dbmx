@@ -147,25 +147,28 @@
 					});
 				}
 
+				$selectedDBDisplay = db.ConnectionName + ' - ' + db.Name;
+				$currentColor = db.Color;
+				$activePoolID = db.PoolID;
+				SaveActiveDBProps(tabID, $activePoolID, $selectedDBDisplay, $currentColor);
+
 				// If the server and database to which connection was established is the current table's database
 				// Set the tab table db pool id so that it's connected
 				if (tabConnID === db.ConnectionID && tabDBName === db.Name) {
 					tabTableDBPoolID = db.PoolID;
 				}
 
-				$selectedDBDisplay = db.ConnectionName + ' - ' + db.Name;
-				$currentColor = db.Color;
-				$activePoolID = db.PoolID;
-				SaveActiveDBProps(tabID, $activePoolID, $selectedDBDisplay, $currentColor);
-
-				// Update tabsMap
-				let currentTab = tabsMap.get(tabID);
-				if (currentTab) {
-					currentTab.ActiveDB = $selectedDBDisplay;
-					currentTab.ActiveDBID = $activePoolID;
-					currentTab.ActiveDBColor = $currentColor;
-					tabsMap.set(tabID, currentTab);
-				}
+				// Loop over all the tabs in the tabs map
+				// If the connection id and database name of the tab matches the connection and database to which the connection was established
+				// Set the active db params of the tab
+				tabsMap.forEach((tab, id) => {
+					if (tab.ConnectionID === db.ConnectionID && tab.DBName === db.Name) {
+						tab.ActiveDB = $selectedDBDisplay;
+						tab.ActiveDBID = $activePoolID;
+						tab.ActiveDBColor = $currentColor;
+						tabsMap.set(id, tab);
+					}
+				});
 
 				toast.success('Connected to ' + db.Name, {});
 			})
@@ -225,14 +228,17 @@
 						$activePoolID = db.PoolID;
 						SaveActiveDBProps(tabID, $activePoolID, $selectedDBDisplay, $currentColor);
 
-						// Update tabsMap
-						let currentTab = tabsMap.get(tabID);
-						if (currentTab) {
-							currentTab.ActiveDB = $selectedDBDisplay;
-							currentTab.ActiveDBID = $activePoolID;
-							currentTab.ActiveDBColor = $currentColor;
-							tabsMap.set(tabID, currentTab);
-						}
+						// Loop over all the tabs in the tabs map
+						// If the connection id and database name of the tab matches the connection and database to which the connection was established
+						// Set the active db params of the tab
+						tabsMap.forEach((tab, id) => {
+							if (tab.ConnectionID === db.ConnectionID && tab.DBName === db.Name) {
+								tab.ActiveDB = $selectedDBDisplay;
+								tab.ActiveDBID = $activePoolID;
+								tab.ActiveDBColor = $currentColor;
+								tabsMap.set(id, tab);
+							}
+						});
 
 						toast.success('Connected to ' + db.Name, {});
 					}
@@ -331,14 +337,18 @@
 
 					SaveActiveDBProps(tabID, $activePoolID, $selectedDBDisplay, $currentColor);
 
-					// Update tabsMap
-					let currentTab = tabsMap.get(tabID);
-					if (currentTab) {
-						currentTab.ActiveDB = $selectedDBDisplay;
-						currentTab.ActiveDBID = $activePoolID;
-						currentTab.ActiveDBColor = $currentColor;
-						tabsMap.set(tabID, currentTab);
-					}
+					// Loop over all the tabs in the tabs map
+					// If the connection id and database name of the tab matches the connection and database to which the connection was terminated
+					// Set the active db params of the tab
+					tabsMap.forEach((tab, id) => {
+						if (tab.ConnectionID === db.ConnectionID && tab.DBName === db.Name) {
+							tab.ActiveDB = '';
+							tab.ActiveDBID = '';
+							tab.ActiveDBColor = '';
+							tabsMap.set(id, tab);
+						}
+					});
+
 
 					toast.success('Disconnected ' + db.Name, {});
 				}
