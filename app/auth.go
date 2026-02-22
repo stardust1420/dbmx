@@ -3,6 +3,7 @@ package app
 import (
 	"database/sql"
 	"dbmx/config/env"
+	"dbmx/model"
 	"log"
 	"time"
 
@@ -39,13 +40,13 @@ func InitAuth(db *sql.DB, supabaseConfig env.SupabaseConfig) *Auth {
 		IsLoggedIn:     false,
 	}
 
-	a.GetLatestSession()
+	a.getLatestSession()
 
 	return a
 }
 
 // Fetch the latest session from db and set the logged in user
-func (a *Auth) GetLatestSession() {
+func (a *Auth) getLatestSession() {
 	var err error
 
 	// Fetch the latest session from db
@@ -59,7 +60,7 @@ func (a *Auth) GetLatestSession() {
 	if time.Now().UTC().After(time.Unix(token.ExpiresAt, 0)) {
 		// Token expired, try to refresh
 		// TODO: handle multi retries
-		token, err = a.RefreshSession(token.RefreshToken)
+		token, err = a.refreshSession(token.RefreshToken)
 		if err != nil {
 			log.Println("Error refreshing token:", err)
 			return
@@ -126,7 +127,7 @@ func (a *Auth) Login(email, password string) (bool, error) {
 	}
 
 	// Save session in db
-	if err := a.SaveSession(*token); err != nil {
+	if err := a.saveSession(*token); err != nil {
 		return false, err
 	}
 
@@ -153,7 +154,7 @@ func (a *Auth) Login(email, password string) (bool, error) {
 	return true, nil
 }
 
-func (a *Auth) SaveSession(token types.TokenResponse) error {
+func (a *Auth) saveSession(token types.TokenResponse) error {
 	_, err := a.DB.Exec("INSERT INTO active_session (access_token, refresh_token, expires_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?)", token.AccessToken, token.RefreshToken, token.ExpiresAt, time.Now().UTC(), time.Now().UTC())
 	if err != nil {
 		return err
@@ -161,24 +162,28 @@ func (a *Auth) SaveSession(token types.TokenResponse) error {
 	return nil
 }
 
-func (a *Auth) GetLoggedInUser() (types.User, error) {
+// Get Logged In User from memory
+func (a *Auth) GetLoggedInUser() (model.User, error) {
 	if !a.IsLoggedIn {
-		return types.User{}, errors.New("not logged in")
+		return model.User{}, errors.New("not logged in")
 	}
 	if a.User == nil {
-		return types.User{}, errors.New("user not found")
+		return model.User{}, errors.New("user not found")
 	}
-	return *a.User, nil
+	return model.User{
+		ID:    a.User.ID,
+		Email: a.User.Email,
+	}, nil
 }
 
-func (a *Auth) RefreshSession(refreshToken string) (types.TokenResponse, error) {
+func (a *Auth) refreshSession(refreshToken string) (types.TokenResponse, error) {
 	token, err := a.SupabaseAuthedClient.RefreshToken(refreshToken)
 	if err != nil {
 		return types.TokenResponse{}, err
 	}
 
 	// Update session in db
-	if err := a.SaveSession(*token); err != nil {
+	if err := a.saveSession(*token); err != nil {
 		return types.TokenResponse{}, err
 	}
 
