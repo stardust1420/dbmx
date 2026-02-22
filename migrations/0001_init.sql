@@ -50,6 +50,15 @@ CREATE TABLE IF NOT EXISTS "tabs" (
 
 CREATE INDEX IF NOT EXISTS idx_tabs_is_active ON "tabs" ("is_active");
 
+CREATE TABLE IF NOT EXISTS "active_session" (
+  "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+  "access_token" TEXT NOT NULL,
+  "refresh_token" TEXT NOT NULL,
+  "expires_at" TIMESTAMP NOT NULL,
+  "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- +goose Down
 DROP TABLE IF EXISTS "tabs";
 DROP TABLE IF EXISTS "connections";

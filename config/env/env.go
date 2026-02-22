@@ -7,11 +7,17 @@ import (
 )
 
 type Env struct {
-	Sqlite3 Sqlite3 `mapstructure:"sqlite3"`
+	Sqlite3        Sqlite3        `mapstructure:"sqlite3"`
+	SupabaseConfig SupabaseConfig `mapstructure:"supabase_config"`
 }
 
 type Sqlite3 struct {
 	Name string `mapstructure:"name"`
+}
+
+type SupabaseConfig struct {
+	ProjectID string `mapstructure:"project_id"`
+	AnonKey   string `mapstructure:"anon_key"`
 }
 
 // GetConfig returns entire project configuration
