@@ -8,4 +8,4 @@ export function Login(arg1:string,arg2:string):Promise<boolean>;
 
 export function Logout():Promise<void>;
 
-export function SignUp(arg1:string,arg2:string):Promise<boolean>;
+export function SignUp(arg1:string,arg2:string,arg3:string,arg4:string):Promise<boolean>;

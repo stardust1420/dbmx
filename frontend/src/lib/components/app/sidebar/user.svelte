@@ -11,8 +11,11 @@
 	import LogOutIcon from '@lucide/svelte/icons/log-out';
 	import SparklesIcon from '@lucide/svelte/icons/sparkles';
 	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
+	import { GetLoggedInUser } from '$lib/wailsjs/go/app/Auth';
+	import { toast } from 'svelte-sonner';
+	import { Logout } from '$lib/wailsjs/go/app/Auth';
 
-	let { user }: { user: { name: string; email: string; avatar: string } } = $props();
 	const sidebar = useSidebar();
 
 	let open = $state(false);
@@ -21,6 +24,46 @@
 		goto(route);
 		open = false;
 	}
+
+	
+	let username = $state("No Account");
+	let email = $state("No Account");
+	let avatar = $state("https://api.dicebear.com/9.x/avataaars-neutral/svg?backgroundRotation=0,360");
+	let isLoggedIn = $state(false);
+	
+	onMount(() => {
+		GetLoggedInUser()
+			.then((user) => {
+				username = user.fullname;
+				email = user.email;
+				avatar = "https://api.dicebear.com/9.x/fun-emoji/svg?seed=Aneka";
+				isLoggedIn = true;
+			})
+			.catch((error) => {
+				console.log(error);
+			});
+	});
+
+	let logout = () => {
+		Logout()
+			.then(() => {
+				toast.success('Logged out successfully');
+				isLoggedIn = false;
+				username = "No Account";
+				email = "No Account";
+				avatar = "https://api.dicebear.com/9.x/avataaars-neutral/svg?backgroundRotation=0,360";
+			})
+			.catch((error) => {
+				toast.error('Failed to log out', {
+					description: error,
+					action: {
+						label: 'OK',
+						onClick: () => console.info('OK')
+					}
+				});
+			});
+	};
+
 </script>
 
 <Sidebar.Menu>
@@ -34,12 +77,12 @@
 						{...props}
 					>
 						<Avatar.Root class="size-8 rounded-lg">
-							<Avatar.Image src={user.avatar} alt={user.name} />
+							<Avatar.Image src={avatar} alt={username} />
 							<Avatar.Fallback class="rounded-lg">CN</Avatar.Fallback>
 						</Avatar.Root>
 						<div class="grid flex-1 text-left text-sm leading-tight">
-							<span class="truncate font-medium">{user.name}</span>
-							<span class="truncate text-xs">{user.email}</span>
+							<span class="truncate font-medium">{username}</span>
+							<span class="truncate text-xs">{email}</span>
 						</div>
 						<ChevronsUpDownIcon class="ml-auto size-4" />
 					</Sidebar.MenuButton>
@@ -54,12 +97,12 @@
 				<DropdownMenu.Label class="p-0 font-normal">
 					<div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
 						<Avatar.Root class="size-8 rounded-lg">
-							<Avatar.Image src={user.avatar} alt={user.name} />
+							<Avatar.Image src={avatar} alt={username} />
 							<Avatar.Fallback class="rounded-lg">CN</Avatar.Fallback>
 						</Avatar.Root>
 						<div class="grid flex-1 text-left text-sm leading-tight">
-							<span class="truncate font-medium">{user.name}</span>
-							<span class="truncate text-xs">{user.email}</span>
+							<span class="truncate font-medium">{username}</span>
+							<span class="truncate text-xs">{email}</span>
 						</div>
 					</div>
 				</DropdownMenu.Label>
@@ -72,7 +115,13 @@
 				</DropdownMenu.Group>
 				<DropdownMenu.Separator />
 				<DropdownMenu.Group>
-					<DropdownMenu.Item onSelect={() => goToRoute('/user')}>
+					<DropdownMenu.Item onSelect={() => {
+						if(isLoggedIn){
+							goToRoute('/user')
+						}else{
+							goToRoute('/user/login')
+						}
+					}}>
 						<UserIcon />
 						User
 					</DropdownMenu.Item>
@@ -89,11 +138,6 @@
 						Billing
 					</DropdownMenu.Item>
 				</DropdownMenu.Group>
-				<DropdownMenu.Separator />
-				<DropdownMenu.Item onSelect={() => goToRoute('/user')}>
-					<LogOutIcon />
-					Log out
-				</DropdownMenu.Item>
 			</DropdownMenu.Content>
 		</DropdownMenu.Root>
 	</Sidebar.MenuItem>

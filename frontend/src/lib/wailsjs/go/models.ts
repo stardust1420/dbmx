@@ -363,6 +363,7 @@ export namespace model {
 	export class User {
 	    id: number[];
 	    email: string;
+	    fullname: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new User(source);
@@ -372,6 +373,7 @@ export namespace model {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
 	        this.email = source["email"];
+	        this.fullname = source["fullname"];
 	    }
 	}
 

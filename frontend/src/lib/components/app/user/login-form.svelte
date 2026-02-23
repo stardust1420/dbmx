@@ -5,8 +5,38 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { cn } from '$lib/utils.js';
 	import type { HTMLAttributes } from 'svelte/elements';
+	import { Login } from '$lib/wailsjs/go/app/Auth';
+	import { toast } from 'svelte-sonner';
+	import { goto } from '$app/navigation';
 
 	let { class: className, ...restProps }: HTMLAttributes<HTMLDivElement> = $props();
+	let email = $state('');
+	let password = $state('');
+	
+	let login = () => {
+		if (email.trim() === '') {
+			toast.error('Email is required');
+			return;
+		}
+		if (password.trim() === '') {
+			toast.error('Password is required');
+			return;
+		}
+		Login(email, password)
+			.then(() => {
+				toast.success('Logged in successfully');
+				goto('/');
+			})
+			.catch((error) => {
+				toast.error('Failed to log in', {
+					description: error,
+					action: {
+						label: 'OK',
+						onClick: () => console.info('OK')
+					}
+				});
+			});
+	}	
 </script>
 
 <div class={cn('flex flex-col gap-6', className)} {...restProps}>
@@ -46,7 +76,7 @@
 					<div class="grid gap-6">
 						<div class="grid gap-3">
 							<Label for="email">Email</Label>
-							<Input id="email" type="email" placeholder="m@example.com" required />
+							<Input id="email" type="email" placeholder="m@example.com" bind:value={email} required />
 						</div>
 						<div class="grid gap-3">
 							<div class="flex items-center">
@@ -55,13 +85,13 @@
 									Forgot your password?
 								</a>
 							</div>
-							<Input id="password" type="password" required />
+							<Input id="password" type="password" bind:value={password} required />
 						</div>
-						<Button type="submit" class="w-full">Login</Button>
+						<Button type="submit" class="w-full" onclick={login}>Login</Button>
 					</div>
 					<div class="text-center text-sm">
 						Don&apos;t have an account?
-						<a href="##" class="underline underline-offset-4"> Sign up </a>
+						<a href="/user/signup" class="underline underline-offset-4"> Sign up </a>
 					</div>
 				</div>
 			</form>
