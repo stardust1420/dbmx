@@ -79,8 +79,8 @@ importers:
         specifier: ^3.10.0
         version: 3.10.0
       '@lucide/svelte':
-        specifier: ^0.544.0
-        version: 0.544.0(svelte@5.45.6)
+        specifier: ^0.561.0
+        version: 0.561.0(svelte@5.45.6)
       '@sveltejs/adapter-static':
         specifier: ^3.0.8
         version: 3.0.10(@sveltejs/kit@2.49.1(@sveltejs/vite-plugin-svelte@4.0.4(svelte@5.45.6)(vite@5.4.21))(svelte@5.45.6)(vite@5.4.21))
@@ -157,8 +157,8 @@ importers:
         specifier: ^2.6.0
         version: 2.6.0
       tailwind-variants:
-        specifier: ^0.2.1
-        version: 0.2.1(tailwindcss@3.4.18)
+        specifier: ^3.2.2
+        version: 3.2.2(tailwind-merge@2.6.0)(tailwindcss@3.4.18)
       tailwindcss:
         specifier: ^3.4.9
         version: 3.4.18
@@ -521,8 +521,8 @@ packages:
   '@layerstack/utils@2.0.0-next.12':
     resolution: {integrity: sha512-fhGZUlSr3N+D44BYm37WKMGSEFyZBW+dwIqtGU8Cl54mR4TLQ/UwyGhdpgIHyH/x/8q1abE0fP0Dn6ZsrDE3BA==}
 
-  '@lucide/svelte@0.544.0':
-    resolution: {integrity: sha512-9f9O6uxng2pLB01sxNySHduJN3HTl5p0HDu4H26VR51vhZfiMzyOMe9Mhof3XAk4l813eTtl+/DYRvGyoRR+yw==}
+  '@lucide/svelte@0.561.0':
+    resolution: {integrity: sha512-vofKV2UFVrKE6I4ewKJ3dfCXSV6iP6nWVmiM83MLjsU91EeJcEg7LoWUABLp/aOTxj1HQNbJD1f3g3L0JQgH9A==}
     peerDependencies:
       svelte: ^5
 
@@ -2020,12 +2020,6 @@ packages:
   tailwind-merge@3.4.0:
     resolution: {integrity: sha512-uSaO4gnW+b3Y2aWoWfFpX62vn2sR3skfhbjsEnaBI81WD1wBLlHZe5sWf0AqjksNdYTbGBEd0UasQMT3SNV15g==}
 
-  tailwind-variants@0.2.1:
-    resolution: {integrity: sha512-2xmhAf4UIc3PijOUcJPA1LP4AbxhpcHuHM2C26xM0k81r0maAO6uoUSHl3APmvHZcY5cZCY/bYuJdfFa4eGoaw==}
-    engines: {node: '>=16.x', pnpm: '>=7.x'}
-    peerDependencies:
-      tailwindcss: '*'
-
   tailwind-variants@3.2.2:
     resolution: {integrity: sha512-Mi4kHeMTLvKlM98XPnK+7HoBPmf4gygdFmqQPaDivc3DpYS6aIY6KiG/PgThrGvii5YZJqRsPz0aPyhoFzmZgg==}
     engines: {node: '>=16.x', pnpm: '>=7.x'}
@@ -2502,7 +2496,7 @@ snapshots:
       d3-time-format: 4.1.0
       lodash-es: 4.17.21
 
-  '@lucide/svelte@0.544.0(svelte@5.45.6)':
+  '@lucide/svelte@0.561.0(svelte@5.45.6)':
     dependencies:
       svelte: 5.45.6
 
@@ -3969,10 +3963,11 @@ snapshots:
 
   tailwind-merge@3.4.0: {}
 
-  tailwind-variants@0.2.1(tailwindcss@3.4.18):
+  tailwind-variants@3.2.2(tailwind-merge@2.6.0)(tailwindcss@3.4.18):
     dependencies:
-      tailwind-merge: 2.6.0
       tailwindcss: 3.4.18
+    optionalDependencies:
+      tailwind-merge: 2.6.0
 
   tailwind-variants@3.2.2(tailwind-merge@3.4.0)(tailwindcss@3.4.18):
     dependencies:

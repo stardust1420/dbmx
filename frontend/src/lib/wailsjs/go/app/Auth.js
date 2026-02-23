@@ -14,6 +14,6 @@ export function Logout() {
   return window['go']['app']['Auth']['Logout']();
 }
 
-export function SignUp(arg1, arg2) {
-  return window['go']['app']['Auth']['SignUp'](arg1, arg2);
+export function SignUp(arg1, arg2, arg3, arg4) {
+  return window['go']['app']['Auth']['SignUp'](arg1, arg2, arg3, arg4);
 }

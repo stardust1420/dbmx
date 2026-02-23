@@ -13,7 +13,7 @@ var configFiles embed.FS
 
 type Env struct {
 	Sqlite3        Sqlite3        `mapstructure:"sqlite3"`
-	SupabaseConfig SupabaseConfig `mapstructure:"supabase_config"`
+	SupabaseConfig SupabaseConfig `mapstructure:"supabase"`
 }
 
 type Sqlite3 struct {

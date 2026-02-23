@@ -17,6 +17,7 @@
 	import { GetAllConnections } from '$lib/wailsjs/go/app/Connections';
 
 	import { postgresConnectionsMap } from '$lib/state.svelte';
+	import { GetLoggedInUser } from '$lib/wailsjs/go/app/Auth';
 
 	// Fetch all connections when the root layout is mounted
 	// This is mounted only for the root layout, so it will only run once
@@ -58,11 +59,29 @@
 	let open = $state(false);
 
 	function handleKeydown(e: KeyboardEvent) {
+		// Fetch the logged in user when the command palette is opened
+		getLoggedInUser();
 		if (e.key === 'p' && (e.metaKey || e.ctrlKey)) {
 			e.preventDefault();
 			open = !open;
 		}
 	}
+
+	let isLoggedIn = $state(false);
+
+	let getLoggedInUser = () => {
+		GetLoggedInUser()
+			.then((user) => {
+				isLoggedIn = true;
+			})
+			.catch((error) => {
+				console.log(error);
+			});
+	};
+	
+	onMount(() => {
+		getLoggedInUser();
+	});
 </script>
 
 <svelte:document onkeydown={handleKeydown} />
@@ -81,7 +100,7 @@
 				<span>Connections</span>
 				<Command.Shortcut>⌘C</Command.Shortcut>
 			</Command.Item>
-			<Command.Item onSelect={() => goToRoute('/user')}>
+			<Command.Item onSelect={() => {if (isLoggedIn) {goToRoute('/user')} else {goToRoute('/user/login')}}}>
 				<UserIcon class="mr-2 size-4" />
 				<span>User</span>
 				<Command.Shortcut>⌘P</Command.Shortcut>

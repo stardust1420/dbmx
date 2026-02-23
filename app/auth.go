@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"dbmx/config/env"
 	"dbmx/model"
+	"fmt"
 	"log"
 	"time"
 
@@ -51,13 +52,15 @@ func (a *Auth) getLatestSession() {
 
 	// Fetch the latest session from db
 	var token types.TokenResponse
-	_ = a.DB.QueryRow("SELECT access_token, refresh_token, expires_at FROM active_session").Scan(&token.AccessToken, &token.RefreshToken, &token.ExpiresAt)
-	if token.AccessToken == "" && token.RefreshToken == "" {
+	err = a.DB.QueryRow("SELECT access_token, refresh_token, expires_at FROM active_session").Scan(&token.AccessToken, &token.RefreshToken, &token.ExpiresAt)
+	if err != nil {
+		log.Println("Error getting latest session:", err)
 		return
 	}
 
 	// Check for expired access token token
-	if time.Now().UTC().After(time.Unix(token.ExpiresAt, 0)) {
+	if time.Now().UTC().Unix() > token.ExpiresAt {
+		fmt.Println("token expired, refreshing...")
 		// Token expired, try to refresh
 		// TODO: handle multi retries
 		token, err = a.refreshSession(token.RefreshToken)
@@ -83,12 +86,24 @@ func (a *Auth) getLatestSession() {
 	a.User = &userRes.User
 }
 
-func (a *Auth) SignUp(email, password string) (bool, error) {
+func (a *Auth) SignUp(fullname, email, password, confirmPassword string) (bool, error) {
+	if password != confirmPassword {
+		return false, errors.New("passwords do not match")
+	}
+
 	token, err := a.SupabaseClient.Signup(types.SignupRequest{
 		Email:    email,
 		Password: password,
+		Data: map[string]interface{}{
+			"fullname": fullname,
+		},
 	})
 	if err != nil {
+		return false, err
+	}
+
+	// Save session in db
+	if err := a.saveSession(token.Session); err != nil {
 		return false, err
 	}
 
@@ -127,7 +142,7 @@ func (a *Auth) Login(email, password string) (bool, error) {
 	}
 
 	// Save session in db
-	if err := a.saveSession(*token); err != nil {
+	if err := a.saveSession(token.Session); err != nil {
 		return false, err
 	}
 
@@ -154,8 +169,15 @@ func (a *Auth) Login(email, password string) (bool, error) {
 	return true, nil
 }
 
-func (a *Auth) saveSession(token types.TokenResponse) error {
-	_, err := a.DB.Exec("INSERT INTO active_session (access_token, refresh_token, expires_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?)", token.AccessToken, token.RefreshToken, token.ExpiresAt, time.Now().UTC(), time.Now().UTC())
+func (a *Auth) saveSession(token types.Session) error {
+	// Delete the active session from db
+	_, err := a.DB.Exec("DELETE FROM active_session")
+	if err != nil {
+		return err
+	}
+
+	// Insert the new session
+	_, err = a.DB.Exec("INSERT INTO active_session (access_token, refresh_token, expires_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?)", token.AccessToken, token.RefreshToken, token.ExpiresAt, time.Now().UTC(), time.Now().UTC())
 	if err != nil {
 		return err
 	}
@@ -171,19 +193,20 @@ func (a *Auth) GetLoggedInUser() (model.User, error) {
 		return model.User{}, errors.New("user not found")
 	}
 	return model.User{
-		ID:    a.User.ID,
-		Email: a.User.Email,
+		ID:       a.User.ID,
+		Email:    a.User.Email,
+		Fullname: a.User.UserMetadata["fullname"].(string),
 	}, nil
 }
 
 func (a *Auth) refreshSession(refreshToken string) (types.TokenResponse, error) {
-	token, err := a.SupabaseAuthedClient.RefreshToken(refreshToken)
+	token, err := a.SupabaseClient.RefreshToken(refreshToken)
 	if err != nil {
 		return types.TokenResponse{}, err
 	}
 
 	// Update session in db
-	if err := a.saveSession(*token); err != nil {
+	if err := a.saveSession(token.Session); err != nil {
 		return types.TokenResponse{}, err
 	}
 

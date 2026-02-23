@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS "active_session" (
   "id" INTEGER PRIMARY KEY AUTOINCREMENT,
   "access_token" TEXT NOT NULL,
   "refresh_token" TEXT NOT NULL,
-  "expires_at" TIMESTAMP NOT NULL,
+  "expires_at" BIGINT NOT NULL,
   "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

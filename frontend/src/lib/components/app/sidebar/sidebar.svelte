@@ -15,13 +15,6 @@
 		goto(route);
 	}
 
-
-	let userData = {
-		name: 'Stardust',
-		email: 'stardust@dbmx.com',
-		avatar: 'https://api.dicebear.com/9.x/glass/svg?seed=Kimberly'
-	};
-
 	let {
 		ref = $bindable(null),
 		tabID = $bindable(0),
@@ -550,7 +543,7 @@
 		</Sidebar.Group>
 	</Sidebar.Content>
 	<Sidebar.Footer>
-		<NavUser user={userData} />
+		<NavUser />
 	</Sidebar.Footer>
 	<Sidebar.Rail />
 </Sidebar.Root>
