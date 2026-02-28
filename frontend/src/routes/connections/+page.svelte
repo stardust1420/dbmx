@@ -6,6 +6,7 @@
 	import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
 	import { Button } from '$lib/components/ui/button/index.js';
 	import Plus from '@lucide/svelte/icons/plus';
+	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 
 	let engine = $state('PostgreSQL');
 	let connectionsTable: any;
@@ -15,7 +16,15 @@
 <div class="flex h-full flex-col items-center justify-center overflow-hidden">
 	<div class="flex h-full w-full flex-col self-center overflow-hidden">
 		<div class="flex h-12 flex-[2] items-center justify-center pt-4">
-			<h1 class="font-mono text-6xl font-bold">Connections</h1>
+			<div class="flex items-center justify-center flex-row w-full">
+				<a class="flex flex-[1] items-center justify-center" href="/">
+					<ChevronLeft size={32} />
+				</a>
+				<h1 class="flex flex-[9] items-center justify-center font-mono text-6xl font-bold">Connections</h1>
+				<div class="flex-[1] items-center justify-center">
+					<!-- Empty box -->
+				</div>
+			</div>
 		</div>
 		<div class="flex flex-[1] items-center justify-end mx-36">
 			<Drawer.Root direction="right" onOpenChange={(open) => { if (!open) connectionsTable.getAllConnections() }}>

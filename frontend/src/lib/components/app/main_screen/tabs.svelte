@@ -755,6 +755,7 @@
 									<Label class="ml-2 text-red-500">Disconnected</Label>
 								{:else}
 									<Label class="ml-2 text-green-500">Connected</Label>
+									<Label class="ml-4 text-white">Run with ⌥(option) + return</Label>
 								{/if}
 							</div>
 							<div class="flex px-2">
@@ -1090,7 +1091,10 @@
 										</Select.Group>
 									</Select.Content>
 								</Select.Root>
+								<Label class="text-white mr-4">Run with ⌥(option) + return</Label>
+								
 							</div>
+							
 
 							<!-- Resizable Panes for Editor and Output -->
 							<Resizable.ResizablePaneGroup direction="vertical" class="h-full">
