@@ -16,5 +16,28 @@
     "linux/*": "bash -lc 'cd ../../ && bash ./scripts/build_db.sh'",
     "windows/*": "pwsh -NoProfile -ExecutionPolicy Bypass -Command \"Set-Location ..\\..; ./scripts/build_db.ps1\""
   },
+  "info": {
+    "companyName": "dbmx",
+    "productName": "dbmx",
+    "productVersion": "0.0.1",
+    "copyright": "Copyright (c) 2026 dbmx",
+    "comments": "dbmx",
+    "fileAssociations": [
+      {
+        "ext": "dbmx",
+        "name": "dbmx",
+        "description": "dbmx file",
+        "iconName": "appicon",
+        "role": "Editor"
+      }
+    ],
+    "protocols": [
+      {
+        "scheme": "dbmx",
+        "description": "dbmx protocol",
+        "role": "Editor"
+      }
+    ]
+  },
   "tags": "production"
 }

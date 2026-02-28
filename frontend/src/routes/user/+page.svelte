@@ -5,6 +5,7 @@ import { goto } from '$app/navigation';
 import Label from '$lib/components/ui/label/label.svelte';
 import { Button } from '$lib/components/ui/button/index.js';
 import { toast } from 'svelte-sonner';
+import { ChevronLeft } from 'lucide-svelte';
 
 let fullname = $state("No Account");
 let email = $state("No Account");
@@ -43,12 +44,17 @@ let logout = () => {
 
 </script>
 
-<div class="flex flex-col gap-4">
-	<Label>{email}</Label>
-	<Label>{fullname}</Label>
-    {#if isLoggedIn}
-        <Button onclick={logout}>Logout</Button>
-    {:else}
-        <Button onclick={() => goto('/user/login')}>Login</Button>
-    {/if}
+<div class="flex h-full w-full items-center justify-center">
+    <div class="flex flex-col gap-4 w-96">
+        <a class="" href="/">
+            <ChevronLeft size={32} />
+        </a>
+        <Label>{email}</Label>
+        <Label>{fullname}</Label>
+        {#if isLoggedIn}
+            <Button onclick={logout}>Logout</Button>
+        {:else}
+            <Button onclick={() => goto('/user/login')}>Login</Button>
+        {/if}
+    </div>
 </div>

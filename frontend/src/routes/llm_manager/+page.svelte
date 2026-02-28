@@ -1,2 +1,2 @@
-<h1>LLM Manager Page</h1>
+<h1>Coming soon...</h1>
 <a href="/">Home</a>
