@@ -303,8 +303,6 @@
 	let checked = $derived(!disabled);
 
 	onMount(async () => {
-		console.log(connectionID);
-		console.log(newConnection);
 		if (!newConnection && connectionID) {
 			try {
 				const connection = await GetConnection(connectionID);
@@ -639,20 +637,20 @@
 	</div>
 	<Drawer.Footer>
 		{#if newConnection}
-			<div class="flex flex-row gap-2">
-				<Button class="w-96 self-center bg-blue-700 hover:bg-blue-800" variant="outline"
+			<div class="flex flex-row gap-2 border">
+				<Button class="flex flex-1 self-center bg-blue-700 hover:bg-blue-800" variant="primary"
 					onclick={testConnectPostgres}
 				>Test</Button>
-				<Button class="w-96 self-center bg-green-700 hover:bg-green-800" variant="outline"
+				<Button class="flex flex-1 self-center bg-green-700 hover:bg-green-800" variant="primary"
 					onclick={connectPostgres}
 				>Save</Button>
 			</div>
 		{:else if checked}
-			<div class="flex flex-row gap-2">
-				<Button class="w-96 self-center bg-blue-700 hover:bg-blue-800" variant="outline"
+			<div class="flex flex-row gap-2 border">
+				<Button class="flex flex-1 self-center bg-blue-700 hover:bg-blue-800" variant="primary"
 						onclick={testConnectPostgres}
 				>Test</Button>
-				<Button class="w-96 self-center bg-orange-700 hover:bg-orange-800" variant="outline"
+				<Button class="flex flex-1 self-center bg-orange-700 hover:bg-orange-800" variant="primary"
 					onclick={updateConnection}
 				>Update</Button>
 			</div>
