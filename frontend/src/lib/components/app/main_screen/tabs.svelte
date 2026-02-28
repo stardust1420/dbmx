@@ -412,6 +412,9 @@
 	}
 
 	function executeQuery() {
+		if (tabType == 'table') {
+			return;
+		}
 		if ($selectedQuery.trim() == '') {
 			console.log('selected query is empty');
 			console.log($selectedQuery.trim());
