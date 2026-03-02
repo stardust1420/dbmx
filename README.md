@@ -2,7 +2,7 @@
   <img src="build/appicon.png" alt="dbmx logo" width="120" />
 </p>
 
-<h1 align="center">dbmx</h1>
+<h1 align="center">DBMX</h1>
 
 <p align="center">
   <strong>An AI-native database management tool built for speed and simplicity.</strong>
@@ -42,14 +42,29 @@
 
 ## Screenshots
 
-#### Sidebar & Tabs
-<img width="1440" alt="Sidebar and Tabs" src="https://github.com/user-attachments/assets/a5b962ca-3330-4c81-a4d4-550ebcd6025e" />
+#### DBMX
+<img width="1440" height="900" alt="dbmx" src="https://github.com/user-attachments/assets/765dbede-dead-43d9-ba32-a4e616f860c1" />
 
-#### Connect to a Database Server
-<img width="1440" alt="Connect to a Database Server" src="https://github.com/user-attachments/assets/c221522d-3b2f-40a6-ab5e-9f496dd7bc31" />
+#### Multi Database Sidebar
+<img width="727" height="708" alt="sidebar" src="https://github.com/user-attachments/assets/e06b1ba3-f3af-4b4a-a70e-a564b24f6139" />
 
-#### Resizable Editor & Autocomplete
-<img width="1440" alt="Resizable Editor View and Autocomplete Suggestions" src="https://github.com/user-attachments/assets/a7406e8a-a76a-4648-bc9b-4777fd79d6fb" />
+
+#### Table View
+<img width="1440" height="900" alt="table" src="https://github.com/user-attachments/assets/a805c93d-0d79-4873-99a0-2eb5f2265966" />
+
+#### Autocomplete Tables and Columns
+<img width="572" height="432" alt="autocomplete" src="https://github.com/user-attachments/assets/4f1a8d25-565f-4957-80db-f18ca1e79339" />
+
+#### Manage Schema
+<img width="1440" height="900" alt="manage" src="https://github.com/user-attachments/assets/a251c8f6-cebc-4d43-a8aa-2d54546d7c0c" />
+
+#### Manage Connections
+<img width="1440" height="900" alt="manage" src="https://github.com/user-attachments/assets/b03d41cc-10ca-44c9-a8db-e5a815a243bb" />
+
+
+#### Edit Cells
+<img width="468" height="451" alt="cell_edit" src="https://github.com/user-attachments/assets/6046f58b-b20e-4524-8173-43ebed845401" />
+
 
 ---
 
