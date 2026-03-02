@@ -48,7 +48,6 @@
 #### Multi Database Sidebar
 <img width="727" height="708" alt="sidebar" src="https://github.com/user-attachments/assets/e06b1ba3-f3af-4b4a-a70e-a564b24f6139" />
 
-
 #### Table View
 <img width="1440" height="900" alt="table" src="https://github.com/user-attachments/assets/a805c93d-0d79-4873-99a0-2eb5f2265966" />
 
@@ -59,8 +58,7 @@
 <img width="1440" height="900" alt="manage" src="https://github.com/user-attachments/assets/a251c8f6-cebc-4d43-a8aa-2d54546d7c0c" />
 
 #### Manage Connections
-<img width="1440" height="900" alt="manage" src="https://github.com/user-attachments/assets/b03d41cc-10ca-44c9-a8db-e5a815a243bb" />
-
+<img width="1440" height="900" alt="connections" src="https://github.com/user-attachments/assets/847035d3-90e8-461c-b909-9885ceb1faa0" />
 
 #### Edit Cells
 <img width="468" height="451" alt="cell_edit" src="https://github.com/user-attachments/assets/6046f58b-b20e-4524-8173-43ebed845401" />
