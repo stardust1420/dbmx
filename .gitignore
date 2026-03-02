@@ -11,4 +11,4 @@ config/env/env.toml
 .DS_Store
 build/.DS_Store
 dbmx
-
+dbmx.dmg
