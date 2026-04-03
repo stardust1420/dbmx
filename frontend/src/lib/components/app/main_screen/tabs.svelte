@@ -717,16 +717,12 @@
 						</Button>
 					</Tabs.List>
 				</div>
-				<!-- <div class="flex">
+				<div class="flex">
 					<Button variant="secondary" size="sm" onclick={toggleChatPane}>
 						<Chat size={16} />
-						{#if tabType == 'table'}
-							Chat with {tabName}
-						{:else}
-							Chat with {$selectedDBDisplay}
-						{/if}
+						Ask Stardust AI
 					</Button>
-				</div> -->
+				</div>
 			</div>
 		</header>
 
