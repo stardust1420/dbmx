@@ -72,7 +72,7 @@
 </script>
 
 <Resizable.PaneGroup direction="horizontal">
-	<Resizable.Pane defaultSize={100} class="mr-1">
+	<Resizable.Pane defaultSize={100}>
 		<Sidebar.Provider>
 			<AppSidebar
 				bind:tabID
@@ -116,7 +116,7 @@
 		onCollapse={() => (chatPaneCollapsed = true)}
 		onExpand={() => (chatPaneCollapsed = false)}
 		bind:this={chatPane}
-		class="flex rounded-lg bg-neutral-900 my-2"
+		class="flex rounded-lg bg-black my-2"
 	>
 		<div class="flex w-full h-full flex-col">
 			<!-- header -->
@@ -137,7 +137,7 @@
 				</div>
 			</div>
 			<div
-				class="flex flex-[1] flex-col items-center justify-center rounded-t-3xl bg-black"
+				class="flex flex-[1] flex-col items-center justify-center rounded-3xl bg-neutral-800 mx-2"
 			>
 				<div class="flex w-full flex-[5] items-center justify-center">
 					<Textarea class="max-h-48 m-1 focus-visible:ring-0 border-0" placeholder="Ask anything..." />
