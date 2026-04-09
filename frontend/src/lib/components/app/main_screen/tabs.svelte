@@ -1032,7 +1032,7 @@
 										</Collapsible.Content>
 									</Collapsible.Root>
 								</div>
-								<div class="flex flex-1 overflow-auto border">
+								<div class="flex flex-1 overflow-auto">
 									<div class="h-full w-full overflow-auto">
 										{#if $columns.length > 0}
 											{#key tabID}
