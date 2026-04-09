@@ -14,6 +14,23 @@
 	import * as Kbd from '$lib/components/ui/kbd/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import * as Select from "$lib/components/ui/select/index.js";
+	import Label from '$lib/components/ui/label/label.svelte';
+
+	const models = [
+		{ value: "gemini-3.1-pro-high", label: "Gemini 3.1 Pro (High)" },
+		{ value: "gemini-3.1-pro-low", label: "Gemini 3.1 Pro (Low)" },
+		{ value: "gemini-3-flash-preview", label: "Gemini 3 Flash" },
+		{ value: "claude-sonnet-4.6-thinking", label: "Claude Sonnet 4.6 (Thinking)" },
+		{ value: "claude-opus-4.6-thinking", label: "Claude Opus 4.6 (Thinking)" },
+		{ value: "gpt-oss-120b-medium", label: "GPT OSS 120B (Medium)" }
+	];
+ 
+	let value = $state("Claude Sonnet 4.6 (Thinking)");
+	
+	const triggerContent = $derived(
+		models.find((f) => f.value === value)?.label ?? "Claude Sonnet 4.6 (Thinking)"
+	);
 
 	// Active tab properties
 	let tabID = $state(0);
@@ -146,13 +163,30 @@
 				<Tooltip.Provider>
 					<Tooltip.Root>
 						<Tooltip.Trigger>
-							<Button variant="ghost"><Plus size={12} /></Button>
+							<Button variant="ghost" class="m-1"><Plus size={12} /></Button>
 						</Tooltip.Trigger>
 						<Tooltip.Content>
 							<p>Add context</p>
 						</Tooltip.Content>
 					</Tooltip.Root>
 				</Tooltip.Provider>
+				<Select.Root type="single" name="model" bind:value>
+					<Select.Trigger class="w-auto m-1">
+						{triggerContent}
+					</Select.Trigger>
+					<Select.Content>
+						<Select.Group>
+						{#each models as model (model.value)}
+							<Select.Item
+							value={model.value}
+							label={model.label}
+							>
+							{model.label}
+							</Select.Item>
+						{/each}
+						</Select.Group>
+					</Select.Content>
+				</Select.Root>
 				</div>
 			</div>
 		</div>
