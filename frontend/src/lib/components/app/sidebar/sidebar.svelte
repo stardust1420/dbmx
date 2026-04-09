@@ -409,7 +409,7 @@
 	{...restProps}
 	variant="floating"
 >
-	<Sidebar.Content>
+	<Sidebar.Content class="bg-black">
 		<Sidebar.Group>
 			<Sidebar.GroupLabel>
 				<div class="flex w-full items-center justify-between">
@@ -422,7 +422,7 @@
 				</div>
 			</Sidebar.GroupLabel>
 			<Sidebar.GroupContent>
-				<Sidebar.Menu>
+				<Sidebar.Menu class="mt-2">
 					<!-- Check if postgresConnectionsMap is empty -->
 					{#if postgresConnectionsMap.size === 0}
 						<Sidebar.MenuItem class="h-96 flex flex-col items-center justify-center">
@@ -434,7 +434,7 @@
 					{:else}
 						{#each Array.from(postgresConnectionsMap.entries()) as [key, connection]}
 							<Sidebar.MenuItem
-								class="{getColorClass(connection.Color)} bg-opacity-20 hover:bg-opacity-25"
+								class="{getColorClass(connection.Color)} bg-opacity-20 hover:bg-opacity-25 rounded-3xl"
 							>
 								<Collapsible.Root>
 									<Collapsible.Trigger onclick={() => establishConnection(connection.ID)}>
@@ -542,7 +542,7 @@
 			</Sidebar.GroupContent>
 		</Sidebar.Group>
 	</Sidebar.Content>
-	<Sidebar.Footer>
+	<Sidebar.Footer class="border border-0 bg-black">
 		<NavUser />
 	</Sidebar.Footer>
 	<Sidebar.Rail />

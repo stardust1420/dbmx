@@ -680,10 +680,10 @@
 	});
 </script>
 
-<div class="my-2 flex h-full flex-1 flex-col rounded-md">
+<div class="my-2 flex h-full flex-1 flex-col rounded-md bg-black">
 	<Tabs.Root value={tabID.toString()} class="flex h-full flex-1 flex-col overflow-hidden">
 		<!-- Tabs visible in the header -->
-		<header class="flex h-10 items-center justify-center">
+		<header class="flex h-10 items-center justify-center bg-black">
 			<div class="flex w-full items-center justify-between">
 				<div class="flex h-auto items-center justify-center overflow-x-auto">
 					<Sidebar.Trigger />
@@ -734,11 +734,11 @@
 		{#if tabsMap.size > 0}
 			<!-- Main Content on screen -->
 
+			<div class="flex h-screen flex-1 flex-col rounded-3xl bg-neutral-800">
 			{#if tabType == 'table'}
-				<div class="flex h-screen flex-1 flex-col">
 					<div class="flex h-full flex-1 flex-col justify-center">
 						<!-- Breadcrumb -->
-						<div class="mt-1 flex items-center justify-between">
+						<div class="mt-1 flex items-center justify-between mx-2">
 							<div class="flex items-center px-2">
 								<Breadcrumb.Root>
 									<Breadcrumb.List>
@@ -1061,18 +1061,16 @@
 							</div>
 						{/if}
 					</div>
-				</div>
 			{:else}
-				<div class="flex h-screen flex-1 flex-col rounded-md">
 					<Tabs.Content value={tabID.toString()} class="flex flex-col flex-1 overflow-hidden">
 						<div class="flex h-full flex-col">
 							<!-- Active DB Selector and Execute Query Button -->
-							<div class="flex items-center justify-between h-10 mb-2">
+							<div class="flex items-center justify-between h-10">
 								<Select.Root type="single" name="activeDatabase">
 									<Select.Trigger
 										class="{getColorClass(
 											$currentColor
-										)} prevent:default w-auto bg-opacity-20 hover:bg-opacity-25 mt-0.5 ml-0.5"
+										)} prevent:default w-auto bg-opacity-20 hover:bg-opacity-25 m-2 focus:ring-0 border-0"
 									>
 										{$selectedDBDisplay}
 									</Select.Trigger>
@@ -1106,7 +1104,7 @@
 								<Resizable.Pane
 									defaultSize={editorHeight}
 									minSize={10}
-									class="rsz-pane"
+									class="rsz-pane rounded-3xl mx-2"
 								>
 									<SqlEditor
 										bind:value={editor}
@@ -1142,8 +1140,9 @@
 							</Resizable.ResizablePaneGroup>
 						</div>
 					</Tabs.Content>
-				</div>
 			{/if}
+			</div>
+
 		{/if}
 	</Tabs.Root>
 </div>
