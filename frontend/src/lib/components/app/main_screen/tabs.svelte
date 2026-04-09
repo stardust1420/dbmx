@@ -69,6 +69,7 @@
 		orderBy = $bindable(''),
 		groupBy = $bindable(''),
 		tableColumns = $bindable([]),
+		chatPaneCollapsed = $bindable(false),
 		toggleChatPane
 	} = $props();
 	let editor = $state('');
@@ -77,6 +78,8 @@
 	let isWhereDropdownOpen = $state(false);
 	let isOrderByDropdownOpen = $state(false);
 	let isGroupByDropdownOpen = $state(false);
+
+	
 
 	// Table view tab state (for Data/Structure/Indexes)
 	let tableViewTab = $state('data');
@@ -718,10 +721,12 @@
 					</Tabs.List>
 				</div>
 				<div class="flex">
-					<Button variant="secondary" size="sm" onclick={toggleChatPane}>
-						<Chat size={16} />
-						Ask Stardust AI
-					</Button>
+					{#if chatPaneCollapsed}
+						<Button variant="secondary" size="sm" onclick={toggleChatPane}>
+							<Chat size={16} />
+							Ask Stardust AI
+						</Button>
+					{/if}
 				</div>
 			</div>
 		</header>
