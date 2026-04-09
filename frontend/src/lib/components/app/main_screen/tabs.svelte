@@ -720,7 +720,7 @@
 						</Button>
 					</Tabs.List>
 				</div>
-				<div class="flex">
+				<div class="flex mr-2">
 					{#if chatPaneCollapsed}
 						<Button variant="secondary" size="sm" onclick={toggleChatPane}>
 							<Chat size={16} />
@@ -731,10 +731,10 @@
 			</div>
 		</header>
 
+		<div class="flex h-screen flex-1 flex-col rounded-3xl bg-neutral-800">
 		{#if tabsMap.size > 0}
 			<!-- Main Content on screen -->
 
-			<div class="flex h-screen flex-1 flex-col rounded-3xl bg-neutral-800">
 			{#if tabType == 'table'}
 					<div class="flex h-full flex-1 flex-col justify-center">
 						<!-- Breadcrumb -->
@@ -765,10 +765,10 @@
 							<div class="flex px-2">
 								<Tabs.Root value={tableViewTab}>
 									<Tabs.List class="flex items-center justify-center gap-2">
-										<Tabs.Trigger class="h-8" value="data" onclick={() => (tableViewTab = 'data')}
+										<Tabs.Trigger class="h-8 bg-black" value="data" onclick={() => (tableViewTab = 'data')}
 											>Data</Tabs.Trigger
 										>
-										<Tabs.Trigger class="h-8" value="manage" onclick={() => (tableViewTab = 'manage')}
+										<Tabs.Trigger class="h-8 bg-black" value="manage" onclick={() => (tableViewTab = 'manage')}
 											>Manage</Tabs.Trigger
 										>
 									</Tabs.List>
@@ -787,13 +787,13 @@
 												<DropdownMenu.Root bind:open={isWhereDropdownOpen}>
 													<DropdownMenu.Trigger
 														disabled={true}
-														class="flex flex-1 items-center gap-2 p-1"
+														class="flex flex-1 items-center gap-2 bg-black rounded-md"
 													>
 														<Input
 															type="text"
 															id="where"
 															placeholder="Where..."
-															class="w-full focus-visible:ring-0"
+															class="w-full focus-visible:ring-0 border-0"
 															bind:value={where}
 															onkeyup={(e) => {
 																if (e.key === "'" || e.key === '"') {
@@ -838,7 +838,7 @@
 												</DropdownMenu.Root>
 											</div>
 											<Collapsible.Trigger>
-												<Button size="sm" variant="secondary">Advanced</Button>
+												<Button size="sm" variant="secondary" class="bg-black">Advanced</Button>
 											</Collapsible.Trigger>
 										</div>
 										<Collapsible.Content>
@@ -847,7 +847,7 @@
 												<DropdownMenu.Root bind:open={isSelectDropdownOpen}>
 													<DropdownMenu.Trigger
 														disabled={true}
-														class="flex flex-1 items-center gap-2 p-1"
+														class="flex flex-1 items-center gap-2 rounded-md bg-black"
 													>
 														<Input
 															type="text"
@@ -903,7 +903,7 @@
 													<DropdownMenu.Root bind:open={isOrderByDropdownOpen}>
 														<DropdownMenu.Trigger
 															disabled={true}
-															class="flex flex-1 items-center gap-2 p-1"
+															class="flex flex-1 items-center gap-2 rounded-md bg-black"
 														>
 															<Input
 																type="text"
@@ -958,7 +958,7 @@
 													<DropdownMenu.Root bind:open={isGroupByDropdownOpen}>
 														<DropdownMenu.Trigger
 															disabled={true}
-															class="flex flex-1 items-center p-1"
+															class="flex flex-1 items-center rounded-md bg-black"
 														>
 															<Input
 																type="text"
@@ -1008,8 +1008,10 @@
 														</DropdownMenu.Content>
 													</DropdownMenu.Root>
 												</div>
-												<div class="flex items-center gap-2 p-1">
+												<div class="flex items-center gap-2">
 													<Label for="limit">Limit</Label>
+													<div class="rounded-md bg-black">
+
 													<Input
 														type="text"
 														id="limit"
@@ -1017,9 +1019,11 @@
 														class="w-24 focus-visible:ring-0"
 														bind:value={limit}
 													/>
+													</div>
 												</div>
-												<div class="flex items-center gap-2 p-1">
+												<div class="flex items-center gap-2">
 													<Label for="offset">Offset</Label>
+													<div class="rounded-md bg-black">
 													<Input
 														type="text"
 														id="offset"
@@ -1027,6 +1031,7 @@
 														class="w-24 focus-visible:ring-0"
 														bind:value={offset}
 													/>
+													</div>
 												</div>
 											</div>
 										</Collapsible.Content>
@@ -1141,10 +1146,10 @@
 						</div>
 					</Tabs.Content>
 			{/if}
-			</div>
-
-		{/if}
-	</Tabs.Root>
+			
+			{/if}
+		</div>
+		</Tabs.Root>
 </div>
 
 <style>

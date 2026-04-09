@@ -109,11 +109,11 @@
 	});
 </script>
 
-<div class="h-full overflow-auto">
+<div class="h-full overflow-auto bg-black m-2 rounded-3xl">
 	<div class="flex h-full flex-col">
 		<div class="position-sticky top-0 flex flex-1 overflow-auto">
 			<Table.Root class="border">
-				<Table.Header class="bg-muted text-xs font-medium">
+				<Table.Header class="bg-black text-xs font-medium">
 					{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
 						<Table.Row>
 							{#each headerGroup.headers as header (header.id)}
