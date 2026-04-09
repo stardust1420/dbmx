@@ -121,7 +121,7 @@
 		<div class="flex w-full h-full flex-col">
 			<!-- header -->
 			<div class="flex flex-[1] items-center justify-between m-1">
-				<SquarePen size={18} class="m-2" />
+				<p></p>
 				<p>Stardust AI</p>
 				<X size={18} class="m-2" onclick={toggleChatPane} />
 			</div>
