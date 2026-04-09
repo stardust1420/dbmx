@@ -680,7 +680,7 @@
 	});
 </script>
 
-<div class="my-2 flex h-full flex-1 flex-col rounded-md bg-black">
+<div class="my-2 flex h-full flex-1 flex-col rounded-md bg-black mr-2">
 	<Tabs.Root value={tabID.toString()} class="flex h-full flex-1 flex-col overflow-hidden">
 		<!-- Tabs visible in the header -->
 		<header class="flex h-10 items-center justify-center bg-black">
