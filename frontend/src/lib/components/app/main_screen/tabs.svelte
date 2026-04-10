@@ -69,6 +69,7 @@
 		orderBy = $bindable(''),
 		groupBy = $bindable(''),
 		tableColumns = $bindable([]),
+		aiChat = $bindable([]),
 		chatPaneCollapsed = $bindable(false),
 		toggleChatPane
 	} = $props();
@@ -118,6 +119,7 @@
 					orderBy = tab.OrderBy;
 					groupBy = tab.GroupBy;
 					tableColumns = tab.TableColumnsList;
+					aiChat = tab.AIChat || [];
 
 					editor = tab.Editor;
 
@@ -237,6 +239,7 @@
 				orderBy = tab.OrderBy;
 				groupBy = tab.GroupBy;
 				tableColumns = tab.TableColumnsList;
+				aiChat = tab.AIChat || [];
 
 				editor = tab.Editor;
 				tabLoading = false;
@@ -282,6 +285,7 @@
 				tabID = 0;
 				tabName = '';
 				editor = '';
+				aiChat = [];
 				columns.set([]);
 				rows.set([]);
 				$selectedDBDisplay = 'Connect to a database';
@@ -332,6 +336,7 @@
 			orderBy = tab.OrderBy;
 			groupBy = tab.GroupBy;
 			tableColumns = tab.TableColumnsList;
+			aiChat = tab.AIChat || [];
 
 			editor = tab.Editor;
 

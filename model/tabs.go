@@ -35,6 +35,16 @@ type Tab struct {
 
 	// To be passed to frontend
 	TableColumnsList []string
+
+	// AI chat
+	AIChat []AIMsg
+}
+
+type AIMsg struct {
+	ID        string
+	Role      string
+	Content   string
+	CreatedAt string
 }
 
 var validTypes = map[string]struct{}{

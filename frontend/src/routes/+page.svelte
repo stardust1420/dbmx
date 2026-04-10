@@ -12,6 +12,8 @@
 	import User from '@lucide/svelte/icons/user';
 	import * as Tooltip from "$lib/components/ui/tooltip/index.js";
 	import * as Avatar from '$lib/components/ui/avatar/index.js';
+	import { toast } from 'svelte-sonner';
+
 
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import * as Kbd from '$lib/components/ui/kbd/index.js';
@@ -20,6 +22,10 @@
 	import * as Select from "$lib/components/ui/select/index.js";
 	import Label from '$lib/components/ui/label/label.svelte';
 	import { tick } from 'svelte';
+	import { model } from '$lib/wailsjs/go/models';
+	import { tabsMap } from '$lib/state.svelte';
+	import { SaveNewChatMessage } from '$lib/wailsjs/go/app/Tabs';
+
 
 	const models = [
 		{ value: "gemini-3.1-pro-high", label: "Gemini 3.1 Pro (High)" },
@@ -54,6 +60,11 @@
 	let orderBy = $state('');
 	let groupBy = $state('');
 	let tableColumns = $state([]);
+	let aiChat: model.AIMsg[] = $state([]);
+
+	$effect(() => {
+		console.log(aiChat);
+	});
 
 	// Reference to the Tabs component
 	let tabsComponent: Tabs;
@@ -73,6 +84,16 @@
 
 	function toggleChatPane() {
 		if (chatPaneCollapsed) {
+			if (tabsMap.size === 0) {
+				toast.error('No tab is open', {
+						description: "Please open a tab to use AI features",
+						action: {
+							label: 'OK',
+							onClick: () => console.info('OK')
+						}
+					});
+				return;
+			}
 			chatPane.expand();
 			if (chatPaneSize > 0) {
 				chatPane.resize(chatPaneSize);
@@ -92,14 +113,7 @@
 	let chatPaneSize: number = $state(0);
 
 	// Chat state
-	interface ChatMessage {
-		id: number;
-		role: 'user' | 'assistant';
-		content: string;
-		timestamp: Date;
-	}
 
-	let chatMessages: ChatMessage[] = $state([]);
 	let chatInput = $state('');
 	let isAiTyping = $state(false);
 	let chatScrollContainer: HTMLDivElement;
@@ -115,16 +129,59 @@
 		return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 	}
 
+	let saveMsg = (currentTabID: number, msg: model.AIMsg) => {
+		// If current tab id is equal to tabID, update the aiChat
+		if (currentTabID === tabID) {
+			aiChat.push(msg);
+		}
+
+		// Save in the tabs map
+		let currentTab = tabsMap.get(currentTabID);
+		if (currentTab) {
+			if (!currentTab.AIChat) {
+				// Initialize the array if null
+				currentTab.AIChat = [];
+			}
+			currentTab.AIChat.push(msg);
+			tabsMap.set(currentTabID, currentTab);
+		}
+
+		// Call backend function to save in DB
+		SaveNewChatMessage(currentTabID, msg)
+			.then(() => {
+				console.log('Message saved successfully');
+			})
+			.catch((err) => {
+				console.error('Failed to save message:', err);
+			});
+	}
+
 	async function sendMessage() {
+		if (tabsMap.size === 0) {
+			toast.error('No tab is open', {
+					description: "Please open a tab to use AI features",
+					action: {
+						label: 'OK',
+						onClick: () => console.info('OK')
+					}
+				});
+			return;
+		}
+
+		// Save the current tab id to make sure data doesn't get updated in wrong tab when quickly switching tabs
+		const currentTabId = tabID;
+
 		const text = chatInput.trim();
 		if (!text) return;
 
-		chatMessages.push({
-			id: Date.now(),
-			role: 'user',
-			content: text,
-			timestamp: new Date()
-		});
+		const msg = new model.AIMsg();
+		msg.ID = crypto.randomUUID().toString();
+		msg.Role = 'user';
+		msg.Content = text;
+		msg.CreatedAt = new Date().toISOString();
+
+		saveMsg(currentTabId, msg);
+
 		chatInput = '';
 		await scrollToBottom();
 
@@ -134,12 +191,14 @@
 		// Simulate AI response (replace with real API call)
 		setTimeout(async () => {
 			isAiTyping = false;
-			chatMessages.push({
-				id: Date.now(),
-				role: 'assistant',
-				content: 'I can help you with that! Let me analyze your database schema and get back to you.',
-				timestamp: new Date()
-			});
+			const aiMsg = new model.AIMsg();
+			aiMsg.ID = crypto.randomUUID().toString();
+			aiMsg.Role = 'assistant';
+			aiMsg.Content = 'I can help you with that! Let me analyze your database schema and get back to you.';
+			aiMsg.CreatedAt = new Date().toISOString();
+
+			saveMsg(currentTabId, aiMsg);
+
 			await scrollToBottom();
 		}, 1500);
 	}
@@ -180,6 +239,7 @@
 					bind:orderBy
 					bind:groupBy
 					bind:tableColumns
+					bind:aiChat
 					bind:chatPaneCollapsed
 					{toggleChatPane}
 				/>
@@ -211,7 +271,7 @@
 					bind:this={chatScrollContainer}
 					class="chat-scroll flex-1 overflow-y-auto px-3 py-4"
 				>
-					{#if chatMessages.length === 0}
+					{#if aiChat.length === 0}
 						<!-- Empty state -->
 						<div class="flex h-full flex-col items-center justify-center gap-4 opacity-60">
 							<div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 ring-1 ring-white/10">
@@ -233,15 +293,15 @@
 						</div>
 					{:else}
 						<div class="flex flex-col gap-4">
-							{#each chatMessages as message (message.id)}
-								{#if message.role === 'user'}
+							{#each aiChat as message (message.ID)}
+								{#if message.Role === 'user'}
 									<!-- User message -->
 									<div class="chat-message-in flex items-end justify-end gap-2">
 										<div class="flex flex-col items-end gap-1 max-w-[85%]">
 											<div class="rounded-2xl rounded-br-md bg-gradient-to-br from-indigo-600 to-indigo-700 px-3.5 py-2.5 text-sm text-white shadow-lg shadow-indigo-500/10">
-												<p class="leading-relaxed whitespace-pre-wrap">{message.content}</p>
+												<p class="leading-relaxed whitespace-pre-wrap">{message.Content}</p>
 											</div>
-											<span class="text-[10px] text-neutral-500 px-1">{formatTime(message.timestamp)}</span>
+											<span class="text-[10px] text-neutral-500 px-1">{formatTime(new Date(message.CreatedAt))}</span>
 										</div>
 										<div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-neutral-700 ring-1 ring-white/10">
 											<User size={14} class="text-neutral-300" />
@@ -255,9 +315,9 @@
 										</div>
 										<div class="flex flex-col gap-1 max-w-[85%]">
 											<div class="rounded-2xl rounded-bl-md bg-neutral-800/80 px-3.5 py-2.5 text-sm text-neutral-200 shadow-lg ring-1 ring-white/5">
-												<p class="leading-relaxed whitespace-pre-wrap">{message.content}</p>
+												<p class="leading-relaxed whitespace-pre-wrap">{message.Content}</p>
 											</div>
-											<span class="text-[10px] text-neutral-500 px-1">{formatTime(message.timestamp)}</span>
+											<span class="text-[10px] text-neutral-500 px-1">{formatTime(new Date(message.CreatedAt))}</span>
 										</div>
 									</div>
 								{/if}
