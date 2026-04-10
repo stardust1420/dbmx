@@ -1,5 +1,23 @@
 export namespace model {
 	
+	export class AIMsg {
+	    ID: string;
+	    Role: string;
+	    Content: string;
+	    CreatedAt: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new AIMsg(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.ID = source["ID"];
+	        this.Role = source["Role"];
+	        this.Content = source["Content"];
+	        this.CreatedAt = source["CreatedAt"];
+	    }
+	}
 	export class Cell {
 	    column: string;
 	    value: string;
@@ -277,6 +295,7 @@ export namespace model {
 	    GroupBy: string;
 	    TableColumns: string;
 	    TableColumnsList: string[];
+	    AIChat: AIMsg[];
 	
 	    static createFrom(source: any = {}) {
 	        return new Tab(source);
@@ -306,6 +325,7 @@ export namespace model {
 	        this.GroupBy = source["GroupBy"];
 	        this.TableColumns = source["TableColumns"];
 	        this.TableColumnsList = source["TableColumnsList"];
+	        this.AIChat = this.convertValues(source["AIChat"], AIMsg);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

@@ -156,9 +156,17 @@ func (t *Tabs) SetActiveTab(id int64) (*model.Tab, error) {
 	updateQuery = `UPDATE tabs SET is_active = true WHERE id = ? RETURNING *`
 
 	var tab model.Tab
-	err = t.DB.QueryRow(updateQuery, id).Scan(&tab.ID, &tab.Name, &tab.Editor, &tab.Output, &tab.IsActive, &tab.ActiveDBID, &tab.ActiveDB, &tab.ActiveDBColor, &tab.Type, &tab.ConnectionID, &tab.DBName, &tab.ConnectionName, &tab.Select, &tab.Limit, &tab.Offset, &tab.Where, &tab.OrderBy, &tab.GroupBy, &tab.TableColumns)
+	var aiChatJSON []byte
+	err = t.DB.QueryRow(updateQuery, id).Scan(&tab.ID, &tab.Name, &tab.Editor, &tab.Output, &tab.IsActive, &tab.ActiveDBID, &tab.ActiveDB, &tab.ActiveDBColor, &tab.Type, &tab.ConnectionID, &tab.DBName, &tab.ConnectionName, &tab.Select, &tab.Limit, &tab.Offset, &tab.Where, &tab.OrderBy, &tab.GroupBy, &tab.TableColumns, &aiChatJSON)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(aiChatJSON) > 0 {
+		err = json.Unmarshal(aiChatJSON, &tab.AIChat)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if len(tab.TableColumns) > 0 {
@@ -177,7 +185,7 @@ func (t *Tabs) SetActiveTab(id int64) (*model.Tab, error) {
 
 func (t *Tabs) GetAllTabs() ([]model.Tab, error) {
 	// Query for all tabs
-	query := `SELECT id, name, editor, output, is_active, active_db_id, active_db, active_db_color, type, connection_id, db_name, connection_name, "select", "limit", "offset", "where", "order_by", "group_by", table_columns FROM tabs`
+	query := `SELECT id, name, editor, output, is_active, active_db_id, active_db, active_db_color, type, connection_id, db_name, connection_name, "select", "limit", "offset", "where", "order_by", "group_by", table_columns, ai_chat FROM tabs`
 	rows, err := t.DB.Query(query)
 	if err != nil {
 		return nil, err
@@ -187,9 +195,17 @@ func (t *Tabs) GetAllTabs() ([]model.Tab, error) {
 	var tabs []model.Tab
 	for rows.Next() {
 		var tab model.Tab
-		err := rows.Scan(&tab.ID, &tab.Name, &tab.Editor, &tab.Output, &tab.IsActive, &tab.ActiveDBID, &tab.ActiveDB, &tab.ActiveDBColor, &tab.Type, &tab.ConnectionID, &tab.DBName, &tab.ConnectionName, &tab.Select, &tab.Limit, &tab.Offset, &tab.Where, &tab.OrderBy, &tab.GroupBy, &tab.TableColumns)
+		var aiChatJSON []byte
+		err := rows.Scan(&tab.ID, &tab.Name, &tab.Editor, &tab.Output, &tab.IsActive, &tab.ActiveDBID, &tab.ActiveDB, &tab.ActiveDBColor, &tab.Type, &tab.ConnectionID, &tab.DBName, &tab.ConnectionName, &tab.Select, &tab.Limit, &tab.Offset, &tab.Where, &tab.OrderBy, &tab.GroupBy, &tab.TableColumns, &aiChatJSON)
 		if err != nil {
 			return nil, err
+		}
+
+		if len(aiChatJSON) > 0 {
+			err = json.Unmarshal(aiChatJSON, &tab.AIChat)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		if tab.IsActive {
@@ -252,6 +268,53 @@ func (t *Tabs) SaveActiveDBProps(id int64, activeDBID, activeDB, activeDBColor s
 	// Update the active db properties in the tab of type editor
 	query := `UPDATE tabs SET active_db_id = ?, active_db = ?, active_db_color = ? WHERE id = ? AND type = 'editor'`
 	_, err := t.DB.Exec(query, active_db_id, active_db, active_db_color, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (t *Tabs) SaveNewChatMessage(id int64, msg model.AIMsg) error {
+	// Check if ai_chat is null
+	query := `SELECT ai_chat FROM tabs WHERE id = ?`
+	var aiChatJSON []byte
+	err := t.DB.QueryRow(query, id).Scan(&aiChatJSON)
+	if err != nil {
+		return err
+	}
+
+	if len(aiChatJSON) == 0 {
+		chat := []model.AIMsg{}
+		chat = append(chat, msg)
+		chatBytes, err := json.Marshal(chat)
+		if err != nil {
+			return err
+		}
+		query = `UPDATE tabs SET ai_chat = ? WHERE id = ?`
+		_, err = t.DB.Exec(query, string(chatBytes), id)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	msgBytes, err := json.Marshal(msg)
+	if err != nil {
+		return err
+	}
+
+	query = `
+		UPDATE tabs 
+		SET ai_chat = json_insert(
+			COALESCE(ai_chat, '[]'), 
+			'$[#]',  -- Targets the end of the array to append
+			json(?)  -- Tells SQLite to parse the string as JSON
+		) 
+		WHERE id = ?
+	`
+
+	_, err = t.DB.Exec(query, string(msgBytes), id)
 	if err != nil {
 		return err
 	}

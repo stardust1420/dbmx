@@ -18,6 +18,10 @@ export function SaveActiveDBProps(arg1, arg2, arg3, arg4) {
   return window['go']['app']['Tabs']['SaveActiveDBProps'](arg1, arg2, arg3, arg4);
 }
 
+export function SaveNewChatMessage(arg1, arg2) {
+  return window['go']['app']['Tabs']['SaveNewChatMessage'](arg1, arg2);
+}
+
 export function SetActiveTab(arg1) {
   return window['go']['app']['Tabs']['SetActiveTab'](arg1);
 }

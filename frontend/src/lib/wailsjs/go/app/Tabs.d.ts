@@ -10,6 +10,8 @@ export function GetAllTabs():Promise<Array<model.Tab>>;
 
 export function SaveActiveDBProps(arg1:number,arg2:string,arg3:string,arg4:string):Promise<void>;
 
+export function SaveNewChatMessage(arg1:number,arg2:model.AIMsg):Promise<void>;
+
 export function SetActiveTab(arg1:number):Promise<model.Tab>;
 
 export function UpdateTabEditorContent(arg1:number,arg2:string,arg3:string,arg4:string,arg5:string,arg6:string,arg7:string,arg8:string):Promise<void>;
