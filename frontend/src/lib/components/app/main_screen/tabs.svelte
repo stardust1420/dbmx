@@ -1042,8 +1042,8 @@
 										</Collapsible.Content>
 									</Collapsible.Root>
 								</div>
-								<div class="flex flex-1 overflow-auto">
-									<div class="h-full w-full overflow-auto">
+								<div class="flex h-full flex-1 overflow-hidden">
+									<div class="flex h-full w-full overflow-hidden px-2 pb-2">
 										{#if $columns.length > 0}
 											{#key tabID}
 												<DataTable data={$rows} columns={$columns} />
@@ -1131,7 +1131,7 @@
 									minSize={10}
 									class="rsz-pane"
 								>
-									<div class="h-full">
+									<div class="h-full p-2">
 										{#if $columns.length > 0}
 											{#key tabID}
 												<DataTable data={$rows} columns={$columns} />
