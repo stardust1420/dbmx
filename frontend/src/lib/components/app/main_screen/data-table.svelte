@@ -109,7 +109,7 @@
 	});
 </script>
 
-<div class="h-full overflow-auto bg-black m-2 rounded-3xl">
+<div class="h-full overflow-auto bg-black rounded-3xl">
 	<div class="flex h-full flex-col">
 		<div class="position-sticky top-0 flex flex-1 overflow-auto">
 			<Table.Root class="border">

@@ -154,7 +154,7 @@
 
 <div class="flex h-full flex-row overflow-hidden">
 	<!-- Tab Management -->
-	<div class="mr-2 flex h-full flex-[1] flex-col overflow-hidden">
+	<div class="m-2 flex w-20 flex-col overflow-hidden">
 		<div class="mb-0.5 flex flex-1 items-center justify-center">
 			<Button
 				variant={selectedView === 'structure' ? 'default' : 'outline'}
@@ -193,7 +193,7 @@
 	<!-- Tab Content -->
 	<div class="flex h-full min-h-0 flex-[15] overflow-hidden">
 		{#if selectedView === 'structure'}
-			<div class="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
+			<div class="flex h-full min-h-0 flex-1 flex-col overflow-hidden pr-2 pb-2">
 				<div class="flex h-1 min-h-0 flex-1 flex-col overflow-hidden">
 					{#if structureColumns.length > 0}
 						<DataTable data={structureRows} columns={structureColumns} />
@@ -205,7 +205,7 @@
 				</div>
 			</div>
 		{:else if selectedView === 'indexes'}
-			<div class="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
+			<div class="flex h-full min-h-0 flex-1 flex-col overflow-hidden pr-2 pb-2">
 				<div class="flex h-1 min-h-0 flex-1 flex-col overflow-hidden">
 					{#if indexesColumns.length > 0}
 						<DataTable data={indexesRows} columns={indexesColumns} />
@@ -217,7 +217,7 @@
 				</div>
 			</div>
 		{:else if selectedView === 'rules'}
-			<div class="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
+			<div class="flex h-full min-h-0 flex-1 flex-col overflow-hidden pr-2 pb-2">
 				<div class="flex h-1 min-h-0 flex-1 flex-col overflow-hidden">
 					{#if rulesColumns.length > 0}
 						<DataTable data={rulesRows} columns={rulesColumns} />
