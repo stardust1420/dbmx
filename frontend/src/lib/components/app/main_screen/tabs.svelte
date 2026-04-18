@@ -42,8 +42,9 @@
 	import { ExecuteQuery, GetTableData } from '$lib/wailsjs/go/app/Connections.js';
 
 	import DataTable from './data-table.svelte';
-	import { columns, rows } from '$lib/state.svelte';
+	import { columns, rows, totalRows } from '$lib/state.svelte';
 	import ManageTable from './manage_table.svelte';
+	import DataTableManual from './data-table-manual.svelte';
 
 	let editorHeight = $state(50); // Percentage of the container height
 	let outputHeight = $state(50); // Percentage of the container height
@@ -74,6 +75,7 @@
 		toggleChatPane
 	} = $props();
 	let editor = $state('');
+
 
 	let isSelectDropdownOpen = $state(false);
 	let isWhereDropdownOpen = $state(false);
@@ -507,7 +509,7 @@
 		rows.set([]);
 	}
 
-	function getTableData() {
+	function getTableData(limit: string, offset: string) {
 		if (tabTableDBPoolID == '') {
 			toast.error('Please select a database to execute the query', {
 				action: {
@@ -534,6 +536,8 @@
 					});
 					return;
 				}
+
+				totalRows.set(result.totalRows);
 
 				// Update columns
 				if (result.columns) {
@@ -563,6 +567,7 @@
 					if (currentTab) {
 						currentTab.columns = result.columns;
 						currentTab.rows = result.rows; // result.rows is Cell[][]
+						currentTab.totalRows = result.totalRows;
 						(currentTab as any).processedRows = newRows; // Cache it!
 						tabsMap.set(tabID, currentTab);
 					}
@@ -581,6 +586,15 @@
 				});
 			});
 
+		
+		console.log('rows', $rows);
+		console.log('columns', $columns);
+		console.log('totalRows', $totalRows);
+		console.log('limit', limit);
+		console.log('offset', offset);
+		console.log('where', where);
+		console.log('orderBy', orderBy);
+		console.log('groupBy', groupBy);
 		columns.set([]);
 		rows.set([]);
 	}
@@ -591,7 +605,7 @@
 			event.preventDefault();
 			if (tabType == 'table') {
 				console.log('get table data');
-				getTableData();
+				getTableData(limit, offset);
 			} else {
 				console.log('execute query');
 				executeQuery();
@@ -1002,31 +1016,6 @@
 														</DropdownMenu.Content>
 													</DropdownMenu.Root>
 												</div>
-												<div class="flex items-center gap-2">
-													<Label for="limit">Limit</Label>
-													<div class="rounded-md bg-black">
-
-													<Input
-														type="text"
-														id="limit"
-														placeholder="Limit"
-														class="w-24 focus-visible:ring-0"
-														bind:value={limit}
-													/>
-													</div>
-												</div>
-												<div class="flex items-center gap-2">
-													<Label for="offset">Offset</Label>
-													<div class="rounded-md bg-black">
-													<Input
-														type="text"
-														id="offset"
-														placeholder="Offset"
-														class="w-24 focus-visible:ring-0"
-														bind:value={offset}
-													/>
-													</div>
-												</div>
 											</div>
 										</Collapsible.Content>
 									</Collapsible.Root>
@@ -1035,7 +1024,14 @@
 									<div class="flex h-full w-full overflow-hidden px-2 pb-2">
 										{#if $columns.length > 0}
 											{#key tabID}
-												<DataTable data={$rows} columns={$columns} />
+												<DataTableManual
+													data={$rows}
+													columns={$columns}
+													totalRows={$totalRows}
+													limit={limit}
+													offset={offset}
+													getTableData={getTableData}
+												/>
 											{/key}
 										{:else if queryLoading}
 											<Skeleton class="my-3 h-[40px] w-full" />

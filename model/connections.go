@@ -68,6 +68,7 @@ type QueryResult struct {
 	OK           bool     `json:"ok"`
 	Columns      []string `json:"columns"`
 	Rows         [][]Cell `json:"rows"`
+	TotalRows    int64    `json:"totalRows"`
 	RowsAffected int64    `json:"rowsAffected"`
 	Message      string   `json:"message"`
 }
