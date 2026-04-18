@@ -353,14 +353,11 @@
 			// Update columns
 			columns.set([]);
 			if (tab.columns) {
-				let newColumns: any[] = [];
-				for (const column of tab.columns) {
-					newColumns.push({
-						accessorKey: column,
-						header: column
-					});
-				}
-				columns.set(newColumns);
+				columns.set(tab.columns.map((column, index) => ({
+					accessorKey: column,
+					id: `${column}_${index}`,
+					header: column
+				})));
 			}
 
 			// Update rows using cached data (O(1))
@@ -462,15 +459,11 @@
 
 				// Update columns
 				if (result.columns) {
-					for (const column of result.columns) {
-						columns.set([
-							...$columns,
-							{
-								accessorKey: column,
-								header: column
-							}
-						]);
-					}
+					columns.set(result.columns.map((column, index) => ({
+						accessorKey: column,
+						id: `${column}_${index}`,
+						header: column
+					})));
 				}
 
 				// Update rows. Also update the in-memory tabsMap!
@@ -544,15 +537,11 @@
 
 				// Update columns
 				if (result.columns) {
-					for (const column of result.columns) {
-						columns.set([
-							...$columns,
-							{
-								accessorKey: column,
-								header: column
-							}
-						]);
-					}
+					columns.set(result.columns.map((column, index) => ({
+						accessorKey: column,
+						id: `${column}_${index}`,
+						header: column
+					})));
 				}
 
 				// Update rows and map
@@ -764,7 +753,7 @@
 									<Label class="ml-2 text-red-500">Disconnected</Label>
 								{:else}
 									<Label class="ml-2 text-green-500">Connected</Label>
-									<Label class="ml-4 text-white">Run with ⌥(option) + return</Label>
+									<Label class="ml-4 text-white">abcdefghiRun with ⌥(option) + return</Label>
 								{/if}
 							</div>
 							<div class="flex px-2">
