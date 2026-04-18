@@ -174,6 +174,7 @@ export namespace model {
 	    ok: boolean;
 	    columns: string[];
 	    rows: Cell[][];
+	    totalRows: number;
 	    rowsAffected: number;
 	    message: string;
 	
@@ -186,6 +187,7 @@ export namespace model {
 	        this.ok = source["ok"];
 	        this.columns = source["columns"];
 	        this.rows = this.convertValues(source["rows"], Cell);
+	        this.totalRows = source["totalRows"];
 	        this.rowsAffected = source["rowsAffected"];
 	        this.message = source["message"];
 	    }
@@ -284,6 +286,7 @@ export namespace model {
 	    Type: string;
 	    columns: string[];
 	    rows: Cell[][];
+	    totalRows: number;
 	    ConnectionID?: number;
 	    ConnectionName: string;
 	    DBName?: string;
@@ -314,6 +317,7 @@ export namespace model {
 	        this.Type = source["Type"];
 	        this.columns = source["columns"];
 	        this.rows = this.convertValues(source["rows"], Cell);
+	        this.totalRows = source["totalRows"];
 	        this.ConnectionID = source["ConnectionID"];
 	        this.ConnectionName = source["ConnectionName"];
 	        this.DBName = source["DBName"];

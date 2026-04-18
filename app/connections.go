@@ -867,7 +867,7 @@ func (c *Connections) GetTableData(activePoolID uuid.UUID, tabID int64, tableNam
 
 	response := &model.QueryResult{OK: true}
 
-	setLimit := strconv.Itoa(100)
+	setLimit := strconv.Itoa(20)
 	if strings.TrimSpace(limit) != "" {
 		limitInt, err := strconv.Atoi(strings.TrimSpace(limit))
 		if err != nil {
@@ -893,6 +893,29 @@ func (c *Connections) GetTableData(activePoolID uuid.UUID, tabID int64, tableNam
 	if strings.TrimSpace(orderBy) != "" {
 		query += fmt.Sprintf(" ORDER BY %s", strings.TrimSpace(orderBy))
 	}
+
+	// Get total rows count
+	totalRowsQuery := fmt.Sprintf("SELECT COUNT(id) FROM %s", tableName)
+	if strings.TrimSpace(where) != "" {
+		totalRowsQuery += fmt.Sprintf(" WHERE %s", strings.TrimSpace(where))
+	}
+	if strings.TrimSpace(groupBy) != "" {
+		totalRowsQuery += fmt.Sprintf(" GROUP BY %s", strings.TrimSpace(groupBy))
+	}
+
+	// Get total rows count
+	var totalRows int64
+	err := pool.QueryRow(ctx, totalRowsQuery).Scan(&totalRows)
+	if err != nil {
+		return &model.QueryResult{
+			OK:           true,
+			Message:      err.Error(),
+			RowsAffected: int64(0),
+			Columns:      []string{"Error"},
+			Rows:         [][]model.Cell{{model.Cell{Column: "Error", Value: err.Error()}}},
+		}
+	}
+	response.TotalRows = totalRows
 
 	// Set limit
 	query += fmt.Sprintf(" LIMIT %s", setLimit)
