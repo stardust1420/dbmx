@@ -52,15 +52,11 @@
 
 				if (response.structure) {
 					if (response.structure.columns) {
-						for (const column of response.structure.columns) {
-							structureColumns = [
-								...structureColumns,
-								{
-									accessorKey: column,
-									header: column
-								}
-							];
-						}
+						structureColumns = response.structure.columns.map((column, index) => ({
+							accessorKey: column,
+							id: `${column}_${index}`, // Unique ID guaranteed!
+							header: column
+						}));
 					}
 
 					// Update rows
@@ -80,15 +76,11 @@
 				if (response.indexes) {
 					// Update columns
 					if (response.indexes.columns) {
-						for (const column of response.indexes.columns) {
-							indexesColumns = [
-								...indexesColumns,
-								{
-									accessorKey: column,
-									header: column
-								}
-							];
-						}
+						indexesColumns = response.indexes.columns.map((column, index) => ({
+							accessorKey: column,
+							id: `${column}_${index}`, // Unique ID guaranteed!
+							header: column
+						}));
 					}
 
 					// Update rows
@@ -108,15 +100,11 @@
 				if (response.rules) {
 					// Update columns
 					if (response.rules.columns) {
-						for (const column of response.rules.columns) {
-							rulesColumns = [
-								...rulesColumns,
-								{
-									accessorKey: column,
-									header: column
-								}
-							];
-						}
+						rulesColumns = response.rules.columns.map((column, index) => ({
+							accessorKey: column,
+							id: `${column}_${index}`, // Unique ID guaranteed!
+							header: column
+						}));
 					}
 
 					// Update rows

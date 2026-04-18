@@ -10,41 +10,47 @@
 
 	export const columns: ColumnDef<model.ConnectionTable>[] = [
 		{
+			id: 'ID',
 			accessorKey: 'ID',
 			header: '#',
 			enableHiding: false,
 			size: 50
 		},
 		{
+			id: 'Name',
 			accessorKey: 'Name',
 			header: 'Name',
 			enableHiding: false,
 			size: 200
 		},
 		{
+			id: 'Env',
 			accessorKey: 'Env',
 			header: 'Env',
 			enableHiding: false,
 			size: 150
 		},
 		{
+			id: 'Engine',
 			accessorKey: 'Engine',
 			header: 'Engine',
 			enableHiding: false,
 		},
 		{
+			id: 'Host',
 			accessorKey: 'Host',
 			header: 'Host',
 			enableHiding: false,
 			size: 300
 		},
 		{
+			id: 'Database',
 			accessorKey: 'Database',
 			header: 'Database',
 			enableHiding: false,
 		},
 		{
-			id: 'actions',
+			id: 'Actions',
 			header: 'Actions',
 			cell: (props) => renderSnippet(DataTableActions, { connectionID: props.row.getValue('ID') as number }),
 			size: 30
