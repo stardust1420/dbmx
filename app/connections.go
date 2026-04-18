@@ -895,7 +895,7 @@ func (c *Connections) GetTableData(activePoolID uuid.UUID, tabID int64, tableNam
 	}
 
 	// Get total rows count
-	totalRowsQuery := fmt.Sprintf("SELECT COUNT(id) FROM %s", tableName)
+	totalRowsQuery := fmt.Sprintf("SELECT COUNT(*) FROM %s", tableName)
 	if strings.TrimSpace(where) != "" {
 		totalRowsQuery += fmt.Sprintf(" WHERE %s", strings.TrimSpace(where))
 	}
