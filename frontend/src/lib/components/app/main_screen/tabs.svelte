@@ -586,17 +586,10 @@
 				});
 			});
 
-		
-		console.log('rows', $rows);
-		console.log('columns', $columns);
-		console.log('totalRows', $totalRows);
-		console.log('limit', limit);
-		console.log('offset', offset);
-		console.log('where', where);
-		console.log('orderBy', orderBy);
-		console.log('groupBy', groupBy);
-		columns.set([]);
-		rows.set([]);
+		// This is not required to do in server side pagination
+		// columns.set([]);
+		// rows.set([]);
+
 	}
 
 	document.addEventListener('keydown', handleKeyDown);
@@ -1027,7 +1020,7 @@
 												<DataTableManual
 													data={$rows}
 													columns={$columns}
-													totalRows={$totalRows}
+													bind:totalRows={$totalRows}
 													limit={limit}
 													offset={offset}
 													getTableData={getTableData}

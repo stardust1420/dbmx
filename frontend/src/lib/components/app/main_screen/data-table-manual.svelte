@@ -24,12 +24,13 @@
 	import ChevronRightIcon from '@tabler/icons-svelte/icons/chevron-right';
 	import ChevronsRightIcon from '@tabler/icons-svelte/icons/chevrons-right';
 	import { toast } from 'svelte-sonner';
+	import { untrack } from 'svelte';
 
 
 	let {
 		data,
 		columns,
-		totalRows,
+		totalRows = $bindable(0),
         limit,
         offset,
         getTableData
@@ -110,13 +111,25 @@
 		}
 	});
 
-    // Fetch data whenever pagination changes
-  $effect(() => {
-    limit = String(pagination.pageSize);
-    offset = String(pagination.pageIndex * pagination.pageSize);
+    // Fetch data whenever pagination changes (user-driven only)
+    let isInitialMount = true;
+    $effect(() => {
+        // Track only pagination state
+        const newLimit = String(pagination.pageSize);
+        const newOffset = String(pagination.pageIndex * pagination.pageSize);
 
-    getTableData(limit, offset);
-  });
+        // Skip the initial mount — parent already loaded the data
+        if (isInitialMount) {
+            isInitialMount = false;
+            return;
+        }
+
+        // Use untrack so that getTableData's side effects (updating rows/columns/totalRows)
+        // don't create reactive dependencies that would re-trigger this effect
+        untrack(() => {
+            getTableData(newLimit, newOffset);
+        });
+    });
 </script>
 
 <div class="h-full overflow-auto bg-black rounded-3xl">
@@ -189,7 +202,10 @@
 			class="position-sticky bottom-0 my-0.5 flex w-full items-center justify-between px-4 py-1"
 		>
 			<div class="text-muted-foreground hidden flex-1 text-sm lg:flex">
-				{table.getFilteredRowModel().rows.length} row(s)
+				Total Rows: {totalRows}
+			</div>
+			<div class="text-muted-foreground hidden flex-1 text-sm lg:flex">
+				Current Page Rows: {data?.length ?? 0} of {totalRows}
 			</div>
 			<div class="flex w-full items-center gap-8 lg:w-fit">
 				<div class="hidden items-center gap-2 lg:flex">
@@ -213,8 +229,7 @@
 					</Select.Root>
 				</div>
 				<div class="flex w-fit items-center justify-center text-sm font-medium">
-					Page {table.getState().pagination.pageIndex + 1} of
-					{table.getPageCount()}
+					Page: {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
 				</div>
 				<div class="ml-auto flex items-center gap-2 lg:ml-0">
 					<Button
