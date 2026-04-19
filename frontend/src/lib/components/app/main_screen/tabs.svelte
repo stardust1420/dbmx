@@ -42,7 +42,7 @@
 	import { ExecuteQuery, GetTableData } from '$lib/wailsjs/go/app/Connections.js';
 
 	import DataTable from './data-table.svelte';
-	import { columns, rows, totalRows } from '$lib/state.svelte';
+	import { columns, rows, totalRows, currentPage, currentPageSize } from '$lib/state.svelte';
 	import ManageTable from './manage_table.svelte';
 	import DataTableManual from './data-table-manual.svelte';
 
@@ -352,6 +352,10 @@
 				$currentColor = tab.ActiveDBColor || '';
 			}
 
+			totalRows.set(tab.totalRows);
+			currentPage.set(tab.currentPage);
+			currentPageSize.set(Number(tab.Limit));
+
 			// Update columns
 			columns.set([]);
 			if (tab.columns) {
@@ -509,7 +513,7 @@
 		rows.set([]);
 	}
 
-	function getTableData(limit: string, offset: string) {
+	function getTableData() {
 		if (tabTableDBPoolID == '') {
 			toast.error('Please select a database to execute the query', {
 				action: {
@@ -523,7 +527,7 @@
 		queryLoading = true;
 
 		// Execute query
-		GetTableData(tabTableDBPoolID, tabID, tabName, select, limit, offset, where, orderBy, groupBy)
+		GetTableData(tabTableDBPoolID, tabID, tabName, select, limit, offset, where, orderBy, groupBy, false)
 			.then((result) => {
 				if (!result.ok) {
 					queryLoading = false;
@@ -538,6 +542,8 @@
 				}
 
 				totalRows.set(result.totalRows);
+				currentPage.set(0);
+				currentPageSize.set(20);
 
 				// Update columns
 				if (result.columns) {
@@ -568,6 +574,90 @@
 						currentTab.columns = result.columns;
 						currentTab.rows = result.rows; // result.rows is Cell[][]
 						currentTab.totalRows = result.totalRows;
+						currentTab.Limit = '20';
+						currentTab.currentPage = 0;
+						(currentTab as any).processedRows = newRows; // Cache it!
+						tabsMap.set(tabID, currentTab);
+					}
+				}
+				queryLoading = false;
+			})
+			.catch((error) => {
+				queryLoading = false;
+				// Handle errors from the ExecuteQuery call
+				toast.error('Query Failed', {
+					description: error,
+					action: {
+						label: 'OK',
+						onClick: () => console.info('OK')
+					}
+				});
+			});
+
+		// This is not required to do in server side pagination
+		// columns.set([]);
+		// rows.set([]);
+
+	}
+
+	function getTablePageData(limit: string, offset: string) {
+		if (tabTableDBPoolID == '') {
+			toast.error('Please select a database to execute the query', {
+				action: {
+					label: 'OK',
+					onClick: () => console.info('OK')
+				}
+			});
+			return;
+		}
+
+		queryLoading = true;
+
+		// Execute query
+		GetTableData(tabTableDBPoolID, tabID, tabName, select, limit, offset, where, orderBy, groupBy, true)
+			.then((result) => {
+				if (!result.ok) {
+					queryLoading = false;
+					toast.error('Query Failed', {
+						description: result.message,
+						action: {
+							label: 'OK',
+							onClick: () => console.info('OK')
+						}
+					});
+					return;
+				}
+
+				// Update columns
+				if (result.columns) {
+					columns.set(result.columns.map((column, index) => ({
+						accessorKey: column,
+						id: `${column}_${index}`,
+						header: column
+					})));
+				}
+
+				// Update rows and map
+				if (result.rows) {
+					let newRows: any[] = [];
+					for (const row of result.rows) {
+						let cell: Record<string, any> = {};
+						for (const resultCell of row) {
+							if (resultCell.column && resultCell.value) {
+								cell[resultCell.column] = resultCell.value;
+							}
+						}
+						newRows.push(cell);
+					}
+					rows.set(newRows);
+
+					// Update the map with cached rows
+					let currentTab = tabsMap.get(tabID);
+					if (currentTab) {
+						currentTab.columns = result.columns;
+						currentTab.rows = result.rows; // result.rows is Cell[][]
+						currentTab.Limit = limit;
+						currentTab.currentPage = $currentPage;
 						(currentTab as any).processedRows = newRows; // Cache it!
 						tabsMap.set(tabID, currentTab);
 					}
@@ -598,7 +688,7 @@
 			event.preventDefault();
 			if (tabType == 'table') {
 				console.log('get table data');
-				getTableData(limit, offset);
+				getTableData();
 			} else {
 				console.log('execute query');
 				executeQuery();
@@ -658,6 +748,12 @@
 		let currentTab = tabsMap.get(tabID);
 		if (currentTab) {
 			currentTab.Editor = currentEditorContent;
+			currentTab.Select = selectQuery;
+			currentTab.Limit = limitQuery;
+			currentTab.Offset = offsetQuery;
+			currentTab.Where = whereQuery;
+			currentTab.OrderBy = orderByQuery;
+			currentTab.GroupBy = groupByQuery;
 			// Update other properties if needed, though they seem bound to local state anyway
 			tabsMap.set(tabID, currentTab);
 		}
@@ -1018,12 +1114,7 @@
 										{#if $columns.length > 0}
 											{#key tabID}
 												<DataTableManual
-													data={$rows}
-													columns={$columns}
-													bind:totalRows={$totalRows}
-													limit={limit}
-													offset={offset}
-													getTableData={getTableData}
+													getTablePageData={getTablePageData}
 												/>
 											{/key}
 										{:else if queryLoading}

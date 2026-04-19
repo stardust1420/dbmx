@@ -25,18 +25,13 @@
 	import ChevronsRightIcon from '@tabler/icons-svelte/icons/chevrons-right';
 	import { toast } from 'svelte-sonner';
 	import { untrack } from 'svelte';
-
+	import { columns, rows, totalRows, currentPage, currentPageSize } from '$lib/state.svelte';
 
 	let {
-		data,
-		columns,
-		totalRows = $bindable(0),
-        limit,
-        offset,
-        getTableData
+        getTablePageData
 	} = $props();
 
-	let pagination = $state<PaginationState>({ pageIndex: 0, pageSize: 20 });
+	let pagination = $state<PaginationState>({ pageIndex: $currentPage, pageSize: $currentPageSize });
 	let sorting = $state<SortingState>([]);
 	let columnFilters = $state<ColumnFiltersState>([]);
 	let rowSelection = $state<RowSelectionState>({});
@@ -44,10 +39,10 @@
 	let editingCell = $state<string | null>(null);
 	const table = createSvelteTable({
 		get data() {
-			return data;
+			return $rows;
 		},
 		get columns() {
-			return columns;
+			return $columns;
 		},
 		state: {
 			get pagination() {
@@ -69,7 +64,9 @@
 		enableRowSelection: true,
 		getCoreRowModel: getCoreRowModel(),
 		manualPagination: true,
-        rowCount: totalRows,
+        get rowCount() {
+            return $totalRows;
+        },
 		getSortedRowModel: getSortedRowModel(),
 		getFacetedRowModel: getFacetedRowModel(),
 		getFacetedUniqueValues: getFacetedUniqueValues(),
@@ -115,8 +112,9 @@
     let isInitialMount = true;
     $effect(() => {
         // Track only pagination state
-        const newLimit = String(pagination.pageSize);
-        const newOffset = String(pagination.pageIndex * pagination.pageSize);
+        currentPageSize.set(pagination.pageSize);
+        currentPage.set(pagination.pageIndex);
+		let offset = $currentPage * $currentPageSize;
 
         // Skip the initial mount — parent already loaded the data
         if (isInitialMount) {
@@ -127,7 +125,7 @@
         // Use untrack so that getTableData's side effects (updating rows/columns/totalRows)
         // don't create reactive dependencies that would re-trigger this effect
         untrack(() => {
-            getTableData(newLimit, newOffset);
+            getTablePageData(String($currentPageSize), String(offset));
         });
     });
 </script>
@@ -191,7 +189,7 @@
 						</Table.Row>
 					{:else}
 						<Table.Row>
-							<Table.Cell colspan={columns.length} class="h-24 text-center">No results.</Table.Cell>
+							<Table.Cell colspan={$columns.length} class="h-24 text-center">No results.</Table.Cell>
 						</Table.Row>
 					{/each}
 				</Table.Body>
@@ -202,10 +200,10 @@
 			class="position-sticky bottom-0 my-0.5 flex w-full items-center justify-between px-4 py-1"
 		>
 			<div class="text-muted-foreground hidden flex-1 text-sm lg:flex">
-				Total Rows: {totalRows}
+				Total Rows: {$totalRows}
 			</div>
 			<div class="text-muted-foreground hidden flex-1 text-sm lg:flex">
-				Current Page Rows: {data?.length ?? 0} of {totalRows}
+				Current Page Rows: {$rows?.length ?? 0} of {$totalRows}
 			</div>
 			<div class="flex w-full items-center gap-8 lg:w-fit">
 				<div class="hidden items-center gap-2 lg:flex">

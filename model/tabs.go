@@ -18,9 +18,10 @@ type Tab struct {
 	Type          string
 
 	// Output
-	Columns   []string `json:"columns"`
-	Rows      [][]Cell `json:"rows"`
-	TotalRows int64    `json:"totalRows"`
+	Columns     []string `json:"columns"`
+	Rows        [][]Cell `json:"rows"`
+	TotalRows   int64    `json:"totalRows"`
+	CurrentPage int64    `json:"currentPage"`
 
 	// Required if type is table
 	ConnectionID   *int64

@@ -857,7 +857,7 @@ func (c *Connections) ExecuteQuery(activePoolID uuid.UUID, query string, tabID i
 	return response
 }
 
-func (c *Connections) GetTableData(activePoolID uuid.UUID, tabID int64, tableName, selectQuery, limit, offset, where, orderBy, groupBy string) *model.QueryResult {
+func (c *Connections) GetTableData(activePoolID uuid.UUID, tabID int64, tableName, selectQuery, limit, offset, where, orderBy, groupBy string, isPageData bool) *model.QueryResult {
 	pool, exists := c.PM.GetPool(activePoolID)
 	if !exists {
 		return &model.QueryResult{OK: false, Message: "pool doesn't exist"}
@@ -894,28 +894,30 @@ func (c *Connections) GetTableData(activePoolID uuid.UUID, tabID int64, tableNam
 		query += fmt.Sprintf(" ORDER BY %s", strings.TrimSpace(orderBy))
 	}
 
-	// Get total rows count
-	totalRowsQuery := fmt.Sprintf("SELECT COUNT(*) FROM %s", tableName)
-	if strings.TrimSpace(where) != "" {
-		totalRowsQuery += fmt.Sprintf(" WHERE %s", strings.TrimSpace(where))
-	}
-	if strings.TrimSpace(groupBy) != "" {
-		totalRowsQuery += fmt.Sprintf(" GROUP BY %s", strings.TrimSpace(groupBy))
-	}
-
-	// Get total rows count
-	var totalRows int64
-	err := pool.QueryRow(ctx, totalRowsQuery).Scan(&totalRows)
-	if err != nil {
-		return &model.QueryResult{
-			OK:           true,
-			Message:      err.Error(),
-			RowsAffected: int64(0),
-			Columns:      []string{"Error"},
-			Rows:         [][]model.Cell{{model.Cell{Column: "Error", Value: err.Error()}}},
+	if !isPageData {
+		// Get total rows count
+		totalRowsQuery := fmt.Sprintf("SELECT COUNT(*) FROM %s", tableName)
+		if strings.TrimSpace(where) != "" {
+			totalRowsQuery += fmt.Sprintf(" WHERE %s", strings.TrimSpace(where))
 		}
+		if strings.TrimSpace(groupBy) != "" {
+			totalRowsQuery += fmt.Sprintf(" GROUP BY %s", strings.TrimSpace(groupBy))
+		}
+
+		// Get total rows count
+		var totalRows int64
+		err := pool.QueryRow(ctx, totalRowsQuery).Scan(&totalRows)
+		if err != nil {
+			return &model.QueryResult{
+				OK:           true,
+				Message:      err.Error(),
+				RowsAffected: int64(0),
+				Columns:      []string{"Error"},
+				Rows:         [][]model.Cell{{model.Cell{Column: "Error", Value: err.Error()}}},
+			}
+		}
+		response.TotalRows = totalRows
 	}
-	response.TotalRows = totalRows
 
 	// Set limit
 	query += fmt.Sprintf(" LIMIT %s", setLimit)
