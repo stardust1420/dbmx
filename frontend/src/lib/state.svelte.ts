@@ -8,7 +8,8 @@ import type { ColumnDef, RowData } from '@tanstack/table-core';
 export let columns = writable<ColumnDef<RowData, unknown>[]>([]);
 export let rows = writable<RowData[]>([]);
 export let totalRows = writable<number>(0);
-
+export let currentPage = writable<number>(0);
+export let currentPageSize = writable<number>(20);
 
 export let postgresConnectionsMap = $state(new SvelteMap<number, model.Connection>());
 export let connectionDatabasesMap = $state(new SvelteMap<number, string[]>());

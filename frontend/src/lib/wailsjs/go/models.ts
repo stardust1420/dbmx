@@ -287,6 +287,7 @@ export namespace model {
 	    columns: string[];
 	    rows: Cell[][];
 	    totalRows: number;
+	    currentPage: number;
 	    ConnectionID?: number;
 	    ConnectionName: string;
 	    DBName?: string;
@@ -318,6 +319,7 @@ export namespace model {
 	        this.columns = source["columns"];
 	        this.rows = this.convertValues(source["rows"], Cell);
 	        this.totalRows = source["totalRows"];
+	        this.currentPage = source["currentPage"];
 	        this.ConnectionID = source["ConnectionID"];
 	        this.ConnectionName = source["ConnectionName"];
 	        this.DBName = source["DBName"];
