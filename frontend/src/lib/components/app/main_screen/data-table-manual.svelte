@@ -31,7 +31,6 @@
         getTablePageData
 	} = $props();
 
-	let pagination = $state<PaginationState>({ pageIndex: $currentPage, pageSize: $currentPageSize });
 	let sorting = $state<SortingState>([]);
 	let columnFilters = $state<ColumnFiltersState>([]);
 	let rowSelection = $state<RowSelectionState>({});
@@ -46,7 +45,7 @@
 		},
 		state: {
 			get pagination() {
-				return pagination;
+				return { pageIndex: $currentPage, pageSize: $currentPageSize };
 			},
 			get sorting() {
 				return sorting;
@@ -72,11 +71,14 @@
 		getFacetedUniqueValues: getFacetedUniqueValues(),
 		getFilteredRowModel: getFilteredRowModel(),
 		onPaginationChange: (updater) => {
+			let nextState: PaginationState;
 			if (typeof updater === 'function') {
-				pagination = updater(pagination);
+				nextState = updater({ pageIndex: $currentPage, pageSize: $currentPageSize });
 			} else {
-				pagination = updater;
+				nextState = updater;
 			}
+			currentPage.set(nextState.pageIndex);
+			currentPageSize.set(nextState.pageSize);
 		},
 		onSortingChange: (updater) => {
 			if (typeof updater === 'function') {
@@ -111,9 +113,7 @@
     // Fetch data whenever pagination changes (user-driven only)
     let isInitialMount = true;
     $effect(() => {
-        // Track only pagination state
-        currentPageSize.set(pagination.pageSize);
-        currentPage.set(pagination.pageIndex);
+        // Track only pagination state via stores
 		let offset = $currentPage * $currentPageSize;
 
         // Skip the initial mount — parent already loaded the data
