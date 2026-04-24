@@ -686,32 +686,6 @@
 
 	}
 
-	document.addEventListener('keydown', handleKeyDown);
-	function handleKeyDown(event: KeyboardEvent) {
-		if (event.altKey && event.key === 'Enter') {
-			event.preventDefault();
-			if (tabType == 'table') {
-				console.log('get table data');
-				getTableData();
-			} else {
-				console.log('execute query');
-				executeQuery();
-			}
-		}
-		// Command+S (Mac) or Ctrl+S (Windows/Linux)
-		if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') {
-			event.preventDefault();
-			// Your custom logic here
-			toast.success('Not Needed! 😂', {
-				description: 'Your queries are saved automatically 😂',
-				action: {
-					label: 'OK',
-					onClick: () => console.info('OK')
-				}
-			});
-		}
-	}
-
 	function selectActiveDB(activeDBDisplay: string, poolID: string, activeDBColor: string) {
 		$selectedDBDisplay = activeDBDisplay;
 		$activePoolID = poolID;
@@ -771,15 +745,37 @@
 		}, 500);
 	});
 
-	// Write a function to call addTab when pressed cmd + t
-	$effect(() => {
-		document.addEventListener('keydown', (event: KeyboardEvent) => {
-			if (event.key === 't' && event.metaKey) {
-				addTab();
-			}
-		});
-	});
+	function handleKeyDown(event: KeyboardEvent) {
+        // Alt + Enter
+        if (event.altKey && event.key === 'Enter') {
+            event.preventDefault();
+            if (tabType == 'table') {
+                console.log('get table data');
+                getTableData();
+            } else {
+                console.log('execute query');
+                executeQuery();
+            }
+        }
+        
+        // Command/Ctrl + S
+        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') {
+            event.preventDefault();
+            toast.success('Not Needed! 😂', {
+                description: 'Your queries are saved automatically 😂',
+                action: { label: 'OK', onClick: () => console.info('OK') }
+            });
+        }
+
+        // Command/Ctrl + T
+        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 't') {
+            event.preventDefault(); // CAREFUL: Without this, the browser will open a new tab!
+            addTab();
+        }
+    }
 </script>
+
+<svelte:document onkeydown={handleKeyDown} />
 
 <div class="my-2 flex h-full flex-1 flex-col rounded-md bg-black mr-2">
 	<Tabs.Root value={tabID.toString()} class="flex h-full flex-1 flex-col overflow-hidden">
