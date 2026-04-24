@@ -96,6 +96,11 @@
 	});
 
 	function establishDatabaseConnection(id: number, dbID: string) {
+		// If connection is alredy being established, return
+		if (dbLoadingMap.get(dbID)) {
+			return;
+		}
+
 		let db = databasesMap.get(dbID);
 
 		if (!db) {
@@ -179,6 +184,11 @@
 	}
 
 	function establishConnection(id: number) {
+		// If connection is alredy being established, return
+		if (loadingMap.get(id)) {
+			return;
+		}
+
 		loadingMap.set(id, true);
 		// Check if connection is already established
 		if ((connectionDatabasesMap.get(id)?.length || 0) > 0) {
