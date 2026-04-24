@@ -767,10 +767,10 @@ func isWriteOperation(query string) bool {
 	return false
 }
 
-func (c *Connections) ExecuteQuery(activePoolID uuid.UUID, query string, tabID int64) *model.QueryResult {
+func (c *Connections) ExecuteQuery(activePoolID uuid.UUID, query string, tabID int64) model.QueryResult {
 	pool, exists := c.PM.GetPool(activePoolID)
 	if !exists {
-		return &model.QueryResult{OK: false, Message: "pool doesn't exist"}
+		return model.QueryResult{OK: false, Message: "pool doesn't exist"}
 	}
 
 	// --- 1. CONCURRENCY CONTROL & TIMEOUT SETUP ---
@@ -782,7 +782,7 @@ func (c *Connections) ExecuteQuery(activePoolID uuid.UUID, query string, tabID i
 	// Prevent running if this tab is already executing a query
 	if _, isRunning := c.activeQueries[tabID]; isRunning {
 		c.mu.Unlock()
-		return &model.QueryResult{OK: false, Message: "A query is already running on this tab"}
+		return model.QueryResult{OK: false, Message: "A query is already running on this tab"}
 	}
 
 	// Set a timeout (e.g., 30 seconds). You can adjust this duration.
@@ -799,7 +799,7 @@ func (c *Connections) ExecuteQuery(activePoolID uuid.UUID, query string, tabID i
 	}()
 	// ----------------------------------------------
 
-	response := &model.QueryResult{OK: true}
+	response := model.QueryResult{OK: true}
 	normalizedQuery := strings.ToLower(strings.TrimSpace(query))
 	isWrite := isWriteOperation(normalizedQuery)
 
@@ -842,7 +842,7 @@ func (c *Connections) ExecuteQuery(activePoolID uuid.UUID, query string, tabID i
 
 			row, err := resultRows.Values()
 			if err != nil {
-				return &model.QueryResult{OK: false, Message: err.Error()}
+				return model.QueryResult{OK: false, Message: err.Error()}
 			}
 
 			cells := make([]model.Cell, 0, len(row))
@@ -883,7 +883,7 @@ func (c *Connections) ExecuteQuery(activePoolID uuid.UUID, query string, tabID i
 			if estimatedBytes > maxAllowedBytes {
 				// Call cancel() to tell PostgreSQL to stop sending data over the network
 				cancel()
-				return &model.QueryResult{
+				return model.QueryResult{
 					OK:      false,
 					Message: "Result set too large: exceeded 5MB limit. Please add a LIMIT clause to your query.",
 				}
@@ -901,17 +901,17 @@ func (c *Connections) ExecuteQuery(activePoolID uuid.UUID, query string, tabID i
 }
 
 // Helper to handle standard vs timeout errors consistently
-func (c *Connections) handleQueryError(err error) *model.QueryResult {
+func (c *Connections) handleQueryError(err error) model.QueryResult {
 	// Check if the error was caused by our context timing out or being canceled
 	if errors.Is(err, context.DeadlineExceeded) {
-		return &model.QueryResult{OK: false, Message: "Query timed out after exceeding the maximum allowed time"}
+		return model.QueryResult{OK: false, Message: "Query timed out after exceeding the maximum allowed time"}
 	}
 	if errors.Is(err, context.Canceled) {
-		return &model.QueryResult{OK: false, Message: "Query was manually aborted"}
+		return model.QueryResult{OK: false, Message: "Query was manually aborted"}
 	}
 
 	// Your original fallback for syntax/SQL errors
-	return &model.QueryResult{
+	return model.QueryResult{
 		OK:           true,
 		Message:      err.Error(),
 		RowsAffected: 0,
@@ -920,24 +920,24 @@ func (c *Connections) handleQueryError(err error) *model.QueryResult {
 	}
 }
 
-func (c *Connections) GetTableData(activePoolID uuid.UUID, tabID int64, tableName, selectQuery, limit, offset, where, orderBy, groupBy string, isPageData bool) *model.QueryResult {
+func (c *Connections) GetTableData(activePoolID uuid.UUID, tabID int64, tableName, selectQuery, limit, offset, where, orderBy, groupBy string, isPageData bool) model.QueryResult {
 	pool, exists := c.PM.GetPool(activePoolID)
 	if !exists {
-		return &model.QueryResult{OK: false, Message: "pool doesn't exist"}
+		return model.QueryResult{OK: false, Message: "pool doesn't exist"}
 	}
 
 	ctx := context.Background()
 
-	response := &model.QueryResult{OK: true}
+	response := model.QueryResult{OK: true}
 
 	setLimit := strconv.Itoa(20)
 	if strings.TrimSpace(limit) != "" {
 		limitInt, err := strconv.Atoi(strings.TrimSpace(limit))
 		if err != nil {
-			return &model.QueryResult{OK: false, Message: "limit is not a number"}
+			return model.QueryResult{OK: false, Message: "limit is not a number"}
 		}
 		if limitInt > 100 {
-			return &model.QueryResult{OK: false, Message: "limit cannot be greater than 100"}
+			return model.QueryResult{OK: false, Message: "limit cannot be greater than 100"}
 		}
 		setLimit = strings.TrimSpace(limit)
 	}
@@ -971,7 +971,7 @@ func (c *Connections) GetTableData(activePoolID uuid.UUID, tabID int64, tableNam
 		var totalRows int64
 		err := pool.QueryRow(ctx, totalRowsQuery).Scan(&totalRows)
 		if err != nil {
-			return &model.QueryResult{
+			return model.QueryResult{
 				OK:           true,
 				Message:      err.Error(),
 				RowsAffected: int64(0),
@@ -992,7 +992,7 @@ func (c *Connections) GetTableData(activePoolID uuid.UUID, tabID int64, tableNam
 	// Use Query for read operations
 	resultRows, err := pool.Query(ctx, query)
 	if err != nil {
-		return &model.QueryResult{
+		return model.QueryResult{
 			OK:           true,
 			Message:      err.Error(),
 			RowsAffected: int64(0),
@@ -1014,7 +1014,7 @@ func (c *Connections) GetTableData(activePoolID uuid.UUID, tabID int64, tableNam
 	for resultRows.Next() {
 		row, err := resultRows.Values()
 		if err != nil {
-			return &model.QueryResult{OK: false, Message: err.Error()}
+			return model.QueryResult{OK: false, Message: err.Error()}
 		}
 
 		cells := []model.Cell{}
@@ -1045,7 +1045,7 @@ func (c *Connections) GetTableData(activePoolID uuid.UUID, tabID int64, tableNam
 	}
 
 	if err := resultRows.Err(); err != nil {
-		return &model.QueryResult{OK: false, Message: err.Error()}
+		return model.QueryResult{OK: false, Message: err.Error()}
 	}
 
 	response.Rows = rows
