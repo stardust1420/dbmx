@@ -828,8 +828,8 @@ func (c *Connections) ExecuteQuery(activePoolID uuid.UUID, query string, tabID i
 		var rows [][]model.Cell
 
 		// Define your memory limit (e.g., 5 Megabytes)
-		const maxAllowedBytes = 5 * 1024 * 1024
-		var estimatedBytes int
+		const maxAllowedBytes = 50 * 1024 * 1024
+		var estimatedBytes int64
 
 		for resultRows.Next() {
 			// 1. ABORT CHECK: Did the user cancel or did the timeout hit during iteration?
@@ -871,7 +871,7 @@ func (c *Connections) ExecuteQuery(activePoolID uuid.UUID, query string, tabID i
 
 				// 2. MEMORY CHECK: Estimate the size of the cell we just created
 				// We count the string length + ~32 bytes for struct/pointer overhead in Go
-				estimatedBytes += len(newCell.Value) + 32
+				estimatedBytes += int64(len(newCell.Value)) + 32
 				cells = append(cells, newCell)
 			}
 
@@ -885,7 +885,7 @@ func (c *Connections) ExecuteQuery(activePoolID uuid.UUID, query string, tabID i
 				cancel()
 				return model.QueryResult{
 					OK:      false,
-					Message: "Result set too large: exceeded 5MB limit. Please add a LIMIT clause to your query.",
+					Message: "Result set too large: exceeded 50MB limit. Please add a LIMIT clause to your query.",
 				}
 			}
 		}
