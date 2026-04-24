@@ -11,6 +11,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -24,6 +25,10 @@ import (
 type Connections struct {
 	DB *sql.DB
 	PM *PoolManager
+
+	// Track active queries per tab
+	mu            sync.Mutex
+	activeQueries map[int64]context.CancelFunc
 }
 
 func NewConnections(db *sql.DB, pm *PoolManager) *Connections {
@@ -768,40 +773,48 @@ func (c *Connections) ExecuteQuery(activePoolID uuid.UUID, query string, tabID i
 		return &model.QueryResult{OK: false, Message: "pool doesn't exist"}
 	}
 
-	ctx := context.Background()
+	// --- 1. CONCURRENCY CONTROL & TIMEOUT SETUP ---
+	c.mu.Lock()
+	if c.activeQueries == nil {
+		c.activeQueries = make(map[int64]context.CancelFunc)
+	}
+
+	// Prevent running if this tab is already executing a query
+	if _, isRunning := c.activeQueries[tabID]; isRunning {
+		c.mu.Unlock()
+		return &model.QueryResult{OK: false, Message: "A query is already running on this tab"}
+	}
+
+	// Set a timeout (e.g., 30 seconds). You can adjust this duration.
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	c.activeQueries[tabID] = cancel
+	c.mu.Unlock()
+
+	// Ensure the tab is freed up when the function returns
+	defer func() {
+		cancel() // Free context resources
+		c.mu.Lock()
+		delete(c.activeQueries, tabID)
+		c.mu.Unlock()
+	}()
+	// ----------------------------------------------
 
 	response := &model.QueryResult{OK: true}
-
 	normalizedQuery := strings.ToLower(strings.TrimSpace(query))
-
 	isWrite := isWriteOperation(normalizedQuery)
 
 	if isWrite {
-		// Use Exec for write operations
 		tag, err := pool.Exec(ctx, query)
 		if err != nil {
-			return &model.QueryResult{
-				OK:           true,
-				Message:      err.Error(),
-				RowsAffected: int64(0),
-				Columns:      []string{"Error"},
-				Rows:         [][]model.Cell{{model.Cell{Column: "Error", Value: err.Error()}}},
-			}
+			return c.handleQueryError(err)
 		}
 		response.RowsAffected = tag.RowsAffected()
 		response.Columns = []string{"Rows Affected"}
 		response.Rows = [][]model.Cell{{model.Cell{Column: "Rows Affected", Value: fmt.Sprintf("%d", response.RowsAffected)}}}
 	} else {
-		// Use Query for read operations
 		resultRows, err := pool.Query(ctx, query)
 		if err != nil {
-			return &model.QueryResult{
-				OK:           true,
-				Message:      err.Error(),
-				RowsAffected: int64(0),
-				Columns:      []string{"Error"},
-				Rows:         [][]model.Cell{{model.Cell{Column: "Error", Value: err.Error()}}},
-			}
+			return c.handleQueryError(err)
 		}
 		defer resultRows.Close()
 
@@ -814,17 +827,29 @@ func (c *Connections) ExecuteQuery(activePoolID uuid.UUID, query string, tabID i
 
 		var rows [][]model.Cell
 
+		// Define your memory limit (e.g., 5 Megabytes)
+		const maxAllowedBytes = 5 * 1024 * 1024
+		var estimatedBytes int
+
 		for resultRows.Next() {
+			// 1. ABORT CHECK: Did the user cancel or did the timeout hit during iteration?
+			select {
+			case <-ctx.Done():
+				return c.handleQueryError(ctx.Err())
+			default:
+				// Context is still alive, proceed.
+			}
+
 			row, err := resultRows.Values()
 			if err != nil {
 				return &model.QueryResult{OK: false, Message: err.Error()}
 			}
 
-			cells := []model.Cell{}
+			cells := make([]model.Cell, 0, len(row))
 			for i, cell := range row {
-				newCell := model.Cell{
-					Column: columnNames[i],
-				}
+				newCell := model.Cell{Column: columnNames[i]}
+
+				// ... (Keep your existing switch statement to format newCell.Value) ...
 				switch v := cell.(type) {
 				case []byte:
 					newCell.Value = string(v)
@@ -837,24 +862,62 @@ func (c *Connections) ExecuteQuery(activePoolID uuid.UUID, query string, tabID i
 				case string:
 					if v == "" {
 						newCell.Value = "EMPTY"
+					} else {
+						newCell.Value = v
 					}
-					newCell.Value = v
 				default:
 					newCell.Value = fmt.Sprintf("%v", v)
 				}
+
+				// 2. MEMORY CHECK: Estimate the size of the cell we just created
+				// We count the string length + ~32 bytes for struct/pointer overhead in Go
+				estimatedBytes += len(newCell.Value) + 32
 				cells = append(cells, newCell)
 			}
+
+			// Add slice overhead for the row (~24 bytes)
+			estimatedBytes += 24
 			rows = append(rows, cells)
+
+			// If we exceed the limit, stop processing immediately
+			if estimatedBytes > maxAllowedBytes {
+				// Call cancel() to tell PostgreSQL to stop sending data over the network
+				cancel()
+				return &model.QueryResult{
+					OK:      false,
+					Message: "Result set too large: exceeded 5MB limit. Please add a LIMIT clause to your query.",
+				}
+			}
 		}
 
 		if err := resultRows.Err(); err != nil {
-			return &model.QueryResult{OK: false, Message: err.Error()}
+			return c.handleQueryError(err)
 		}
 
 		response.Rows = rows
 	}
 
 	return response
+}
+
+// Helper to handle standard vs timeout errors consistently
+func (c *Connections) handleQueryError(err error) *model.QueryResult {
+	// Check if the error was caused by our context timing out or being canceled
+	if errors.Is(err, context.DeadlineExceeded) {
+		return &model.QueryResult{OK: false, Message: "Query timed out after exceeding the maximum allowed time"}
+	}
+	if errors.Is(err, context.Canceled) {
+		return &model.QueryResult{OK: false, Message: "Query was manually aborted"}
+	}
+
+	// Your original fallback for syntax/SQL errors
+	return &model.QueryResult{
+		OK:           true,
+		Message:      err.Error(),
+		RowsAffected: 0,
+		Columns:      []string{"Error"},
+		Rows:         [][]model.Cell{{model.Cell{Column: "Error", Value: err.Error()}}},
+	}
 }
 
 func (c *Connections) GetTableData(activePoolID uuid.UUID, tabID int64, tableName, selectQuery, limit, offset, where, orderBy, groupBy string, isPageData bool) *model.QueryResult {

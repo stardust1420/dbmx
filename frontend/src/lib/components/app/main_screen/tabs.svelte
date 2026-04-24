@@ -514,6 +514,10 @@
 	}
 
 	function getTableData() {
+		if (tabType == 'editor') {
+			return;
+		}
+
 		if (tabTableDBPoolID == '') {
 			toast.error('Please select a database to execute the query', {
 				action: {
