@@ -857,7 +857,7 @@
 									<Label class="ml-2 text-red-500">Disconnected</Label>
 								{:else}
 									<Label class="ml-2 text-green-500">Connected</Label>
-									<Label class="ml-4 text-white">abcdefghiRun with ⌥(option) + return</Label>
+									<Label class="ml-4 text-white">Run with ⌥(option) + return</Label>
 								{/if}
 							</div>
 							<div class="flex px-2">
