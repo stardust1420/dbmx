@@ -386,6 +386,26 @@ export namespace model {
 		    return a;
 		}
 	}
+	export class UpdateCell {
+	    CellID: string;
+	    TableName: string;
+	    RowID: number;
+	    ColumnName: string;
+	    Value: any;
+	
+	    static createFrom(source: any = {}) {
+	        return new UpdateCell(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.CellID = source["CellID"];
+	        this.TableName = source["TableName"];
+	        this.RowID = source["RowID"];
+	        this.ColumnName = source["ColumnName"];
+	        this.Value = source["Value"];
+	    }
+	}
 	export class User {
 	    id: number[];
 	    email: string;

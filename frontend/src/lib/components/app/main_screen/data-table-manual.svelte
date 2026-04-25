@@ -5,6 +5,7 @@
 		getFacetedUniqueValues,
 		getFilteredRowModel,
 		getSortedRowModel,
+		type Cell,
 		type ColumnDef,
 		type ColumnFiltersState,
 		type PaginationState,
@@ -26,8 +27,14 @@
 	import { toast } from 'svelte-sonner';
 	import { untrack } from 'svelte';
 	import { columns, rows, totalRows, currentPage, currentPageSize } from '$lib/state.svelte';
+	import { SvelteMap } from 'svelte/reactivity';
+	import type { model } from '$lib/wailsjs/go/models';
+	import { UpdateCells } from '$lib/wailsjs/go/app/Connections';
+
 
 	let {
+		tabTableDBPoolID,
+        tableName,
         getTablePageData
 	} = $props();
 
@@ -128,7 +135,75 @@
             getTablePageData(String($currentPageSize), String(offset));
         });
     });
+
+	let editedCellsMap = $state(new SvelteMap<string, string>());
+	let editingCellValue: any = $state(null);
+
+	let updateCellPayload = $state<model.UpdateCell[]>([]);
+
+	function addUpdateCellPayload(cellId: string, rowId: number, columnId: string, value: any) {
+		let payload = updateCellPayload.find((item) => item.CellID === cellId);
+		if (payload) {
+			payload.Value = value;
+		} else {
+			updateCellPayload.push({
+				CellID: cellId,
+				TableName: tableName,
+				RowID: rowId,
+				ColumnName: columnId,
+				Value: value
+			});
+		}
+	}
+
+	function removeUpdateCellPayload(cellId: string) {
+		updateCellPayload = updateCellPayload.filter((item) => item.CellID !== cellId);
+	}
+
+	function handleKeyDown(event: KeyboardEvent) {
+        // Command/Ctrl + S
+        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') {
+            event.preventDefault();
+			if (updateCellPayload.length > 0) {
+				UpdateCells(tabTableDBPoolID, updateCellPayload)
+				.then((res) => {
+					if (res) {
+						toast.success('Saving Changes', {
+							description: 'Your changes are saved successfully.',
+						});
+						updateCellPayload = [];
+						editedCellsMap.clear();
+						getTablePageData(String($currentPageSize), String($currentPage * $currentPageSize));
+					}
+				})
+				.catch(error => {
+					toast.error('Failed to save changes.', {
+						description: error
+					});
+				});
+			} else {
+				toast.error('No changes to save.', {
+					description: 'There are no changes to save.',
+				});
+			}
+        }
+
+		// Clear the update payload on escape or cmd + z
+		if (event.key === 'Escape' || ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z')) {
+            event.preventDefault();
+			if (updateCellPayload.length > 0) {
+				updateCellPayload = [];
+				editedCellsMap.clear();
+				toast.success('Changes Cleared', {
+					description: 'Your changes are cleared successfully.',
+				});
+			}
+		}
+    }
+
 </script>
+
+<svelte:document onkeydown={handleKeyDown} />
 
 <div class="h-full overflow-auto bg-black rounded-3xl">
 	<div class="flex h-full flex-col">
@@ -155,34 +230,52 @@
 						<Table.Row>
 							{#each row.getVisibleCells() as cell (cell.id)}
 								<Table.Cell
-									class="h-12 px-4 text-start focus-within:px-2 transition-[padding] w-fit hover:bg-muted"
+									class={`hover:bg-muted ${
+										editedCellsMap.has(cell.id) ? 'bg-red-900 hover:bg-red-800' : ''
+									} h-12 px-4 text-start focus-within:px-2 transition-[padding] w-fit`}
 									ondblclick={() => {
 										editingCell = cell.id;
+										editingCellValue = editedCellsMap.get(cell.id) ?? String(cell.getValue());
 									}}
 								>
 									{#if editingCell === cell.id}
 										<form
 											onsubmit={(e) => {
 												e.preventDefault();
-												toast.promise(new Promise((resolve) => setTimeout(resolve, 1000)), {
-													loading: `Saving ${cell.getValue()}`,
-													success: 'Done',
-													error: 'Error'
-												});
+												if (cell.getValue() != editingCellValue) {
+													if (row.original["id"] === undefined) {
+														toast.error("No primary key found for the row. Please make sure the primary key is selected while querying")
+														return;
+													}
+													editedCellsMap.set(cell.id, editingCellValue);
+													addUpdateCellPayload(cell.id, Number(row.original["id"]), cell.column.id, editingCellValue);
+												} else {
+													editedCellsMap.delete(cell.id);
+													removeUpdateCellPayload(cell.id);
+												}
 												editingCell = null;
+												editingCellValue = "";
 											}}
 										>
 											<Input
 												class="hover:bg-input/30 px-2 focus-visible:bg-background dark:hover:bg-input/30 dark:focus-visible:bg-input/30 w-full bg-transparent text-start shadow-none focus-visible:border dark:bg-transparent"
-												value={cell.getValue()}
+												bind:value={editingCellValue}
 												autofocus
 												onfocusout={() => {
 													editingCell = null;
+													editingCellValue = "";
 												}}
 											/>
 										</form>
 									{:else}
-										<FlexRender content={cell.column.columnDef.cell} context={cell.getContext()} />
+										{#if editedCellsMap.has(cell.id)}
+											{editedCellsMap.get(cell.id)}
+										{:else}
+											<FlexRender
+												content={cell.column.columnDef.cell}
+												context={cell.getContext()}
+											/>
+										{/if}
 									{/if}
 								</Table.Cell>
 							{/each}

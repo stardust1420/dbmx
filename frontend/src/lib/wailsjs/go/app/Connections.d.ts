@@ -39,4 +39,6 @@ export function TestConnectPostgres(arg1:model.Connection):Promise<boolean>;
 
 export function TypeConnectionTable():Promise<model.ConnectionTable>;
 
+export function UpdateCells(arg1:uuid.UUID,arg2:Array<model.UpdateCell>):Promise<boolean>;
+
 export function UpdateConnection(arg1:model.Connection):Promise<boolean>;

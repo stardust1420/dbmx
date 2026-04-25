@@ -52,9 +52,9 @@
 
 				if (response.structure) {
 					if (response.structure.columns) {
-						structureColumns = response.structure.columns.map((column, index) => ({
+						structureColumns = response.structure.columns.map((column) => ({
 							accessorKey: column,
-							id: `${column}_${index}`, // Unique ID guaranteed!
+							id: column, // Unique ID guaranteed!
 							header: column
 						}));
 					}
@@ -76,9 +76,9 @@
 				if (response.indexes) {
 					// Update columns
 					if (response.indexes.columns) {
-						indexesColumns = response.indexes.columns.map((column, index) => ({
+						indexesColumns = response.indexes.columns.map((column) => ({
 							accessorKey: column,
-							id: `${column}_${index}`, // Unique ID guaranteed!
+							id: column, // Unique ID guaranteed!
 							header: column
 						}));
 					}
@@ -100,9 +100,9 @@
 				if (response.rules) {
 					// Update columns
 					if (response.rules.columns) {
-						rulesColumns = response.rules.columns.map((column, index) => ({
+						rulesColumns = response.rules.columns.map((column) => ({
 							accessorKey: column,
-							id: `${column}_${index}`, // Unique ID guaranteed!
+							id: column, // Unique ID guaranteed!
 							header: column
 						}));
 					}

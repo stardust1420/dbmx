@@ -98,3 +98,11 @@ type TableInfo struct {
 	Indexes   Indexes   `json:"indexes"`
 	Rules     Rules     `json:"rules"`
 }
+
+type UpdateCell struct {
+	CellID     string
+	TableName  string
+	RowID      int64
+	ColumnName string
+	Value      any
+}
