@@ -160,11 +160,18 @@
 				// If the connection id and database name of the tab matches the connection and database to which the connection was established
 				// Set the active db params of the tab
 				tabsMap.forEach((tab, id) => {
-					if (tab.ConnectionID === db.ConnectionID && tab.DBName === db.Name) {
+					if (tab.Type === 'editor' && !tab.ActiveDBID) {
 						tab.ActiveDB = $selectedDBDisplay;
 						tab.ActiveDBID = $activePoolID;
 						tab.ActiveDBColor = $currentColor;
 						tabsMap.set(id, tab);
+					} else {
+						if (tab.ConnectionID === db.ConnectionID && tab.DBName === db.Name) {
+							tab.ActiveDB = $selectedDBDisplay;
+							tab.ActiveDBID = $activePoolID;
+							tab.ActiveDBColor = $currentColor;
+							tabsMap.set(id, tab);
+						}
 					}
 				});
 
@@ -235,11 +242,18 @@
 						// If the connection id and database name of the tab matches the connection and database to which the connection was established
 						// Set the active db params of the tab
 						tabsMap.forEach((tab, id) => {
-							if (tab.ConnectionID === db.ConnectionID && tab.DBName === db.Name) {
+							if (tab.Type === 'editor' && !tab.ActiveDBID) {
 								tab.ActiveDB = $selectedDBDisplay;
 								tab.ActiveDBID = $activePoolID;
 								tab.ActiveDBColor = $currentColor;
 								tabsMap.set(id, tab);
+							} else {
+								if (tab.ConnectionID === db.ConnectionID && tab.DBName === db.Name) {
+									tab.ActiveDB = $selectedDBDisplay;
+									tab.ActiveDBID = $activePoolID;
+									tab.ActiveDBColor = $currentColor;
+									tabsMap.set(id, tab);
+								}
 							}
 						});
 
