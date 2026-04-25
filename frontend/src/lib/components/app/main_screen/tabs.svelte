@@ -109,10 +109,12 @@
 					tabType = tab.Type;
 
 					// Properties for table view tab
-					tabDBName = tab.DBName || '';
-					tabTableDBPoolID = tab.ActiveDBID || '';
-					tabConnName = tab.ConnectionName || '';
-					tabConnID = tab.ConnectionID || 0;
+					if (tabType === 'table') {
+						tabDBName = tab.DBName || '';
+						tabTableDBPoolID = tab.ActiveDBID || '';
+						tabConnName = tab.ConnectionName || '';
+						tabConnID = tab.ConnectionID || 0;
+					}
 
 					select = tab.Select;
 					limit = tab.Limit;
@@ -210,10 +212,11 @@
 			poolID = tableDBPoolID;
 		}
 		// Send default values for now in activeDBID and activeDB
+		// Do not set active db for new tab. Let the user select the active db
 		AddTab(
-			poolID,
-			$selectedDBDisplay,
-			$currentColor,
+			"",
+			"",
+			"",
 			tabDisplayName,
 			tableType,
 			connID,
@@ -229,10 +232,16 @@
 				tabType = tab.Type;
 
 				// Properties for table view tab
-				tabDBName = tab.DBName || '';
-				tabTableDBPoolID = tab.ActiveDBID || '';
-				tabConnName = tab.ConnectionName || '';
-				tabConnID = tab.ConnectionID || 0;
+				if (tabType === 'table') {
+					tabDBName = tab.DBName || '';
+					tabTableDBPoolID = tab.ActiveDBID || '';
+					tabConnName = tab.ConnectionName || '';
+					tabConnID = tab.ConnectionID || 0;
+				}
+
+				$selectedDBDisplay = 'Connect to a database';
+				$currentColor = '';
+				$activePoolID = '';
 
 				select = tab.Select;
 				limit = tab.Limit;
@@ -256,11 +265,6 @@
 				});
 				tabLoading = false;
 			});
-			
-
-		$selectedDBDisplay = $selectedDBDisplay;
-		$activePoolID = $activePoolID;
-		$currentColor = $currentColor;
 
 		columns.set([]);
 		rows.set([]);
