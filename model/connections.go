@@ -71,6 +71,10 @@ type QueryResult struct {
 	TotalRows    int64    `json:"totalRows"`
 	RowsAffected int64    `json:"rowsAffected"`
 	Message      string   `json:"message"`
+
+	// If query output contains data of only one table and output also contains id primary key, its name will be stored here
+	// Else it will be empty
+	TableName string `json:"tableName"`
 }
 
 type Output struct {
