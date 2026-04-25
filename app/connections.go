@@ -29,12 +29,20 @@ type Connections struct {
 	// Track active queries per tab
 	mu            sync.Mutex
 	activeQueries map[int64]context.CancelFunc
+
+	// Map to save connection level table oid and names
+	// Table Oid uniquely identifies a teble within a database. But it can repeat for a different database.
+	// Hence use a nested map with connection uuid and table oid as key to store table name
+	tableMu         sync.RWMutex
+	tableOidNameMap map[uuid.UUID]map[uint32]string
 }
 
 func NewConnections(db *sql.DB, pm *PoolManager) *Connections {
 	return &Connections{
-		DB: db,
-		PM: pm,
+		DB:              db,
+		PM:              pm,
+		activeQueries:   make(map[int64]context.CancelFunc),
+		tableOidNameMap: make(map[uuid.UUID]map[uint32]string),
 	}
 }
 
@@ -622,7 +630,19 @@ func (c *Connections) GetAllPostgresTables(activePoolID uuid.UUID) ([]string, er
 	}
 
 	// Get all tables
-	rows, err := pool.Query(context.TODO(), "SELECT tablename FROM pg_tables WHERE schemaname = 'public'")
+	query := `
+		SELECT 
+			c.oid AS table_oid, 
+			c.relname AS tablename
+		FROM 
+			pg_class c
+		JOIN 
+			pg_namespace n ON n.oid = c.relnamespace
+		WHERE 
+			n.nspname = 'public' 
+			AND c.relkind IN ('r', 'p');
+	`
+	rows, err := pool.Query(context.TODO(), query)
 	if err != nil {
 		return nil, err
 	}
@@ -633,12 +653,16 @@ func (c *Connections) GetAllPostgresTables(activePoolID uuid.UUID) ([]string, er
 
 	// Iterate through the rows
 	for rows.Next() {
+		var tableOID uint32
 		var table string
-		err := rows.Scan(&table)
+		err := rows.Scan(&tableOID, &table)
 		if err != nil {
 			return nil, err
 		}
+
 		tables = append(tables, table)
+
+		c.setTableOidNameMap(activePoolID, tableOID, table)
 	}
 
 	// Check for any error encountered during iteration
@@ -703,6 +727,8 @@ func (c *Connections) TerminatePostgresDatabaseConnection(activePoolID string, i
 		return false, err
 	}
 
+	c.deleteTableOidNameMap(activePoolIDUUID)
+
 	// Remove the pool from all the tabs in which it's saved
 	_, err = c.DB.Exec("UPDATE tabs SET active_db_id = NULL, active_db = NULL, active_db_color = NULL WHERE active_db_id = ?", activePoolID)
 	if err != nil {
@@ -722,6 +748,8 @@ func (c *Connections) TerminateAllDatabaseConnections() error {
 		activeDBIds = append(activeDBIds, id.String())
 		pool.Close()
 		delete(c.PM.Pools, id)
+
+		c.deleteTableOidNameMap(id)
 	}
 
 	// Build placeholders (?, ?, ?)
@@ -818,12 +846,28 @@ func (c *Connections) ExecuteQuery(activePoolID uuid.UUID, query string, tabID i
 		}
 		defer resultRows.Close()
 
+		// Table oid set
+		tableOidSet := make(map[uint32]struct{})
+		idExists := false
+
 		columns := resultRows.FieldDescriptions()
 		columnNames := make([]string, len(columns))
 		for i, column := range columns {
-			columnNames[i] = string(column.Name)
+			columnName := string(column.Name)
+			columnNames[i] = columnName
+			tableOidSet[column.TableOID] = struct{}{}
+			if columnName == "id" {
+				idExists = true
+			}
 		}
 		response.Columns = columnNames
+
+		// Set response table name if query output contains only one table data and has an id column
+		if len(tableOidSet) == 1 && idExists {
+			for oid := range tableOidSet {
+				response.TableName = c.getTableOidNameMap(activePoolID, oid)
+			}
+		}
 
 		var rows [][]model.Cell
 
@@ -1375,4 +1419,28 @@ func (c *Connections) UpdateCells(activePoolID uuid.UUID, updateCells []model.Up
 	}
 
 	return true, nil
+}
+
+func (c *Connections) setTableOidNameMap(activePoolID uuid.UUID, tableOid uint32, tableName string) {
+	c.tableMu.Lock()
+	defer c.tableMu.Unlock()
+	if c.tableOidNameMap[activePoolID] == nil {
+		c.tableOidNameMap[activePoolID] = make(map[uint32]string)
+	}
+	c.tableOidNameMap[activePoolID][tableOid] = tableName
+}
+
+func (c *Connections) getTableOidNameMap(activePoolID uuid.UUID, tableOid uint32) string {
+	c.tableMu.RLock()
+	defer c.tableMu.RUnlock()
+	if c.tableOidNameMap[activePoolID] == nil {
+		return ""
+	}
+	return c.tableOidNameMap[activePoolID][tableOid]
+}
+
+func (c *Connections) deleteTableOidNameMap(activePoolID uuid.UUID) {
+	c.tableMu.Lock()
+	defer c.tableMu.Unlock()
+	delete(c.tableOidNameMap, activePoolID)
 }

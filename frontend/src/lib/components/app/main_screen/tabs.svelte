@@ -422,6 +422,8 @@
 		return colorMap[color] || '';
 	}
 
+	let executeQueryTableName = $state("")
+
 	function executeQuery() {
 		if (tabType == 'table') {
 			return;
@@ -496,6 +498,7 @@
 					}
 				}
 				queryLoading = false;
+				executeQueryTableName = result.tableName;
 			})
 			.catch((error) => {
 				queryLoading = false;
@@ -1206,7 +1209,10 @@
 									<div class="h-full p-2">
 										{#if $columns.length > 0}
 											{#key tabID}
-												<DataTable data={$rows} columns={$columns} />
+												<DataTable 
+													tableName={executeQueryTableName} 
+													executeQuery={executeQuery}
+												/>
 											{/key}
 										{:else if queryLoading}
 											<Skeleton class="my-3 h-[40px] w-full" />

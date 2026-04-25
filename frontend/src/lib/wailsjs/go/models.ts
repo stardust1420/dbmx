@@ -177,6 +177,7 @@ export namespace model {
 	    totalRows: number;
 	    rowsAffected: number;
 	    message: string;
+	    tableName: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new QueryResult(source);
@@ -190,6 +191,7 @@ export namespace model {
 	        this.totalRows = source["totalRows"];
 	        this.rowsAffected = source["rowsAffected"];
 	        this.message = source["message"];
+	        this.tableName = source["tableName"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
