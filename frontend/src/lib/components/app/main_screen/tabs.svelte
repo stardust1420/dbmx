@@ -359,9 +359,9 @@
 			// Update columns
 			columns.set([]);
 			if (tab.columns) {
-				columns.set(tab.columns.map((column, index) => ({
+				columns.set(tab.columns.map((column) => ({
 					accessorKey: column,
-					id: `${column}_${index}`,
+					id: column,
 					header: column
 				})));
 			}
@@ -465,9 +465,9 @@
 
 				// Update columns
 				if (result.columns) {
-					columns.set(result.columns.map((column, index) => ({
+					columns.set(result.columns.map((column) => ({
 						accessorKey: column,
-						id: `${column}_${index}`,
+						id: column,
 						header: column
 					})));
 				}
@@ -551,10 +551,11 @@
 
 				// Update columns
 				if (result.columns) {
-					columns.set(result.columns.map((column, index) => ({
+					columns.set(result.columns.map((column) => ({
 						accessorKey: column,
-						id: `${column}_${index}`,
-						header: column
+						id: column,
+						header: column,
+						size: 270,
 					})));
 				}
 
@@ -634,9 +635,9 @@
 
 				// Update columns
 				if (result.columns) {
-					columns.set(result.columns.map((column, index) => ({
+					columns.set(result.columns.map((column) => ({
 						accessorKey: column,
-						id: `${column}_${index}`,
+						id: column,
 						header: column
 					})));
 				}
@@ -758,14 +759,14 @@
             }
         }
         
-        // Command/Ctrl + S
-        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') {
-            event.preventDefault();
-            toast.success('Not Needed! 😂', {
-                description: 'Your queries are saved automatically 😂',
-                action: { label: 'OK', onClick: () => console.info('OK') }
-            });
-        }
+        // // Command/Ctrl + S
+        // if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') {
+        //     event.preventDefault();
+        //     toast.success('Not Needed! 😂', {
+        //         description: 'Your queries are saved automatically 😂',
+        //         action: { label: 'OK', onClick: () => console.info('OK') }
+        //     });
+        // }
 
         // Command/Ctrl + T
         if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 't') {
@@ -1114,6 +1115,8 @@
 										{#if $columns.length > 0}
 											{#key tabID}
 												<DataTableManual
+													tabTableDBPoolID={tabTableDBPoolID}
+													tableName={tabName}
 													getTablePageData={getTablePageData}
 												/>
 											{/key}

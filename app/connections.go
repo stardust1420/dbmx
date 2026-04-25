@@ -955,6 +955,8 @@ func (c *Connections) GetTableData(activePoolID uuid.UUID, tabID int64, tableNam
 	}
 	if strings.TrimSpace(orderBy) != "" {
 		query += fmt.Sprintf(" ORDER BY %s", strings.TrimSpace(orderBy))
+	} else {
+		query += " ORDER BY 1"
 	}
 
 	if !isPageData {
@@ -1332,4 +1334,45 @@ func (c *Connections) GetTableInfo(activePoolID uuid.UUID, tableName string) (*m
 	rules.Rows = ruleRows
 
 	return &model.TableInfo{Structure: structure, Indexes: indexes, Rules: rules}, nil
+}
+
+func (c *Connections) UpdateCells(activePoolID uuid.UUID, updateCells []model.UpdateCell) (bool, error) {
+	pool, exists := c.PM.GetPool(activePoolID)
+	if !exists {
+		return false, errors.New("pool doesn't exist")
+	}
+
+	// 1. Initialize a new batch
+	batch := &pgx.Batch{}
+
+	for _, u := range updateCells {
+		// 2. SAFELY construct the query using pgx.Identifier for table/column names.
+		// This translates "my_table" to `"my_table"` and prevents SQL injection.
+		safeTable := pgx.Identifier{u.TableName}.Sanitize()
+		safeColumn := pgx.Identifier{u.ColumnName}.Sanitize()
+
+		// Construct the final query string
+		query := fmt.Sprintf("UPDATE %s SET %s = $1 WHERE id = $2", safeTable, safeColumn)
+
+		// 3. Queue the query with the actual parameterized values
+		batch.Queue(query, u.Value, u.RowID)
+	}
+
+	// 4. Send the batch to the database
+	br := pool.SendBatch(context.Background(), batch)
+
+	// 5. CRITICAL: You must ensure the batch results are closed to release the connection
+	defer br.Close()
+
+	// 6. Verify the results. You must call Exec() (or QueryRow) for EVERY item you queued.
+	for i := 0; i < len(updateCells); i++ {
+		_, err := br.Exec()
+		if err != nil {
+			// If one fails, the whole batch transaction rolls back automatically
+			return false, fmt.Errorf("failed to update cell %s (table: %s, row: %d): %w",
+				updateCells[i].CellID, updateCells[i].TableName, updateCells[i].RowID, err)
+		}
+	}
+
+	return true, nil
 }

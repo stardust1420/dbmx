@@ -74,6 +74,10 @@ export function TypeConnectionTable() {
   return window['go']['app']['Connections']['TypeConnectionTable']();
 }
 
+export function UpdateCells(arg1, arg2) {
+  return window['go']['app']['Connections']['UpdateCells'](arg1, arg2);
+}
+
 export function UpdateConnection(arg1) {
   return window['go']['app']['Connections']['UpdateConnection'](arg1);
 }
