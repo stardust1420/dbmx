@@ -363,7 +363,7 @@
 			// Update columns
 			columns.set([]);
 			if (tab.columns) {
-				const cachedTypes = (tab as any).columnTypes as string[] | undefined;
+				const cachedTypes = tab.columnTypes;
 				columns.set(tab.columns.map((column, i) => ({
 					accessorKey: column,
 					id: column,
@@ -499,7 +499,7 @@
 					let currentTab = tabsMap.get(tabID);
 					if (currentTab) {
 						currentTab.columns = result.columns;
-						(currentTab as any).columnTypes = result.columnTypes;
+						currentTab.columnTypes = result.columnTypes;
 						currentTab.rows = result.rows; // result.rows is Cell[][]
 						(currentTab as any).processedRows = newRows; // Cache it!
 						tabsMap.set(tabID, currentTab);
@@ -589,7 +589,7 @@
 					let currentTab = tabsMap.get(tabID);
 					if (currentTab) {
 						currentTab.columns = result.columns;
-						(currentTab as any).columnTypes = result.columnTypes;
+						currentTab.columnTypes = result.columnTypes;
 						currentTab.rows = result.rows; // result.rows is Cell[][]
 						currentTab.totalRows = result.totalRows;
 						currentTab.Limit = '20';
@@ -674,7 +674,7 @@
 					let currentTab = tabsMap.get(tabID);
 					if (currentTab) {
 						currentTab.columns = result.columns;
-						(currentTab as any).columnTypes = result.columnTypes;
+						currentTab.columnTypes = result.columnTypes;
 						currentTab.rows = result.rows; // result.rows is Cell[][]
 						currentTab.Limit = limit;
 						currentTab.currentPage = $currentPage;

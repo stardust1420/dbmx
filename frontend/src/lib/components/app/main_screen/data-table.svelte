@@ -188,6 +188,7 @@
 					{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
 						<Table.Row>
 							{#each headerGroup.headers as header (header.id)}
+								{@const meta = header.column.columnDef.meta as { dataType?: string } | undefined}
 								<Table.Head colspan={header.colSpan} class="text-center">
 									{#if !header.isPlaceholder}
 										<div class="flex flex-col items-center leading-tight">
@@ -195,9 +196,9 @@
 												content={header.column.columnDef.header}
 												context={header.getContext()}
 											/>
-											{#if (header.column.columnDef.meta as { dataType?: string } | undefined)?.dataType}
+											{#if meta?.dataType}
 												<span class="text-muted-foreground text-[10px] font-normal lowercase">
-													{(header.column.columnDef.meta as { dataType?: string }).dataType}
+													{meta.dataType}
 												</span>
 											{/if}
 										</div>
