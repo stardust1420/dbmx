@@ -363,10 +363,12 @@
 			// Update columns
 			columns.set([]);
 			if (tab.columns) {
-				columns.set(tab.columns.map((column) => ({
+				const cachedTypes = (tab as any).columnTypes as string[] | undefined;
+				columns.set(tab.columns.map((column, i) => ({
 					accessorKey: column,
 					id: column,
-					header: column
+					header: column,
+					meta: { dataType: cachedTypes?.[i] ?? '' }
 				})));
 			}
 
@@ -471,10 +473,11 @@
 
 				// Update columns
 				if (result.columns) {
-					columns.set(result.columns.map((column) => ({
+					columns.set(result.columns.map((column, i) => ({
 						accessorKey: column,
 						id: column,
-						header: column
+						header: column,
+						meta: { dataType: result.columnTypes?.[i] ?? '' }
 					})));
 				}
 
@@ -496,6 +499,7 @@
 					let currentTab = tabsMap.get(tabID);
 					if (currentTab) {
 						currentTab.columns = result.columns;
+						(currentTab as any).columnTypes = result.columnTypes;
 						currentTab.rows = result.rows; // result.rows is Cell[][]
 						(currentTab as any).processedRows = newRows; // Cache it!
 						tabsMap.set(tabID, currentTab);
@@ -558,11 +562,12 @@
 
 				// Update columns
 				if (result.columns) {
-					columns.set(result.columns.map((column) => ({
+					columns.set(result.columns.map((column, i) => ({
 						accessorKey: column,
 						id: column,
 						header: column,
 						size: 270,
+						meta: { dataType: result.columnTypes?.[i] ?? '' }
 					})));
 				}
 
@@ -584,6 +589,7 @@
 					let currentTab = tabsMap.get(tabID);
 					if (currentTab) {
 						currentTab.columns = result.columns;
+						(currentTab as any).columnTypes = result.columnTypes;
 						currentTab.rows = result.rows; // result.rows is Cell[][]
 						currentTab.totalRows = result.totalRows;
 						currentTab.Limit = '20';
@@ -642,10 +648,11 @@
 
 				// Update columns
 				if (result.columns) {
-					columns.set(result.columns.map((column) => ({
+					columns.set(result.columns.map((column, i) => ({
 						accessorKey: column,
 						id: column,
-						header: column
+						header: column,
+						meta: { dataType: result.columnTypes?.[i] ?? '' }
 					})));
 				}
 
@@ -667,6 +674,7 @@
 					let currentTab = tabsMap.get(tabID);
 					if (currentTab) {
 						currentTab.columns = result.columns;
+						(currentTab as any).columnTypes = result.columnTypes;
 						currentTab.rows = result.rows; // result.rows is Cell[][]
 						currentTab.Limit = limit;
 						currentTab.currentPage = $currentPage;

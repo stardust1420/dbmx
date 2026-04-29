@@ -190,10 +190,17 @@
 							{#each headerGroup.headers as header (header.id)}
 								<Table.Head colspan={header.colSpan} class="text-center">
 									{#if !header.isPlaceholder}
-										<FlexRender
-											content={header.column.columnDef.header}
-											context={header.getContext()}
-										/>
+										<div class="flex flex-col items-center leading-tight">
+											<FlexRender
+												content={header.column.columnDef.header}
+												context={header.getContext()}
+											/>
+											{#if (header.column.columnDef.meta as { dataType?: string } | undefined)?.dataType}
+												<span class="text-muted-foreground text-[10px] font-normal lowercase">
+													{(header.column.columnDef.meta as { dataType?: string }).dataType}
+												</span>
+											{/if}
+										</div>
 									{/if}
 								</Table.Head>
 							{/each}

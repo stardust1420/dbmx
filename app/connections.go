@@ -18,6 +18,7 @@ import (
 	"golang.org/x/crypto/ssh"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/pkg/errors"
 )
@@ -838,6 +839,7 @@ func (c *Connections) ExecuteQuery(activePoolID uuid.UUID, query string, tabID i
 		}
 		response.RowsAffected = tag.RowsAffected()
 		response.Columns = []string{"Rows Affected"}
+		response.ColumnTypes = []string{""}
 		response.Rows = [][]model.Cell{{model.Cell{Column: "Rows Affected", Value: fmt.Sprintf("%d", response.RowsAffected)}}}
 	} else {
 		resultRows, err := pool.Query(ctx, query)
@@ -861,6 +863,7 @@ func (c *Connections) ExecuteQuery(activePoolID uuid.UUID, query string, tabID i
 			}
 		}
 		response.Columns = columnNames
+		response.ColumnTypes = resolveColumnTypes(resultRows)
 
 		// Set response table name if query output contains only one table data and has an id column
 		if len(tableOidSet) == 1 && idExists {
@@ -960,8 +963,32 @@ func (c *Connections) handleQueryError(err error) model.QueryResult {
 		Message:      err.Error(),
 		RowsAffected: 0,
 		Columns:      []string{"Error"},
+		ColumnTypes:  []string{""},
 		Rows:         [][]model.Cell{{model.Cell{Column: "Error", Value: err.Error()}}},
 	}
+}
+
+// resolveColumnTypes resolves the PostgreSQL type name for each field description
+// using the connection's type map. Falls back to the OID as a string when the
+// type is not registered in the map (e.g., custom user-defined types).
+func resolveColumnTypes(rows pgx.Rows) []string {
+	fields := rows.FieldDescriptions()
+	typeNames := make([]string, len(fields))
+	conn := rows.Conn()
+	var typeMap *pgtype.Map
+	if conn != nil {
+		typeMap = conn.TypeMap()
+	}
+	for i, f := range fields {
+		if typeMap != nil {
+			if t, ok := typeMap.TypeForOID(f.DataTypeOID); ok {
+				typeNames[i] = t.Name
+				continue
+			}
+		}
+		typeNames[i] = fmt.Sprintf("oid:%d", f.DataTypeOID)
+	}
+	return typeNames
 }
 
 func (c *Connections) GetTableData(activePoolID uuid.UUID, tabID int64, tableName, selectQuery, limit, offset, where, orderBy, groupBy string, isPageData bool) model.QueryResult {
@@ -1022,6 +1049,7 @@ func (c *Connections) GetTableData(activePoolID uuid.UUID, tabID int64, tableNam
 				Message:      err.Error(),
 				RowsAffected: int64(0),
 				Columns:      []string{"Error"},
+				ColumnTypes:  []string{""},
 				Rows:         [][]model.Cell{{model.Cell{Column: "Error", Value: err.Error()}}},
 			}
 		}
@@ -1043,6 +1071,7 @@ func (c *Connections) GetTableData(activePoolID uuid.UUID, tabID int64, tableNam
 			Message:      err.Error(),
 			RowsAffected: int64(0),
 			Columns:      []string{"Error"},
+			ColumnTypes:  []string{""},
 			Rows:         [][]model.Cell{{model.Cell{Column: "Error", Value: err.Error()}}},
 		}
 	}
@@ -1054,6 +1083,7 @@ func (c *Connections) GetTableData(activePoolID uuid.UUID, tabID int64, tableNam
 		columnNames[i] = string(column.Name)
 	}
 	response.Columns = columnNames
+	response.ColumnTypes = resolveColumnTypes(resultRows)
 
 	var rows [][]model.Cell
 

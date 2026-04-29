@@ -173,6 +173,7 @@ export namespace model {
 	export class QueryResult {
 	    ok: boolean;
 	    columns: string[];
+	    columnTypes: string[];
 	    rows: Cell[][];
 	    totalRows: number;
 	    rowsAffected: number;
@@ -187,6 +188,7 @@ export namespace model {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.ok = source["ok"];
 	        this.columns = source["columns"];
+	        this.columnTypes = source["columnTypes"];
 	        this.rows = this.convertValues(source["rows"], Cell);
 	        this.totalRows = source["totalRows"];
 	        this.rowsAffected = source["rowsAffected"];
