@@ -214,7 +214,7 @@
 		// Send default values for now in activeDBID and activeDB
 		// Do not set active db for new tab. Let the user select the active db
 		AddTab(
-			"",
+			tableType === 'table' ? poolID : '',
 			"",
 			"",
 			tabDisplayName,
