@@ -838,10 +838,10 @@
 
 <svelte:document onkeydown={handleKeyDown} />
 
-<div class="flex h-full flex-1 flex-col rounded-md bg-neutral-900 mr-2">
+<div class="flex h-full flex-1 flex-col rounded-md bg-black mr-2">
 	<Tabs.Root value={tabID.toString()} class="flex h-full flex-1 flex-col overflow-hidden">
 		<!-- Tabs visible in the header - Chrome style -->
-		<header class="flex h-11 items-end bg-neutral-900 pt-1">
+		<header class="flex h-11 items-end bg-black pt-1">
 			<div class="flex w-full items-end justify-between">
 				<div class="flex h-auto items-end overflow-x-auto">
 					<div class="flex items-center self-center px-1">
@@ -901,7 +901,7 @@
 				</div>
 				<div class="flex mr-2 self-center">
 					{#if chatPaneCollapsed}
-						<Button variant="secondary" size="sm" onclick={toggleChatPane}>
+						<Button class="text-xs p-1" variant="secondary" size="xs" onclick={toggleChatPane}>
 							<Chat size={16} />
 							Ask Stardust AI
 						</Button>
