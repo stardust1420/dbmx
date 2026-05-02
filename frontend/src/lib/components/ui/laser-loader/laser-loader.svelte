@@ -26,7 +26,7 @@
 		top: 0;
 		left: 0;
 		height: 100%;
-		width: 30%;
+		width: 50%;
 		border-radius: 1px;
 		background: linear-gradient(
 			90deg,
@@ -43,12 +43,12 @@
 			0 0 12px rgba(255, 0, 255, 0.7),
 			0 0 24px rgba(255, 0, 255, 0.5),
 			0 0 48px rgba(255, 0, 255, 0.3);
-		animation: laser-sweep 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+		animation: laser-sweep 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 	}
 
 	@keyframes laser-sweep {
 		0% {
-			left: -30%;
+			left: -50%;
 		}
 		100% {
 			left: 100%;
