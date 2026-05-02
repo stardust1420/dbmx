@@ -31,11 +31,11 @@ function createZoomState() {
 	}
 
 	function applyZoom(value: number) {
-		if (!document.body) return;
-		document.body.style.transform = `scale(${value})`;
-		document.body.style.transformOrigin = 'top left';
-		document.body.style.width = `${100 / value}%`;
-		document.body.style.height = `${100 / value}%`;
+		if (!document.documentElement) return;
+		// CSS zoom on the root element adjusts the layout viewport so that
+		// fixed/percentage-sized elements always fill the physical window correctly.
+		document.documentElement.style.zoom =
+			value === DEFAULT_ZOOM ? '' : value.toString();
 	}
 
 	return {
