@@ -472,17 +472,6 @@
 	{...restProps}
 	variant="floating"
 >
-	<Sidebar.Header class="bg-black">
-		<div class="relative">
-			<Search class="text-muted-foreground absolute left-2.5 top-2.5 h-4 w-4" />
-			<Input
-				type="text"
-				placeholder="Search..."
-				bind:value={searchQuery}
-				class="h-9 pl-8 bg-black border-sidebar-border"
-			/>
-		</div>
-	</Sidebar.Header>
 	<Sidebar.Content class="bg-black">
 		<Sidebar.Group>
 			<Sidebar.GroupLabel>
@@ -497,6 +486,18 @@
 			</Sidebar.GroupLabel>
 			<Sidebar.GroupContent>
 				<Sidebar.Menu class="mt-2">
+						<Sidebar.MenuItem class="flex flex-col items-center justify-center">
+						<div class="relative">
+							<Search class="text-muted-foreground absolute left-2.5 top-2.5 h-4 w-4" />
+							<Input
+								type="text"
+								placeholder="Search..."
+								bind:value={searchQuery}
+								class="h-9 pl-8 bg-black border-sidebar-border"
+							/>
+						</div>
+						</Sidebar.MenuItem>
+
 					<!-- Check if postgresConnectionsMap is empty -->
 					{#if postgresConnectionsMap.size === 0}
 						<Sidebar.MenuItem class="h-96 flex flex-col items-center justify-center">
