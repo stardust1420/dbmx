@@ -31,6 +31,7 @@ function createZoomState() {
 	}
 
 	function applyZoom(value: number) {
+		if (!document.body) return;
 		document.body.style.transform = `scale(${value})`;
 		document.body.style.transformOrigin = 'top left';
 		document.body.style.width = `${100 / value}%`;
