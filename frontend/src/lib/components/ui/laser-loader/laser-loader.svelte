@@ -27,18 +27,18 @@
 		background: linear-gradient(
 			90deg,
 			transparent 0%,
-			rgba(0, 255, 220, 0.4) 10%,
-			rgba(0, 255, 220, 0.8) 30%,
-			#00ffdc 50%,
-			rgba(0, 255, 220, 0.8) 70%,
-			rgba(0, 255, 220, 0.4) 90%,
+			rgba(255, 0, 255, 0.4) 10%,
+			rgba(255, 0, 255, 0.8) 30%,
+			#ff00ff 50%,
+			rgba(255, 0, 255, 0.8) 70%,
+			rgba(255, 0, 255, 0.4) 90%,
 			transparent 100%
 		);
 		box-shadow:
-			0 0 6px rgba(0, 255, 220, 0.9),
-			0 0 12px rgba(0, 255, 220, 0.7),
-			0 0 24px rgba(0, 255, 220, 0.5),
-			0 0 48px rgba(0, 255, 220, 0.3);
+			0 0 6px rgba(255, 0, 255, 0.9),
+			0 0 12px rgba(255, 0, 255, 0.7),
+			0 0 24px rgba(255, 0, 255, 0.5),
+			0 0 48px rgba(255, 0, 255, 0.3);
 		animation: laser-sweep 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 	}
 
