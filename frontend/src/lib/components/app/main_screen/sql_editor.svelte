@@ -37,6 +37,26 @@
 	let historySelectedIndex = $state(0);
 	let historySearchInput: HTMLInputElement | null = $state(null);
 
+	function formatTimestamp(ts: string): string {
+		const date = new Date(ts);
+		if (isNaN(date.getTime())) return ts;
+		const now = new Date();
+		const diffMs = now.getTime() - date.getTime();
+		const diffMin = Math.floor(diffMs / 60000);
+		const diffHr = Math.floor(diffMs / 3600000);
+		const diffDays = Math.floor(diffMs / 86400000);
+
+		let relative: string;
+		if (diffMin < 1) relative = 'just now';
+		else if (diffMin < 60) relative = `${diffMin}m ago`;
+		else if (diffHr < 24) relative = `${diffHr}h ago`;
+		else if (diffDays < 7) relative = `${diffDays}d ago`;
+		else relative = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+
+		const time = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+		return `${relative} · ${time}`;
+	}
+
 	function filterHistory() {
 		const term = historySearchTerm.toLowerCase();
 		if (!term) {
@@ -372,7 +392,7 @@
 					}
 					historyItems = history.map((h) => ({
 						label: h.query,
-						detail: h.executedAt
+						detail: formatTimestamp(h.executedAt)
 					}));
 					filteredItems = historyItems;
 					historySearchTerm = '';
