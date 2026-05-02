@@ -12,9 +12,9 @@
 	.laser-loader-container {
 		position: relative;
 		width: 100%;
-		height: 3px;
+		height: 2px;
 		overflow: hidden;
-		border-radius: 2px;
+		border-radius: 1px;
 	}
 
 	.laser-beam {
@@ -22,25 +22,29 @@
 		top: 0;
 		left: 0;
 		height: 100%;
-		width: 40%;
-		border-radius: 2px;
+		width: 30%;
+		border-radius: 1px;
 		background: linear-gradient(
 			90deg,
 			transparent 0%,
-			rgba(59, 130, 246, 0.5) 20%,
-			rgba(99, 102, 241, 0.9) 50%,
-			rgba(59, 130, 246, 0.5) 80%,
+			rgba(0, 255, 220, 0.4) 10%,
+			rgba(0, 255, 220, 0.8) 30%,
+			#00ffdc 50%,
+			rgba(0, 255, 220, 0.8) 70%,
+			rgba(0, 255, 220, 0.4) 90%,
 			transparent 100%
 		);
 		box-shadow:
-			0 0 8px rgba(99, 102, 241, 0.6),
-			0 0 16px rgba(99, 102, 241, 0.3);
-		animation: laser-sweep 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+			0 0 6px rgba(0, 255, 220, 0.9),
+			0 0 12px rgba(0, 255, 220, 0.7),
+			0 0 24px rgba(0, 255, 220, 0.5),
+			0 0 48px rgba(0, 255, 220, 0.3);
+		animation: laser-sweep 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 	}
 
 	@keyframes laser-sweep {
 		0% {
-			left: -40%;
+			left: -30%;
 		}
 		100% {
 			left: 100%;
