@@ -2,6 +2,7 @@
 	import loader from '@monaco-editor/loader';
 	import { onMount, onDestroy, tick } from 'svelte';
 	import { GetQueryHistory } from '$lib/wailsjs/go/app/QueryHistory.js';
+	import { format as formatSQL } from 'sql-formatter';
 
 	// ----- Types (strict & runtime-safe) -----
 	import type * as MonacoNS from 'monaco-editor';
@@ -417,6 +418,38 @@
 					});
 				} catch (e) {
 					console.error('Failed to load query history:', e);
+				}
+			}
+		});
+
+		// Register "Pretty Format Query" in the right-click context menu
+		editor.addAction({
+			id: 'pretty-format-query',
+			label: 'Pretty Format Query',
+			contextMenuGroupId: 'modification',
+			contextMenuOrder: 1.5,
+			keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyF],
+			run: (ed) => {
+				if (!model) return;
+				const pos = ed.getPosition();
+				if (!pos) return;
+
+				const range = calcBlockRange(monaco, model, pos.lineNumber);
+				const queryText = model.getValueInRange(range);
+
+				try {
+					const formatted = formatSQL(queryText, {
+						language: 'sql',
+						tabWidth: 2,
+						keywordCase: 'upper'
+					});
+
+					ed.pushUndoStop();
+					ed.executeEdits('prettyFormat', [{ range, text: formatted }]);
+					ed.pushUndoStop();
+					value = model!.getValue();
+				} catch (e) {
+					console.error('Failed to format SQL query:', e);
 				}
 			}
 		});
