@@ -345,9 +345,15 @@
 	:global(table th),
 	:global(table th:first-child) {
 		height: 32px;
+		min-width: 100px;
+		max-width: 400px;
+		width: fit-content;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 	:global(table td:first-child) {
-		width: 200px;
+		width: fit-content;
 	}
 	:global(table td) {
 		text-align: center;
@@ -355,7 +361,9 @@
 		text-overflow: ellipsis;
 		white-space: nowrap;
 		border-right: 1px solid #262734;
-		max-width: 350px;
+		min-width: 100px;
+		max-width: 400px;
+		width: fit-content;
 		overflow: hidden;
 	}
 	:global(table td:last-child) {
