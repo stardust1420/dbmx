@@ -942,7 +942,9 @@ func (c *Connections) ExecuteQuery(activePoolID uuid.UUID, query string, tabID i
 	}
 
 	// Save successful query to history
-	_, _ = c.DB.Exec(`INSERT INTO query_history (query) VALUES (?)`, query)
+	if _, err := c.DB.Exec(`INSERT INTO query_history (query) VALUES (?)`, query); err != nil {
+		log.Printf("failed to save query to history: %v", err)
+	}
 
 	return response
 }
