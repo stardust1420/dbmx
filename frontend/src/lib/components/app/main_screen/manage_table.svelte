@@ -6,8 +6,9 @@
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 	import DataTable from './data-table.svelte';
 
+
 	// Accept pool id and table name as props
-	let { activePoolID = '', tabName = '' } = $props();
+	let { tabTableDBPoolID, tabName = '' } = $props();
 	let selectedView = $state('structure');
 
 	// Columns and rows for the query output data table
@@ -28,7 +29,7 @@
 	});
 
 	function getTableInfo() {
-		if (activePoolID == '') {
+		if (tabTableDBPoolID == '') {
 			toast.error('Please connect to a database', {
 				action: {
 					label: 'OK',
@@ -47,7 +48,7 @@
 			return;
 		}
 
-		GetTableInfo(activePoolID, tabName)
+		GetTableInfo(tabTableDBPoolID, tabName)
 			.then((response) => {
 				// Update structure columns
 
