@@ -31,11 +31,19 @@ function createZoomState() {
 	}
 
 	function applyZoom(value: number) {
-		if (!document.documentElement) return;
-		// CSS zoom on the root element adjusts the layout viewport so that
-		// fixed/percentage-sized elements always fill the physical window correctly.
-		document.documentElement.style.zoom =
-			value === DEFAULT_ZOOM ? '' : value.toString();
+		if (!document.body) return;
+		if (value === DEFAULT_ZOOM) {
+			document.body.style.zoom = '';
+			document.body.style.width = '100%';
+			document.body.style.height = '100%';
+		} else {
+			// Apply CSS zoom to body and compensate dimensions so the body
+			// always fills the viewport after scaling. For zoom 0.8, body is
+			// set to 125% wide/tall — after 0.8x zoom it visually fills 100%.
+			document.body.style.zoom = value.toString();
+			document.body.style.width = `${100 / value}%`;
+			document.body.style.height = `${100 / value}%`;
+		}
 	}
 
 	return {
