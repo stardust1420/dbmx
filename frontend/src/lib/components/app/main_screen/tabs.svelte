@@ -8,7 +8,7 @@
 	import * as Resizable from '$lib/components/ui/resizable/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { onMount, type ComponentProps } from 'svelte';
-	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
+	import { LaserLoader } from '$lib/components/ui/laser-loader/index.js';
 	import * as Breadcrumb from '$lib/components/ui/breadcrumb/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
@@ -1119,7 +1119,10 @@
 								</div>
 								<div class="flex h-full flex-1 overflow-hidden">
 									<div class="flex h-full w-full overflow-hidden px-2 pb-2">
-										{#if $columns.length > 0}
+										{#if queryLoading}
+										<LaserLoader />
+									{/if}
+									{#if $columns.length > 0}
 											{#key tabID}
 												<DataTableManual
 													tabTableDBPoolID={tabTableDBPoolID}
@@ -1127,19 +1130,6 @@
 													getTablePageData={getTablePageData}
 												/>
 											{/key}
-										{:else if queryLoading}
-											<Skeleton class="my-3 h-[40px] w-full" />
-											<Skeleton class="my-3 h-[40px] w-full" />
-											<Skeleton class="my-3 h-[40px] w-full" />
-											<Skeleton class="my-3 h-[40px] w-full" />
-											<Skeleton class="my-3 h-[40px] w-full" />
-											<Skeleton class="my-3 h-[40px] w-full" />
-											<Skeleton class="my-3 h-[40px] w-full" />
-											<Skeleton class="my-3 h-[40px] w-full" />
-											<Skeleton class="my-3 h-[40px] w-full" />
-											<Skeleton class="my-3 h-[40px] w-full" />
-											<Skeleton class="my-3 h-[40px] w-full" />
-											<Skeleton class="my-3 h-[40px] w-full" />
 										{/if}
 									</div>
 								</div>
@@ -1211,6 +1201,9 @@
 									class="rsz-pane"
 								>
 									<div class="h-full p-2">
+										{#if queryLoading}
+											<LaserLoader />
+										{/if}
 										{#if $columns.length > 0}
 											{#key tabID}
 												<DataTable 
@@ -1218,14 +1211,6 @@
 													executeQuery={executeQuery}
 												/>
 											{/key}
-										{:else if queryLoading}
-											<Skeleton class="my-3 h-[40px] w-full" />
-											<Skeleton class="my-3 h-[40px] w-full" />
-											<Skeleton class="my-3 h-[40px] w-full" />
-											<Skeleton class="my-3 h-[40px] w-full" />
-											<Skeleton class="my-3 h-[40px] w-full" />
-											<Skeleton class="my-3 h-[40px] w-full" />
-											<Skeleton class="my-3 h-[40px] w-full" />
 										{/if}
 									</div>
 								</Resizable.Pane>
