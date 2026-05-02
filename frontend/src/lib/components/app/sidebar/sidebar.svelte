@@ -298,41 +298,38 @@
 
 	let searchQuery = $state('');
 
+	let normalizedSearch = $derived(searchQuery.trim().toLowerCase());
+
 	function matchesSearch(text: string): boolean {
-		if (!searchQuery.trim()) return true;
-		return text.toLowerCase().includes(searchQuery.trim().toLowerCase());
+		if (!normalizedSearch) return true;
+		return text.toLowerCase().includes(normalizedSearch);
+	}
+
+	function tablesMatchSearch(tables: string[]): boolean {
+		for (const table of tables) {
+			if (matchesSearch(table)) return true;
+		}
+		return false;
 	}
 
 	function connectionMatchesSearch(connectionID: number, connectionName: string): boolean {
-		if (!searchQuery.trim()) return true;
-		// Connection name matches
+		if (!normalizedSearch) return true;
 		if (matchesSearch(connectionName)) return true;
-		// Any database under this connection matches
 		const dbIDs = connectionDatabasesMap.get(connectionID) || [];
 		for (const dbID of dbIDs) {
 			const db = databasesMap.get(dbID);
 			if (db && matchesSearch(db.Name)) return true;
-			// Any table under this database matches
-			if (db?.Tables) {
-				for (const table of db.Tables) {
-					if (matchesSearch(table)) return true;
-				}
-			}
+			if (db?.Tables && tablesMatchSearch(db.Tables)) return true;
 		}
 		return false;
 	}
 
 	function databaseMatchesSearch(databaseID: string): boolean {
-		if (!searchQuery.trim()) return true;
+		if (!normalizedSearch) return true;
 		const db = databasesMap.get(databaseID);
 		if (!db) return false;
 		if (matchesSearch(db.Name)) return true;
-		// Any table under this database matches
-		if (db.Tables) {
-			for (const table of db.Tables) {
-				if (matchesSearch(table)) return true;
-			}
-		}
+		if (db.Tables && tablesMatchSearch(db.Tables)) return true;
 		return false;
 	}
 
