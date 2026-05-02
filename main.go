@@ -35,6 +35,7 @@ func main() {
 
 	conn := a.NewConnections(db.DB, pm)
 	tabs := a.NewTabs(db.DB, pm)
+	queryHistory := a.NewQueryHistory(db.DB)
 	auth := a.InitAuth(db.DB, env.SupabaseConfig)
 	app := NewApp(conn)
 
@@ -70,6 +71,7 @@ func main() {
 			app,
 			conn,
 			tabs,
+			queryHistory,
 			auth,
 		},
 		// Mac platform specific options
