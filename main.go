@@ -10,6 +10,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
+	"github.com/wailsapp/wails/v2/pkg/options/windows"
 
 	a "dbmx/app"
 	"dbmx/config/database"
@@ -71,6 +72,11 @@ func main() {
 			conn,
 			tabs,
 			auth,
+		},
+		// Windows platform specific options
+		Windows: &windows.Options{
+			IsZoomControlEnabled: true,
+			ZoomFactor:           1.0,
 		},
 		// Mac platform specific options
 		Mac: &mac.Options{

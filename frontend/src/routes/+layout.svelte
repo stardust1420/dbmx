@@ -18,7 +18,6 @@
 
 	import { postgresConnectionsMap } from '$lib/state.svelte';
 	import { GetLoggedInUser } from '$lib/wailsjs/go/app/Auth';
-	import { zoom } from '$lib/zoom.svelte';
 
 	// Fetch all connections when the root layout is mounted
 	// This is mounted only for the root layout, so it will only run once
@@ -66,20 +65,6 @@
 			e.preventDefault();
 			open = !open;
 		}
-
-		// Chrome-like zoom: Cmd/Ctrl + '+' to zoom in, Cmd/Ctrl + '-' to zoom out, Cmd/Ctrl + '0' to reset
-		if ((e.metaKey || e.ctrlKey) && (e.key === '=' || e.key === '+')) {
-			e.preventDefault();
-			zoom.zoomIn();
-		}
-		if ((e.metaKey || e.ctrlKey) && e.key === '-') {
-			e.preventDefault();
-			zoom.zoomOut();
-		}
-		if ((e.metaKey || e.ctrlKey) && e.key === '0') {
-			e.preventDefault();
-			zoom.resetZoom();
-		}
 	}
 
 	let isLoggedIn = $state(false);
@@ -96,7 +81,6 @@
 	
 	onMount(() => {
 		getLoggedInUser();
-		zoom.initialize();
 	});
 </script>
 
