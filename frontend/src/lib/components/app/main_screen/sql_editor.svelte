@@ -69,9 +69,12 @@
 
 	function selectHistoryItem(item: HistoryItem) {
 		if (editor && model) {
-			const fullRange = model.getFullModelRange();
+			const selection = editor.getSelection();
+			const range = selection ? selection : editor.getPosition()
+				? new monaco.Range(editor.getPosition()!.lineNumber, editor.getPosition()!.column, editor.getPosition()!.lineNumber, editor.getPosition()!.column)
+				: model.getFullModelRange();
 			editor.pushUndoStop();
-			editor.executeEdits('historyPick', [{ range: fullRange, text: item.label }]);
+			editor.executeEdits('historyPick', [{ range, text: item.label }]);
 			editor.pushUndoStop();
 			value = item.label;
 		}
