@@ -189,6 +189,10 @@
 		tableDBPoolID: string = '',
 		connName: string = ''
 	) {
+		// Clear the output area for new tab. This is important to avoid confusion as the new tab loads and fetches its own data
+		columns.set([]);
+		rows.set([]);
+
 		$selectedQuery = '';
 
 		tableViewTab = 'data';
@@ -212,7 +216,7 @@
 			poolID = tableDBPoolID;
 		}
 		// Send default values for now in activeDBID and activeDB
-		// Do not set active db for new tab. Let the user select the active db
+		// Do not set active db for new tab in case of editor tab. Let the user select the active db
 		AddTab(
 			tableType === 'table' ? poolID : '',
 			"",
@@ -254,6 +258,10 @@
 
 				editor = tab.Editor;
 				tabLoading = false;
+
+				if (tabType === 'table') {
+					getTableData();
+				}
 			})
 			.catch((error) => {
 				toast.error('Failed to add tab', {
@@ -265,9 +273,6 @@
 				});
 				tabLoading = false;
 			});
-
-		columns.set([]);
-		rows.set([]);
 	}
 
 	function deleteTab(id: number) {
