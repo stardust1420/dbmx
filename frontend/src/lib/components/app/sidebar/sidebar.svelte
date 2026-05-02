@@ -6,10 +6,12 @@
 	import Activity from 'lucide-svelte/icons/activity';
 	import Table2 from 'lucide-svelte/icons/table-2';
 	import RefreshCw from 'lucide-svelte/icons/refresh-cw';
+	import Search from 'lucide-svelte/icons/search';
 	import { type ComponentProps } from 'svelte';
 	import * as ContextMenu from '$lib/components/ui/context-menu/index.js';
 	import NavUser from './user.svelte';
 	import { goto } from '$app/navigation';
+	import Input from '$lib/components/ui/input/input.svelte';
 
 	function goToRoute(route: string) {
 		goto(route);
@@ -294,6 +296,46 @@
 		return colorMap[color] || '';
 	}
 
+	let searchQuery = $state('');
+
+	function matchesSearch(text: string): boolean {
+		if (!searchQuery.trim()) return true;
+		return text.toLowerCase().includes(searchQuery.trim().toLowerCase());
+	}
+
+	function connectionMatchesSearch(connectionID: number, connectionName: string): boolean {
+		if (!searchQuery.trim()) return true;
+		// Connection name matches
+		if (matchesSearch(connectionName)) return true;
+		// Any database under this connection matches
+		const dbIDs = connectionDatabasesMap.get(connectionID) || [];
+		for (const dbID of dbIDs) {
+			const db = databasesMap.get(dbID);
+			if (db && matchesSearch(db.Name)) return true;
+			// Any table under this database matches
+			if (db?.Tables) {
+				for (const table of db.Tables) {
+					if (matchesSearch(table)) return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	function databaseMatchesSearch(databaseID: string): boolean {
+		if (!searchQuery.trim()) return true;
+		const db = databasesMap.get(databaseID);
+		if (!db) return false;
+		if (matchesSearch(db.Name)) return true;
+		// Any table under this database matches
+		if (db.Tables) {
+			for (const table of db.Tables) {
+				if (matchesSearch(table)) return true;
+			}
+		}
+		return false;
+	}
+
 	function terminateDBConnection(dbID: string) {
 		let db = databasesMap.get(dbID);
 
@@ -433,6 +475,17 @@
 	{...restProps}
 	variant="floating"
 >
+	<Sidebar.Header class="bg-black">
+		<div class="relative">
+			<Search class="text-muted-foreground absolute left-2.5 top-2.5 h-4 w-4" />
+			<Input
+				type="text"
+				placeholder="Search..."
+				bind:value={searchQuery}
+				class="h-9 pl-8 bg-black border-sidebar-border"
+			/>
+		</div>
+	</Sidebar.Header>
 	<Sidebar.Content class="bg-black">
 		<Sidebar.Group>
 			<Sidebar.GroupLabel>
@@ -456,7 +509,7 @@
 							</Button>
 						</Sidebar.MenuItem>
 					{:else}
-						{#each Array.from(postgresConnectionsMap.entries()) as [key, connection]}
+						{#each Array.from(postgresConnectionsMap.entries()).filter(([key, connection]) => connectionMatchesSearch(connection.ID, connection.Name)) as [key, connection]}
 							<Sidebar.MenuItem
 								class="{getColorClass(connection.Color)} bg-opacity-20 hover:bg-opacity-25 rounded-3xl"
 							>
@@ -476,7 +529,7 @@
 												<Sidebar.MenuSkeleton />
 												<Sidebar.MenuSkeleton />
 											{:else if (connectionDatabasesMap.get(connection.ID) || []).length > 0}
-												{#each connectionDatabasesMap.get(connection.ID) || [] as databaseID}
+												{#each (connectionDatabasesMap.get(connection.ID) || []).filter((dbID) => databaseMatchesSearch(dbID)) as databaseID}
 													<Collapsible.Root open={databasesMap.get(databaseID)?.IsActive}>
 														<Collapsible.Trigger
 															onclick={() => establishDatabaseConnection(connection.ID, databaseID)}
@@ -512,7 +565,7 @@
 																	<Sidebar.MenuSkeleton />
 																	<Sidebar.MenuSkeleton />
 																{:else if (databasesMap.get(databaseID)?.Tables || []).length > 0}
-																	{#each databasesMap.get(databaseID)?.Tables || [] as table}
+																	{#each (databasesMap.get(databaseID)?.Tables || []).filter((table) => matchesSearch(table)) as table}
 																		<ContextMenu.Root>
 																			<ContextMenu.Trigger>
 																				<Sidebar.MenuButton
