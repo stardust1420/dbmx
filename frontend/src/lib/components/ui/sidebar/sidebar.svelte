@@ -31,6 +31,33 @@
 	} = $props();
 
 	const sidebar = useSidebar();
+
+	const MIN_WIDTH = 180;
+	const MAX_WIDTH = 480;
+
+	function startResize(e: MouseEvent) {
+		e.preventDefault();
+		const startX = e.clientX;
+		const startWidth = parseInt(sidebar.sidebarWidth);
+
+		function onMouseMove(e: MouseEvent) {
+			const delta = side === 'left' ? e.clientX - startX : startX - e.clientX;
+			const newWidth = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, startWidth + delta));
+			sidebar.sidebarWidth = `${newWidth}px`;
+		}
+
+		function onMouseUp() {
+			document.removeEventListener('mousemove', onMouseMove);
+			document.removeEventListener('mouseup', onMouseUp);
+			document.body.style.cursor = '';
+			document.body.style.userSelect = '';
+		}
+
+		document.body.style.cursor = 'col-resize';
+		document.body.style.userSelect = 'none';
+		document.addEventListener('mousemove', onMouseMove);
+		document.addEventListener('mouseup', onMouseUp);
+	}
 </script>
 
 {#if collapsible === 'none'}
@@ -70,7 +97,7 @@
 		<!-- This is what handles the sidebar gap on desktop -->
 		<div
 			class={cn(
-				'relative h-svh w-[--sidebar-width] bg-transparent transition-[width] duration-200 ease-linear',
+				'relative h-svh w-[--sidebar-width] bg-transparent',
 				'group-data-[collapsible=offcanvas]:w-0',
 				'group-data-[side=right]:rotate-180',
 				variant === 'floating' || variant === 'inset'
@@ -80,7 +107,7 @@
 		></div>
 		<div
 			class={cn(
-				'fixed inset-y-0 z-10 hidden h-svh w-[--sidebar-width] transition-[left,right,width] duration-200 ease-linear md:flex',
+				'fixed inset-y-0 z-10 hidden h-svh w-[--sidebar-width] md:flex',
 				side === 'left'
 					? 'left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]'
 					: 'right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]',
@@ -98,6 +125,14 @@
 			>
 				{@render children?.()}
 			</div>
+			<!-- Resize handle -->
+			<div
+				role="separator"
+				aria-label="Resize sidebar"
+				tabindex="-1"
+				class="absolute top-0 {side === 'left' ? 'right-0' : 'left-0'} z-20 h-full w-1 cursor-col-resize select-none hover:bg-border active:bg-border transition-colors"
+				onmousedown={startResize}
+			></div>
 		</div>
 	</div>
 {/if}
