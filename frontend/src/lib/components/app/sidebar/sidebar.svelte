@@ -486,14 +486,14 @@
 			</Sidebar.GroupLabel>
 			<Sidebar.GroupContent>
 				<Sidebar.Menu class="mt-2">
-						<Sidebar.MenuItem class="flex flex-col items-center justify-center">
-						<div class="relative">
+						<Sidebar.MenuItem class="flex w-full flex-col items-center justify-center">
+						<div class="relative w-full">
 							<Search class="text-muted-foreground absolute left-2.5 top-2.5 h-4 w-4" />
 							<Input
 								type="text"
 								placeholder="Search..."
 								bind:value={searchQuery}
-								class="h-9 pl-8 bg-black border-sidebar-border"
+								class="pl-8 bg-black focus-visible:border-0 focus-visible:ring-[1px] rounded-3xl"
 							/>
 						</div>
 						</Sidebar.MenuItem>
