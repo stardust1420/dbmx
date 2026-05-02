@@ -1117,7 +1117,7 @@
 										</Collapsible.Content>
 									</Collapsible.Root>
 								</div>
-								<div class="flex h-full flex-1 overflow-hidden">
+								<div class="relative flex h-full flex-1 overflow-hidden">
 									<div class="flex h-full w-full overflow-hidden px-2 pb-2">
 										{#if queryLoading}
 										<LaserLoader />
@@ -1200,7 +1200,7 @@
 									minSize={10}
 									class="rsz-pane"
 								>
-									<div class="h-full p-2">
+									<div class="relative h-full p-2">
 										{#if queryLoading}
 											<LaserLoader />
 										{/if}
