@@ -52,6 +52,52 @@
 	let queryLoading = $state(false);
 	let tabLoading = $state(false);
 
+	// Drag-and-drop tab reordering state
+	let dragTabId: number | null = $state(null);
+	let dragOverTabId: number | null = $state(null);
+	// Ordered tab IDs for rendering (controls display order)
+	let tabOrder: number[] = $state([]);
+
+	function onTabDragStart(e: DragEvent, id: number) {
+		dragTabId = id;
+		if (e.dataTransfer) {
+			e.dataTransfer.effectAllowed = 'move';
+		}
+	}
+
+	function onTabDragOver(e: DragEvent, id: number) {
+		e.preventDefault();
+		if (dragTabId === null || dragTabId === id) return;
+		dragOverTabId = id;
+
+		// Reorder tabs in real-time
+		const fromIndex = tabOrder.indexOf(dragTabId);
+		const toIndex = tabOrder.indexOf(id);
+		if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) return;
+		const newOrder = [...tabOrder];
+		newOrder.splice(fromIndex, 1);
+		newOrder.splice(toIndex, 0, dragTabId);
+		tabOrder = newOrder;
+	}
+
+	function onTabDragEnd() {
+		dragTabId = null;
+		dragOverTabId = null;
+	}
+
+	// Keep tabOrder in sync with tabsMap additions/removals
+	function syncTabOrder() {
+		const mapKeys = Array.from(tabsMap.keys());
+		// Add any new keys not yet in the order
+		for (const key of mapKeys) {
+			if (!tabOrder.includes(key)) {
+				tabOrder = [...tabOrder, key];
+			}
+		}
+		// Remove keys that no longer exist
+		tabOrder = tabOrder.filter((id) => tabsMap.has(id));
+	}
+
 	// Handle Tabs
 
 	// Active tab properties
@@ -176,6 +222,7 @@
 					}
 				}
 			}
+			syncTabOrder();
 		});
 
 		columns.set([]);
@@ -230,7 +277,7 @@
 			.then((tab) => {
 				queryLoading = false;
 				tabsMap.set(tab.ID, tab);
-
+				syncTabOrder();
 				tabID = tab.ID;
 				tabName = tab.Name;
 				tabType = tab.Type;
@@ -282,6 +329,7 @@
 
 		// Delete the old tab from the map
 		tabsMap.delete(id);
+		syncTabOrder();
 
 		// If the tab was active, switch to another tab
 		if (wasActive) {
@@ -790,47 +838,68 @@
 
 <svelte:document onkeydown={handleKeyDown} />
 
-<div class="my-2 flex h-full flex-1 flex-col rounded-md bg-black mr-2">
+<div class="flex h-full flex-1 flex-col rounded-md bg-neutral-900 mr-2">
 	<Tabs.Root value={tabID.toString()} class="flex h-full flex-1 flex-col overflow-hidden">
-		<!-- Tabs visible in the header -->
-		<header class="flex h-10 items-center justify-center bg-black">
-			<div class="flex w-full items-center justify-between">
-				<div class="flex h-auto items-center justify-center overflow-x-auto">
-					<Sidebar.Trigger />
-					<Separator orientation="vertical" />
-					<Tabs.List class="thin-scrollbar scrollbar-thin overflow-x-auto overflow-y-hidden">
-						{#each Array.from(tabsMap.entries()) as [key, tab]}
-							<div class="mr-2 flex rounded-sm bg-slate-800">
-								<Tabs.Trigger
-									value={tab.ID.toString()}
-									class="flex items-center justify-center h-auto opacity-70 data-[state=active]:opacity-100 data-[state=active]:bg-slate-700"
-									onclick={() => setActiveTab(tab.ID)}
+		<!-- Tabs visible in the header - Chrome style -->
+		<header class="flex h-11 items-end bg-neutral-900 pt-1">
+			<div class="flex w-full items-end justify-between">
+				<div class="flex h-auto items-end overflow-x-auto">
+					<div class="flex items-center self-center px-1">
+						<Sidebar.Trigger />
+					</div>
+					<div class="thin-scrollbar scrollbar-thin flex items-end overflow-x-auto overflow-y-hidden gap-0.5 px-1">
+						{#each tabOrder as id (id)}
+							{@const tab = tabsMap.get(id)}
+							{#if tab}
+								<div
+									class="group relative flex items-center rounded-t-lg px-3 py-1.5 cursor-grab transition-all duration-150 select-none
+										{tab.ID === tabID
+											? 'bg-neutral-800 text-white z-10'
+											: 'bg-neutral-900 text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-200'}"
+									draggable="true"
+									ondragstart={(e) => onTabDragStart(e, tab.ID)}
+									ondragover={(e) => onTabDragOver(e, tab.ID)}
+									ondragend={onTabDragEnd}
+									role="tab"
+									tabindex="0"
 								>
-									{tab.Name}
-								</Tabs.Trigger>
-								<button
-									class="rounded-r-sm bg-slate-900 px-2 py-1 text-slate-300 hover:text-red-700"
-									onclick={() => deleteTab(tab.ID)}
-								>
-									<X size={16} />
-								</button>
-							</div>
+									<button
+										class="flex items-center gap-1.5 pr-2 text-sm font-medium truncate max-w-[160px]"
+										onclick={() => setActiveTab(tab.ID)}
+										title={tab.Name}
+									>
+										{tab.Name}
+									</button>
+									<button
+										class="ml-1 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity text-neutral-400 hover:text-red-400 hover:bg-neutral-700"
+										onclick={(e) => { e.stopPropagation(); deleteTab(tab.ID); }}
+									>
+										<X size={14} />
+									</button>
+									<!-- Active tab connector to content below -->
+									{#if tab.ID === tabID}
+										<div class="absolute bottom-0 left-0 right-0 h-[2px] bg-neutral-800"></div>
+									{/if}
+								</div>
+							{/if}
 						{/each}
 						{#if tabLoading}
-							<Button variant="outline" size="sm">
-								<Spinner />
-								Processing
-							</Button>
+							<div class="flex items-center self-center ml-2">
+								<Button variant="ghost" size="sm" class="text-neutral-400">
+									<Spinner />
+									Processing
+								</Button>
+							</div>
 						{/if}
-						<Button
-							variant="outline" size="sm"
+						<button
+							class="flex items-center self-center ml-1 rounded-full p-1.5 text-neutral-400 hover:bg-neutral-700 hover:text-white transition-colors"
 							onclick={() => addTab()}
 						>
-							<Plus size={16} color="white" />
-						</Button>
-					</Tabs.List>
+							<Plus size={16} />
+						</button>
+					</div>
 				</div>
-				<div class="flex mr-2">
+				<div class="flex mr-2 self-center">
 					{#if chatPaneCollapsed}
 						<Button variant="secondary" size="sm" onclick={toggleChatPane}>
 							<Chat size={16} />
