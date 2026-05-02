@@ -22,6 +22,7 @@
 
 	// Call getTableInfo on mount
 	import { onMount } from 'svelte';
+	import DataTableManage from './data-table-manage.svelte';
 	onMount(() => {
 		getTableInfo();
 	});
@@ -184,7 +185,7 @@
 			<div class="flex h-full min-h-0 flex-1 flex-col overflow-hidden pr-2 pb-2">
 				<div class="flex h-1 min-h-0 flex-1 flex-col overflow-hidden">
 					{#if structureColumns.length > 0}
-						<DataTable data={structureRows} columns={structureColumns} />
+						<DataTableManage rows={structureRows} columns={structureColumns} />
 					{:else}
 						<Skeleton class="my-3 h-[40px] w-full" />
 						<Skeleton class="my-3 h-[40px] w-full" />
@@ -196,7 +197,7 @@
 			<div class="flex h-full min-h-0 flex-1 flex-col overflow-hidden pr-2 pb-2">
 				<div class="flex h-1 min-h-0 flex-1 flex-col overflow-hidden">
 					{#if indexesColumns.length > 0}
-						<DataTable data={indexesRows} columns={indexesColumns} />
+						<DataTableManage rows={indexesRows} columns={indexesColumns} />
 					{:else}
 						<Skeleton class="my-3 h-[40px] w-full" />
 						<Skeleton class="my-3 h-[40px] w-full" />
@@ -208,7 +209,7 @@
 			<div class="flex h-full min-h-0 flex-1 flex-col overflow-hidden pr-2 pb-2">
 				<div class="flex h-1 min-h-0 flex-1 flex-col overflow-hidden">
 					{#if rulesColumns.length > 0}
-						<DataTable data={rulesRows} columns={rulesColumns} />
+						<DataTableManage rows={rulesRows} columns={rulesColumns} />
 					{:else}
 						<Skeleton class="my-3 h-[40px] w-full" />
 						<Skeleton class="my-3 h-[40px] w-full" />
