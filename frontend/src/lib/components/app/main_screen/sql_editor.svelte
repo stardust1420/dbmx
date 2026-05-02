@@ -440,7 +440,7 @@
 				try {
 					const formatted = formatSQL(queryText, {
 						language: 'sql',
-						tabWidth: 2,
+						tabWidth: 4,
 						keywordCase: 'upper'
 					});
 
