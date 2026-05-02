@@ -941,6 +941,9 @@ func (c *Connections) ExecuteQuery(activePoolID uuid.UUID, query string, tabID i
 		response.Rows = rows
 	}
 
+	// Save successful query to history
+	_, _ = c.DB.Exec(`INSERT INTO query_history (query) VALUES (?)`, query)
+
 	return response
 }
 

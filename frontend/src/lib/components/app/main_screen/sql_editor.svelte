@@ -1,6 +1,7 @@
 <script lang="ts">
 	import loader from '@monaco-editor/loader';
 	import { onMount, onDestroy } from 'svelte';
+	import { GetQueryHistory } from '$lib/wailsjs/go/app/QueryHistory.js';
 
 	// ----- Types (strict & runtime-safe) -----
 	import type * as MonacoNS from 'monaco-editor';
@@ -23,6 +24,58 @@
 		width = '100%',
 		suggestions = $bindable<string[]>([])
 	} = $props();
+
+	// Query history picker state
+	interface HistoryItem {
+		label: string;
+		detail: string;
+	}
+	let showHistoryPicker = $state(false);
+	let historyItems = $state<HistoryItem[]>([]);
+	let filteredItems = $state<HistoryItem[]>([]);
+	let historySearchTerm = $state('');
+	let historySelectedIndex = $state(0);
+	let historySearchInput: HTMLInputElement | null = $state(null);
+
+	function filterHistory() {
+		const term = historySearchTerm.toLowerCase();
+		if (!term) {
+			filteredItems = historyItems;
+		} else {
+			filteredItems = historyItems.filter((item) => item.label.toLowerCase().includes(term));
+		}
+		historySelectedIndex = 0;
+	}
+
+	function selectHistoryItem(item: HistoryItem) {
+		if (editor && model) {
+			const fullRange = model.getFullModelRange();
+			editor.pushUndoStop();
+			editor.executeEdits('historyPick', [{ range: fullRange, text: item.label }]);
+			editor.pushUndoStop();
+			value = item.label;
+		}
+		showHistoryPicker = false;
+	}
+
+	function handleHistoryKeydown(e: KeyboardEvent) {
+		if (e.key === 'Escape') {
+			showHistoryPicker = false;
+			editor?.focus();
+		} else if (e.key === 'ArrowDown') {
+			e.preventDefault();
+			historySelectedIndex = Math.min(historySelectedIndex + 1, filteredItems.length - 1);
+		} else if (e.key === 'ArrowUp') {
+			e.preventDefault();
+			historySelectedIndex = Math.max(historySelectedIndex - 1, 0);
+		} else if (e.key === 'Enter') {
+			e.preventDefault();
+			if (filteredItems.length > 0) {
+				selectHistoryItem(filteredItems[historySelectedIndex]);
+				editor?.focus();
+			}
+		}
+	}
 
 	function refreshSuggestWidget() {
 		if (!editor) return;
@@ -306,6 +359,34 @@
 			editor!.trigger('focus', 'editor.action.triggerSuggest', {});
 		});
 
+		// Register Cmd+H / Ctrl+H to show query history quick pick
+		editor.addAction({
+			id: 'show-query-history',
+			label: 'Show Query History',
+			keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyH],
+			run: async () => {
+				try {
+					const history = await GetQueryHistory();
+					if (!history || history.length === 0) {
+						return;
+					}
+					historyItems = history.map((h) => ({
+						label: h.query,
+						detail: h.executedAt
+					}));
+					filteredItems = historyItems;
+					historySearchTerm = '';
+					showHistoryPicker = true;
+					// Focus the search input after DOM update
+					requestAnimationFrame(() => {
+						historySearchInput?.focus();
+					});
+				} catch (e) {
+					console.error('Failed to load query history:', e);
+				}
+			}
+		});
+
 		isInitialized = true;
 	});
 
@@ -331,5 +412,39 @@
 	onselect={handleSelection}
 	bind:this={editorContainer}
 	class="sql-editor"
-	style="height: {height}; width: {width};"
+	style="height: {height}; width: {width}; position: relative;"
 ></div>
+
+{#if showHistoryPicker}
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div
+		class="fixed inset-0 z-50 flex items-start justify-center pt-[10%]"
+		onmousedown={(e) => { if (e.target === e.currentTarget) { showHistoryPicker = false; editor?.focus(); } }}
+	>
+		<div class="w-[600px] max-h-[400px] bg-[#1e1e1e] border border-[#3c3c3c] rounded-md shadow-2xl flex flex-col overflow-hidden">
+			<input
+				bind:this={historySearchInput}
+				bind:value={historySearchTerm}
+				oninput={filterHistory}
+				onkeydown={handleHistoryKeydown}
+				type="text"
+				placeholder="Search query history..."
+				class="w-full px-3 py-2 bg-[#252526] text-[#cccccc] text-sm border-b border-[#3c3c3c] outline-none placeholder-[#6c6c6c]"
+			/>
+			<div class="overflow-y-auto flex-1">
+				{#each filteredItems as item, i}
+					<button
+						class="w-full text-left px-3 py-2 text-sm cursor-pointer hover:bg-[#2a2d2e] {i === historySelectedIndex ? 'bg-[#04395e]' : ''}"
+						onmousedown={() => { selectHistoryItem(item); editor?.focus(); }}
+					>
+						<div class="text-[#cccccc] truncate font-mono text-xs">{item.label}</div>
+						<div class="text-[#6c6c6c] text-xs mt-0.5">{item.detail}</div>
+					</button>
+				{/each}
+				{#if filteredItems.length === 0}
+					<div class="px-3 py-4 text-[#6c6c6c] text-sm text-center">No matching queries</div>
+				{/if}
+			</div>
+		</div>
+	</div>
+{/if}

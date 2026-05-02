@@ -170,6 +170,22 @@ export namespace model {
 		    return a;
 		}
 	}
+	export class QueryHistory {
+	    id: number;
+	    query: string;
+	    executedAt: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new QueryHistory(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.query = source["query"];
+	        this.executedAt = source["executedAt"];
+	    }
+	}
 	export class QueryResult {
 	    ok: boolean;
 	    columns: string[];
