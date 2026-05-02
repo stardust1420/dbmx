@@ -38,7 +38,7 @@
 	function startResize(e: MouseEvent) {
 		e.preventDefault();
 		const startX = e.clientX;
-		const startWidth = parseInt(sidebar.sidebarWidth);
+		const startWidth = parseInt(sidebar.sidebarWidth, 10);
 
 		function onMouseMove(e: MouseEvent) {
 			const delta = side === 'left' ? e.clientX - startX : startX - e.clientX;
