@@ -67,6 +67,7 @@ type Cell struct {
 type QueryResult struct {
 	OK           bool     `json:"ok"`
 	Columns      []string `json:"columns"`
+	ColumnTypes  []string `json:"columnTypes"`
 	Rows         [][]Cell `json:"rows"`
 	TotalRows    int64    `json:"totalRows"`
 	RowsAffected int64    `json:"rowsAffected"`

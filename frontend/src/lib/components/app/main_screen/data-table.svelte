@@ -188,12 +188,20 @@
 					{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
 						<Table.Row>
 							{#each headerGroup.headers as header (header.id)}
+								{@const meta = header.column.columnDef.meta as { dataType?: string } | undefined}
 								<Table.Head colspan={header.colSpan} class="text-center">
 									{#if !header.isPlaceholder}
-										<FlexRender
-											content={header.column.columnDef.header}
-											context={header.getContext()}
-										/>
+										<div class="flex flex-col items-center leading-tight">
+											<FlexRender
+												content={header.column.columnDef.header}
+												context={header.getContext()}
+											/>
+											{#if meta?.dataType}
+												<span class="text-muted-foreground text-[10px] font-normal lowercase">
+													{meta.dataType}
+												</span>
+											{/if}
+										</div>
 									{/if}
 								</Table.Head>
 							{/each}
