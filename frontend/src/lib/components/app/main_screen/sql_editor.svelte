@@ -1,6 +1,6 @@
 <script lang="ts">
 	import loader from '@monaco-editor/loader';
-	import { onMount, onDestroy } from 'svelte';
+	import { onMount, onDestroy, tick } from 'svelte';
 	import { GetQueryHistory } from '$lib/wailsjs/go/app/QueryHistory.js';
 
 	// ----- Types (strict & runtime-safe) -----
@@ -37,6 +37,14 @@
 	let historySelectedIndex = $state(0);
 	let historySearchInput: HTMLInputElement | null = $state(null);
 	let historyCursorPosition: import('monaco-editor').IRange | null = $state(null);
+	let historyListContainer: HTMLElement | null = $state(null);
+
+	async function scrollSelectedIntoView() {
+		await tick();
+		if (!historyListContainer) return;
+		const selected = historyListContainer.children[historySelectedIndex] as HTMLElement | undefined;
+		selected?.scrollIntoView({ block: 'nearest' });
+	}
 
 	function formatTimestamp(ts: string): string {
 		const date = new Date(ts);
@@ -88,9 +96,11 @@
 		} else if (e.key === 'ArrowDown') {
 			e.preventDefault();
 			historySelectedIndex = Math.min(historySelectedIndex + 1, filteredItems.length - 1);
+			scrollSelectedIntoView();
 		} else if (e.key === 'ArrowUp') {
 			e.preventDefault();
 			historySelectedIndex = Math.max(historySelectedIndex - 1, 0);
+			scrollSelectedIntoView();
 		} else if (e.key === 'Enter') {
 			e.preventDefault();
 			if (filteredItems.length > 0) {
@@ -455,7 +465,7 @@
 				placeholder="Search query history..."
 				class="w-full px-3 py-2 bg-[#252526] text-[#cccccc] text-sm border-b border-[#3c3c3c] outline-none placeholder-[#6c6c6c]"
 			/>
-			<div class="overflow-y-auto flex-1">
+			<div class="overflow-y-auto flex-1" bind:this={historyListContainer}>
 				{#each filteredItems as item, i}
 					<button
 						class="w-full text-left px-3 py-2 text-sm cursor-pointer hover:bg-[#2a2d2e] {i === historySelectedIndex ? 'bg-[#04395e]' : ''}"
