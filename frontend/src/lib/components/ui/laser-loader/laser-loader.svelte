@@ -10,11 +10,15 @@
 
 <style>
 	.laser-loader-container {
-		position: relative;
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
 		width: 100%;
 		height: 2px;
 		overflow: hidden;
 		border-radius: 1px;
+		z-index: 10;
 	}
 
 	.laser-beam {
