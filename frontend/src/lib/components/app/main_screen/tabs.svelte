@@ -844,7 +844,7 @@
 		<header class="flex h-11 items-end bg-black pt-1">
 			<div class="flex w-full items-end justify-between">
 				<div class="flex h-auto items-end overflow-x-auto">
-					<div class="flex items-center self-center px-1">
+					<div class="flex items-center self-center px-1 mb-1">
 						<Sidebar.Trigger />
 					</div>
 					<div class="thin-scrollbar scrollbar-thin flex items-end overflow-x-auto overflow-y-hidden gap-0.5 px-1">
@@ -892,7 +892,7 @@
 							</div>
 						{/if}
 						<button
-							class="flex items-center self-center ml-1 rounded-full p-1.5 text-neutral-400 hover:bg-neutral-700 hover:text-white transition-colors"
+							class="flex items-center self-center ml-1 mb-1 rounded-full border border-neutral-400 p-1 text-neutral-400 hover:bg-neutral-700 hover:text-white transition-colors"
 							onclick={() => addTab()}
 						>
 							<Plus size={16} />
@@ -1210,7 +1210,9 @@
 							</div>
 						{:else if tableViewTab === 'manage'}
 							<div class="mt-2 flex flex-1 flex-col overflow-hidden">
-								<ManageTable activePoolID={$activePoolID} {tabName} />
+								<ManageTable 
+									tabTableDBPoolID={tabTableDBPoolID}
+									tabName={tabName} />
 							</div>
 						{/if}
 					</div>
