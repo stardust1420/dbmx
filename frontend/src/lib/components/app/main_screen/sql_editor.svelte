@@ -36,6 +36,7 @@
 	let historySearchTerm = $state('');
 	let historySelectedIndex = $state(0);
 	let historySearchInput: HTMLInputElement | null = $state(null);
+	let historyCursorPosition: import('monaco-editor').IRange | null = $state(null);
 
 	function formatTimestamp(ts: string): string {
 		const date = new Date(ts);
@@ -69,14 +70,13 @@
 
 	function selectHistoryItem(item: HistoryItem) {
 		if (editor && model) {
-			const selection = editor.getSelection();
-			const range = selection ? selection : editor.getPosition()
-				? new monaco.Range(editor.getPosition()!.lineNumber, editor.getPosition()!.column, editor.getPosition()!.lineNumber, editor.getPosition()!.column)
+			const range = historyCursorPosition
+				? historyCursorPosition
 				: model.getFullModelRange();
 			editor.pushUndoStop();
 			editor.executeEdits('historyPick', [{ range, text: item.label }]);
 			editor.pushUndoStop();
-			value = item.label;
+			value = model.getValue();
 		}
 		showHistoryPicker = false;
 	}
@@ -399,6 +399,7 @@
 					}));
 					filteredItems = historyItems;
 					historySearchTerm = '';
+					historyCursorPosition = editor?.getSelection() ?? null;
 					showHistoryPicker = true;
 					// Focus the search input after DOM update
 					requestAnimationFrame(() => {
