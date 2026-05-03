@@ -556,7 +556,7 @@
 															</ContextMenu.Root>
 														</Collapsible.Trigger>
 														<Collapsible.Content>
-															<Sidebar.MenuSub>
+															<Sidebar.MenuSub class="w-full">
 																{#if dbLoadingMap.get(databaseID)}
 																	<Sidebar.MenuSkeleton />
 																	<Sidebar.MenuSkeleton />
