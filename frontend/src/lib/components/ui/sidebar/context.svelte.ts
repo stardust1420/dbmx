@@ -28,6 +28,7 @@ class SidebarState {
 	#isMobile: IsMobile;
 	state = $derived.by(() => (this.open ? "expanded" : "collapsed"));
 	sidebarWidth = $state(SIDEBAR_WIDTH);
+	isResizing = $state(false);
 
 	constructor(props: SidebarStateProps) {
 		this.setOpen = props.setOpen;

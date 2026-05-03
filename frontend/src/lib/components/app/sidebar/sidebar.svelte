@@ -620,5 +620,4 @@
 	<Sidebar.Footer class="border border-0 bg-black">
 		<NavUser />
 	</Sidebar.Footer>
-	<Sidebar.Rail />
 </Sidebar.Root>

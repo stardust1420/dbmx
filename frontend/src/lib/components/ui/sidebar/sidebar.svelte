@@ -39,6 +39,7 @@
 		e.preventDefault();
 		const startX = e.clientX;
 		const startWidth = parseInt(sidebar.sidebarWidth, 10);
+		sidebar.isResizing = true;
 
 		function onMouseMove(e: MouseEvent) {
 			const delta = side === 'left' ? e.clientX - startX : startX - e.clientX;
@@ -47,6 +48,7 @@
 		}
 
 		function onMouseUp() {
+			sidebar.isResizing = false;
 			document.removeEventListener('mousemove', onMouseMove);
 			document.removeEventListener('mouseup', onMouseUp);
 			document.body.style.cursor = '';
@@ -98,6 +100,7 @@
 		<div
 			class={cn(
 				'relative h-svh w-[--sidebar-width] bg-transparent',
+				!sidebar.isResizing && 'transition-[width] duration-200 ease-linear',
 				'group-data-[collapsible=offcanvas]:w-0',
 				'group-data-[side=right]:rotate-180',
 				variant === 'floating' || variant === 'inset'
@@ -108,6 +111,7 @@
 		<div
 			class={cn(
 				'fixed inset-y-0 z-10 hidden h-svh w-[--sidebar-width] md:flex',
+				!sidebar.isResizing && 'transition-[left,right,width] duration-200 ease-linear',
 				side === 'left'
 					? 'left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]'
 					: 'right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]',
