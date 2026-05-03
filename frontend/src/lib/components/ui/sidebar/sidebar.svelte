@@ -38,7 +38,8 @@
 	function startResize(e: MouseEvent) {
 		e.preventDefault();
 		const startX = e.clientX;
-		const startWidth = parseInt(sidebar.sidebarWidth, 10);
+		const handle = e.currentTarget as HTMLElement;
+		const startWidth = handle.parentElement!.getBoundingClientRect().width;
 		sidebar.isResizing = true;
 
 		function onMouseMove(e: MouseEvent) {
