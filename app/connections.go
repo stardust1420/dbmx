@@ -831,7 +831,6 @@ func (c *Connections) ExecuteQuery(activePoolID uuid.UUID, query string, tabID i
 	}()
 	// ----------------------------------------------
 
-	startTime := time.Now()
 	response := model.QueryResult{OK: true}
 	normalizedQuery := strings.ToLower(strings.TrimSpace(query))
 	isWrite := isWriteOperation(normalizedQuery)
@@ -884,12 +883,7 @@ func (c *Connections) ExecuteQuery(activePoolID uuid.UUID, query string, tabID i
 			// 1. ABORT CHECK: Did the user cancel or did the timeout hit during iteration?
 			select {
 			case <-ctx.Done():
-				// Return partial results collected so far
-				cancel()
-				response.Rows = rows
-				response.Message = "Query timed out after 30 seconds. Partial results returned."
-				response.ExecutionTime = time.Since(startTime).Milliseconds()
-				return response
+				return c.handleQueryError(ctx.Err())
 			default:
 				// Context is still alive, proceed.
 			}
@@ -933,14 +927,14 @@ func (c *Connections) ExecuteQuery(activePoolID uuid.UUID, query string, tabID i
 			estimatedBytes += 24
 			rows = append(rows, cells)
 
-			// If we exceed the limit, stop processing and return partial results
+			// If we exceed the limit, stop processing immediately
 			if estimatedBytes > maxAllowedBytes {
 				// Call cancel() to tell PostgreSQL to stop sending data over the network
 				cancel()
-				response.Rows = rows
-				response.Message = "Result set exceeded 50MB limit. Partial results returned. Please add a LIMIT clause to your query."
-				response.ExecutionTime = time.Since(startTime).Milliseconds()
-				return response
+				return model.QueryResult{
+					OK:      false,
+					Message: "Result set too large: exceeded 50MB limit. Please add a LIMIT clause to your query.",
+				}
 			}
 		}
 
@@ -956,7 +950,6 @@ func (c *Connections) ExecuteQuery(activePoolID uuid.UUID, query string, tabID i
 		log.Printf("failed to save query to history: %v", err)
 	}
 
-	response.ExecutionTime = time.Since(startTime).Milliseconds()
 	return response
 }
 

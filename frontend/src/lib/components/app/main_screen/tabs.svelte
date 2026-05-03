@@ -481,7 +481,6 @@
 	}
 
 	let executeQueryTableName = $state("")
-	let executionTime = $state(0);
 
 	function executeQuery(isExplain?: boolean) {
 		if (tabType == 'table') {
@@ -559,18 +558,6 @@
 				}
 				queryLoading = false;
 				executeQueryTableName = result.tableName;
-				executionTime = result.executionTime || 0;
-
-				// Show warning toast if partial results were returned
-				if (result.message) {
-					toast.warning('Partial Results', {
-						description: result.message,
-						action: {
-							label: 'OK',
-							onClick: () => console.info('OK')
-						}
-					});
-				}
 			})
 			.catch((error) => {
 				queryLoading = false;
@@ -1306,7 +1293,6 @@
 												<DataTable 
 													tableName={executeQueryTableName} 
 													executeQuery={executeQuery}
-													{executionTime}
 												/>
 											{/key}
 										{/if}

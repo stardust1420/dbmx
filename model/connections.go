@@ -75,9 +75,6 @@ type QueryResult struct {
 	// If query output contains data of only one table and output also contains id primary key, its name will be stored here
 	// Else it will be empty
 	TableName string `json:"tableName"`
-
-	// ExecutionTime is the time taken to execute the query in milliseconds
-	ExecutionTime int64 `json:"executionTime"`
 }
 
 type Output struct {

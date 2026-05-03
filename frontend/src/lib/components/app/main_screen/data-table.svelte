@@ -29,8 +29,7 @@
 
 	let {
 		tableName,
-		executeQuery,
-		executionTime = 0
+		executeQuery
 	} = $props();
 
 	let pagination = $state<PaginationState>({ pageIndex: 0, pageSize: 20 });
@@ -268,11 +267,8 @@
 		<div
 			class="position-sticky bottom-0 my-0.5 flex w-full items-center justify-between px-4 py-1"
 		>
-			<div class="text-muted-foreground hidden flex-1 text-sm lg:flex items-center gap-4">
-				<span>{table.getFilteredRowModel().rows.length} row(s)</span>
-				{#if executionTime > 0}
-					<span class="text-muted-foreground/70">⏱ {executionTime}ms</span>
-				{/if}
+			<div class="text-muted-foreground hidden flex-1 text-sm lg:flex">
+				{table.getFilteredRowModel().rows.length} row(s)
 			</div>
 			<div class="flex w-full items-center gap-8 lg:w-fit">
 				<div class="hidden items-center gap-2 lg:flex">
