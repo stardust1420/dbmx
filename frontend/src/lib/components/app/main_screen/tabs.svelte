@@ -129,14 +129,193 @@
 	let isOrderByDropdownOpen = $state(false);
 	let isGroupByDropdownOpen = $state(false);
 
-	
-
 	// Table view tab state (for Data/Structure/Indexes)
 	let tableViewTab = $state('data');
 
 	onMount(() => {
-		getAllTabs();
+		getAllTabsTest() 
 	});
+
+
+	function getAllTabsTest() {
+		tableViewTab = 'data';
+
+		if (tabsMap.size > 0) {
+			// For each tab in tabs map
+			for (const tab of tabsMap.values()) {
+
+				// Set active tab properties
+				if (tab.IsActive) {
+					if (tab.IsQueryRunning) {
+						queryLoading = true;
+					} else {
+						queryLoading = false;
+					}
+					console.log('Active tab', tab);
+					tabID = tab.ID;
+					tabName = tab.Name;
+					tabType = tab.Type;
+
+					// Properties for table view tab
+					if (tabType === 'table') {
+						tabDBName = tab.DBName || '';
+						tabTableDBPoolID = tab.ActiveDBID || '';
+						tabConnName = tab.ConnectionName || '';
+						tabConnID = tab.ConnectionID || 0;
+					}
+
+					select = tab.Select;
+					limit = tab.Limit;
+					offset = tab.Offset;
+					where = tab.Where;
+					orderBy = tab.OrderBy;
+					groupBy = tab.GroupBy;
+					tableColumns = tab.TableColumnsList;
+					aiChat = tab.AIChat || [];
+
+					editor = tab.Editor;
+
+					if ($activeDBs.length == 0) {
+						$selectedDBDisplay = 'Connect to a database';
+						$currentColor = '';
+						$activePoolID = '';
+					} else {
+						$selectedDBDisplay = tab.ActiveDB || 'Connect to a database';
+						$activePoolID = tab.ActiveDBID || '';
+						$currentColor = tab.ActiveDBColor || '';
+					}
+
+					// Update columns
+					if (tab.columns) {
+						columns.set(tab.columns.map((column) => ({
+							accessorKey: column,
+							id: column,
+							header: column
+						})));
+					}
+
+					// Process rows once and cache them
+					if (tab.rows) {
+						let processedRows: any[] = [];
+						for (const row of tab.rows) {
+							let cell: Record<string, any> = {};
+							if (Array.isArray(row)) {
+								for (const resultCell of row) {
+									if (resultCell.column && resultCell.value) {
+										cell[resultCell.column] = resultCell.value;
+									}
+								}
+								processedRows.push(cell);
+							}
+						}
+						// Cache the processed rows in the tab object
+						// We need to cast to any to avoid TS error if model definition isn't updated instantly in IDE
+						(tab as any).processedRows = processedRows;
+					}
+
+					// Update active rows from cache
+					if ((tab as any).processedRows) {
+						rows.set((tab as any).processedRows);
+					}
+				}
+			}
+			syncTabOrder();
+			
+		} else {
+			GetAllTabs().then((tabs) => {
+				if (!tabs) {
+					return;
+				}
+				for (const tab of tabs) {
+					tabsMap.set(tab.ID, tab);
+
+					// Set active tab properties
+					if (tab.IsActive) {
+						if (tab.IsQueryRunning) {
+							queryLoading = true;
+						} else {
+							queryLoading = false;
+						}
+						console.log('Active tab', tab);
+						tabID = tab.ID;
+						tabName = tab.Name;
+						tabType = tab.Type;
+
+						// Properties for table view tab
+						if (tabType === 'table') {
+							tabDBName = tab.DBName || '';
+							tabTableDBPoolID = tab.ActiveDBID || '';
+							tabConnName = tab.ConnectionName || '';
+							tabConnID = tab.ConnectionID || 0;
+						}
+
+						select = tab.Select;
+						limit = tab.Limit;
+						offset = tab.Offset;
+						where = tab.Where;
+						orderBy = tab.OrderBy;
+						groupBy = tab.GroupBy;
+						tableColumns = tab.TableColumnsList;
+						aiChat = tab.AIChat || [];
+
+						editor = tab.Editor;
+
+						if ($activeDBs.length == 0) {
+							$selectedDBDisplay = 'Connect to a database';
+							$currentColor = '';
+							$activePoolID = '';
+						} else {
+							$selectedDBDisplay = tab.ActiveDB || 'Connect to a database';
+							$activePoolID = tab.ActiveDBID || '';
+							$currentColor = tab.ActiveDBColor || '';
+						}
+
+						// Update columns
+						// if (tab.columns) {
+						// 	for (const column of tab.columns) {
+						// 		columns.set([
+						// 			...$columns,
+						// 			{
+						// 				accessorKey: column,
+						// 				header: column
+						// 			}
+						// 		]);
+						// 	}
+						// }
+
+						// Process rows once and cache them
+						// if (tab.rows) {
+						// 	let processedRows: any[] = [];
+						// 	for (const row of tab.rows) {
+						// 		let cell: Record<string, any> = {};
+						// 		if (Array.isArray(row)) {
+						// 			for (const resultCell of row) {
+						// 				if (resultCell.column && resultCell.value) {
+						// 					cell[resultCell.column] = resultCell.value;
+						// 				}
+						// 			}
+						// 			processedRows.push(cell);
+						// 		}
+						// 	}
+						// 	// Cache the processed rows in the tab object
+						// 	// We need to cast to any to avoid TS error if model definition isn't updated instantly in IDE
+						// 	(tab as any).processedRows = processedRows;
+						// 	tabsMap.set(tab.ID, tab);
+						// }
+
+						// // Update active rows from cache
+						// if ((tab as any).processedRows) {
+						// 	rows.set((tab as any).processedRows);
+						// }
+					}
+				}
+				syncTabOrder();
+			});
+		}
+
+		columns.set([]);
+		rows.set([]);
+	}
 
 	function getAllTabs() {
 		tableViewTab = 'data';
@@ -150,6 +329,11 @@
 
 				// Set active tab properties
 				if (tab.IsActive) {
+					if (tab.IsQueryRunning) {
+						queryLoading = true;
+					} else {
+						queryLoading = false;
+					}
 					console.log('Active tab', tab);
 					tabID = tab.ID;
 					tabName = tab.Name;
@@ -324,6 +508,19 @@
 	}
 
 	function deleteTab(id: number) {
+		// Check if the tab being deleted has query running and if yes, prevent deletion and show toast
+		const tabToDelete = tabsMap.get(id);
+		if (tabToDelete && tabToDelete.IsQueryRunning) {
+			toast.error('Cannot delete tab', {
+				description: 'A query is currently running in this tab. Please wait for it to finish before deleting.',
+				action: {
+					label: 'OK',
+					onClick: () => console.info('OK')
+				}
+			});
+			return;
+		}
+
 		$selectedQuery = '';
 
 		let wasActive = (id === tabID);
@@ -378,91 +575,100 @@
 
 		// Set the active tab from the map
 		const tab = tabsMap.get(id);
-		if (tab) {
-			tabID = tab.ID;
-			tabName = tab.Name;
-			tabType = tab.Type;
-
-			// Properties for table view tab
-			tabDBName = tab.DBName || '';
-			tabTableDBPoolID = tab.ActiveDBID || '';
-			tabConnName = tab.ConnectionName || '';
-			tabConnID = tab.ConnectionID || 0;
-
-			select = tab.Select;
-			limit = tab.Limit;
-			offset = tab.Offset;
-			where = tab.Where;
-			orderBy = tab.OrderBy;
-			groupBy = tab.GroupBy;
-			tableColumns = tab.TableColumnsList;
-			aiChat = tab.AIChat || [];
-
-			editor = tab.Editor;
-
-			if ($activeDBs.length == 0) {
-				$selectedDBDisplay = 'Connect to a database';
-				$currentColor = '';
-				$activePoolID = '';
-			} else {
-				$selectedDBDisplay = tab.ActiveDB || 'Connect to a database';
-				$activePoolID = tab.ActiveDBID || '';
-				$currentColor = tab.ActiveDBColor || '';
-			}
-
-			totalRows.set(tab.totalRows);
-			currentPage.set(tab.currentPage);
-			currentPageSize.set(Number(tab.Limit));
-
-			// Update columns
-			columns.set([]);
-			if (tab.columns) {
-				columns.set(tab.columns.map((column) => ({
-					accessorKey: column,
-					id: column,
-					header: column
-				})));
-			}
-
-			// Update rows using cached data (O(1))
-			rows.set([]);
-			if ((tab as any).processedRows) {
-				rows.set((tab as any).processedRows);
-			} else if (tab.rows) {
-				// Fallback: If not cached yet (legacy/first load edge case), process and cache now
-				let newRows: any[] = [];
-				for (const row of tab.rows) {
-					let cell: Record<string, any> = {};
-					if (Array.isArray(row)) {
-						for (const resultCell of row) {
-							if (resultCell.column && resultCell.value) {
-								cell[resultCell.column] = resultCell.value;
-							}
-						}
-						newRows.push(cell);
-					}
-				}
-				(tab as any).processedRows = newRows;
-				tabsMap.set(tabID, tab);
-				rows.set(newRows);
-			}
+		if (!tab) {
+			return;
 		}
 
-		SetActiveTab(id)
-			.then((tab) => {
-				// We don't update UI from this response anymore as it's slow/empty
-				queryLoading = false;
-				// Maybe update metadata if needed, but tabsMap already has it from GetAllTabs or local updates
-			})
-			.catch((error) => {
-				toast.error('Failed to set active tab', {
-					description: error,
-					action: {
-						label: 'OK',
-						onClick: () => console.info('OK')
+		if (tab.IsQueryRunning) {
+			queryLoading = true;
+		} else {
+			queryLoading = false;
+		}
+
+		tab.IsActive = true;
+
+		tabID = tab.ID;
+		tabName = tab.Name;
+		tabType = tab.Type;
+
+		// Properties for table view tab
+		tabDBName = tab.DBName || '';
+		tabTableDBPoolID = tab.ActiveDBID || '';
+		tabConnName = tab.ConnectionName || '';
+		tabConnID = tab.ConnectionID || 0;
+
+		select = tab.Select;
+		limit = tab.Limit;
+		offset = tab.Offset;
+		where = tab.Where;
+		orderBy = tab.OrderBy;
+		groupBy = tab.GroupBy;
+		tableColumns = tab.TableColumnsList;
+		aiChat = tab.AIChat || [];
+
+		editor = tab.Editor;
+
+		if ($activeDBs.length == 0) {
+			$selectedDBDisplay = 'Connect to a database';
+			$currentColor = '';
+			$activePoolID = '';
+		} else {
+			$selectedDBDisplay = tab.ActiveDB || 'Connect to a database';
+			$activePoolID = tab.ActiveDBID || '';
+			$currentColor = tab.ActiveDBColor || '';
+		}
+
+		totalRows.set(tab.totalRows);
+		currentPage.set(tab.currentPage);
+		currentPageSize.set(Number(tab.Limit));
+
+		// Update columns
+		columns.set([]);
+		if (tab.columns) {
+			columns.set(tab.columns.map((column) => ({
+				accessorKey: column,
+				id: column,
+				header: column
+			})));
+		}
+
+		// Update rows using cached data (O(1))
+		rows.set([]);
+		if ((tab as any).processedRows.length > 0) {
+			rows.set((tab as any).processedRows);
+		} else if (tab.rows) {
+			// Fallback: If not cached yet (legacy/first load edge case), process and cache now
+			let newRows: any[] = [];
+			for (const row of tab.rows) {
+				let cell: Record<string, any> = {};
+				if (Array.isArray(row)) {
+					for (const resultCell of row) {
+						if (resultCell.column && resultCell.value) {
+							cell[resultCell.column] = resultCell.value;
+						}
 					}
-				});
-			});
+					newRows.push(cell);
+				}
+			}
+			(tab as any).processedRows = newRows;
+			rows.set(newRows);
+		}
+		tabsMap.set(tabID, tab);
+
+		// SetActiveTab(id)
+		// 	.then((tab) => {
+		// 		// We don't update UI from this response anymore as it's slow/empty
+		// 		// Maybe update metadata if needed, but tabsMap already has it from GetAllTabs or local updates
+		// 	})
+		// 	.catch((error) => {
+		// 		toast.error('Failed to set active tab', {
+		// 			description: error,
+		// 			action: {
+		// 				label: 'OK',
+		// 				onClick: () => console.info('OK')
+		// 			}
+		// 		});
+		// 	});
 	}
 
 	function getColorClass(color: string): string {
@@ -508,13 +714,39 @@
 			return;
 		}
 
+		// Set the current output to empty
+		columns.set([]);
+		rows.set([]);
+
+		// Save in a const to prevent reactive tabID from changing in the middle of execution and causing issues with tabsMap updates
+		const currentTabID = tabID;
+
+		// Update loading state in the current tab to show spinner on the tab itself
+		let currentTab = tabsMap.get(currentTabID);
+		if (currentTab) {
+			currentTab.IsQueryRunning = true;
+			// Delete the previous output data
+			currentTab.columns = [];
+			currentTab.rows = [];
+			(currentTab as any).processedRows = []; // Clear cached rows as well
+			tabsMap.set(currentTabID, currentTab);
+		}
+
 		queryLoading = true;
 		let explain = isExplain || false;
 		// Execute query
 		ExecuteQuery($activePoolID, $selectedQuery, tabID, explain)
 			.then((result) => {
+				// Update the map with cached rows
 				if (!result.ok) {
 					queryLoading = false;
+
+					// Update the tab state in memory
+					if (currentTab) {
+						currentTab.IsQueryRunning = false;
+						tabsMap.set(currentTabID, currentTab);
+					}
+
 					toast.error('Query Failed', {
 						description: result.message,
 						action: {
@@ -525,37 +757,37 @@
 					return;
 				}
 
-				// Update columns
-				if (result.columns) {
-					columns.set(result.columns.map((column) => ({
-						accessorKey: column,
-						id: column,
-						header: column
-					})));
-				}
+				if (currentTabID == tabID) {
+					// Update columns
+					if (result.columns) {
+						columns.set(result.columns.map((column) => ({
+							accessorKey: column,
+							id: column,
+							header: column
+						})));
+					}
 
-				// Update rows. Also update the in-memory tabsMap!
-				if (result.rows) {
-					let newRows: any[] = [];
-					for (const row of result.rows) {
-						let cell: Record<string, any> = {};
-						for (const resultCell of row) {
-							if (resultCell.column && resultCell.value) {
-								cell[resultCell.column] = resultCell.value;
+					// Update rows. Also update the in-memory tabsMap!
+					if (result.rows) {
+						let newRows: any[] = [];
+						for (const row of result.rows) {
+							let cell: Record<string, any> = {};
+							for (const resultCell of row) {
+								if (resultCell.column && resultCell.value) {
+									cell[resultCell.column] = resultCell.value;
+								}
 							}
+							newRows.push(cell);
 						}
-						newRows.push(cell);
+						rows.set(newRows);
 					}
-					rows.set(newRows);
-
-					// Update the map with cached rows
-					let currentTab = tabsMap.get(tabID);
-					if (currentTab) {
-						currentTab.columns = result.columns;
-						currentTab.rows = result.rows; // result.rows is Cell[][]
-						(currentTab as any).processedRows = newRows; // Cache it!
-						tabsMap.set(tabID, currentTab);
-					}
+				}
+				
+				if (currentTab) {
+					currentTab.columns = result.columns;
+					currentTab.rows = result.rows; // result.rows is Cell[][]
+					currentTab.IsQueryRunning = false;
+					tabsMap.set(currentTabID, currentTab);
 				}
 				queryLoading = false;
 				executeQueryTableName = result.tableName;
@@ -574,6 +806,13 @@
 			})
 			.catch((error) => {
 				queryLoading = false;
+
+				// Update the tab state in memory
+				if (currentTab) {
+					currentTab.IsQueryRunning = false;
+					tabsMap.set(currentTabID, currentTab);
+				}
+
 				// Handle errors from the ExecuteQuery call
 				toast.error('Query Failed', {
 					description: error,
@@ -647,18 +886,16 @@
 						newRows.push(cell);
 					}
 					rows.set(newRows);
-
-					// Update the map with cached rows
-					let currentTab = tabsMap.get(tabID);
-					if (currentTab) {
-						currentTab.columns = result.columns;
-						currentTab.rows = result.rows; // result.rows is Cell[][]
-						currentTab.totalRows = result.totalRows;
-						currentTab.Limit = '20';
-						currentTab.currentPage = 0;
-						(currentTab as any).processedRows = newRows; // Cache it!
-						tabsMap.set(tabID, currentTab);
-					}
+				}
+				// Update the map with cached rows
+				let currentTab = tabsMap.get(tabID);
+				if (currentTab) {
+					currentTab.columns = result.columns;
+					currentTab.rows = result.rows; // result.rows is Cell[][]
+					currentTab.totalRows = result.totalRows;
+					currentTab.Limit = '20';
+					currentTab.currentPage = 0;
+					tabsMap.set(tabID, currentTab);
 				}
 				queryLoading = false;
 			})
@@ -730,17 +967,15 @@
 						newRows.push(cell);
 					}
 					rows.set(newRows);
-
-					// Update the map with cached rows
-					let currentTab = tabsMap.get(tabID);
-					if (currentTab) {
-						currentTab.columns = result.columns;
-						currentTab.rows = result.rows; // result.rows is Cell[][]
-						currentTab.Limit = limit;
-						currentTab.currentPage = $currentPage;
-						(currentTab as any).processedRows = newRows; // Cache it!
-						tabsMap.set(tabID, currentTab);
-					}
+				}
+				// Update the map with cached rows
+				let currentTab = tabsMap.get(tabID);
+				if (currentTab) {
+					currentTab.columns = result.columns;
+					currentTab.rows = result.rows; // result.rows is Cell[][]
+					currentTab.Limit = limit;
+					currentTab.currentPage = $currentPage;
+					tabsMap.set(tabID, currentTab);
 				}
 				queryLoading = false;
 			})

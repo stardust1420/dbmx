@@ -320,6 +320,7 @@ export namespace model {
 	    TableColumns: string;
 	    TableColumnsList: string[];
 	    AIChat: AIMsg[];
+	    IsQueryRunning: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new Tab(source);
@@ -352,6 +353,7 @@ export namespace model {
 	        this.TableColumns = source["TableColumns"];
 	        this.TableColumnsList = source["TableColumnsList"];
 	        this.AIChat = this.convertValues(source["AIChat"], AIMsg);
+	        this.IsQueryRunning = source["IsQueryRunning"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
