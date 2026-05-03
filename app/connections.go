@@ -877,7 +877,7 @@ func (c *Connections) ExecuteQuery(activePoolID uuid.UUID, query string, tabID i
 		var rows [][]model.Cell
 
 		// Define your memory limit (e.g., 5 Megabytes)
-		const maxAllowedBytes = 5 * 1024 * 1024
+		const maxAllowedBytes = 50 * 1024 * 1024
 		var estimatedBytes int64
 
 		for resultRows.Next() {
@@ -938,7 +938,7 @@ func (c *Connections) ExecuteQuery(activePoolID uuid.UUID, query string, tabID i
 				// Call cancel() to tell PostgreSQL to stop sending data over the network
 				cancel()
 				response.Rows = rows
-				response.Message = "Result set exceeded 5MB limit. Partial results returned. Please add a LIMIT clause to your query."
+				response.Message = "Result set exceeded 50MB limit. Partial results returned. Please add a LIMIT clause to your query."
 				response.ExecutionTime = time.Since(startTime).Milliseconds()
 				return response
 			}
