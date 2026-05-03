@@ -23,7 +23,8 @@
 		selectedQuery = $bindable(''),
 		height = '100%',
 		width = '100%',
-		suggestions = $bindable<string[]>([])
+		suggestions = $bindable<string[]>([]),
+		onRunQuery = () => {}
 	} = $props();
 
 	// Query history picker state
@@ -39,6 +40,39 @@
 	let historySearchInput: HTMLInputElement | null = $state(null);
 	let historyCursorPosition: import('monaco-editor').IRange | null = $state(null);
 	let historyListContainer: HTMLElement | null = $state(null);
+
+	// Custom context menu state
+	let showContextMenu = $state(false);
+	let contextMenuX = $state(0);
+	let contextMenuY = $state(0);
+
+	function showCustomMenu(x: number, y: number) {
+		contextMenuX = x;
+		contextMenuY = y;
+		showContextMenu = true;
+	}
+
+	function hideCustomMenu() {
+		showContextMenu = false;
+	}
+
+	function handleContextMenuAction(action: string) {
+		hideCustomMenu();
+		if (!editor) return;
+		editor.focus();
+
+		switch (action) {
+			case 'run':
+				onRunQuery();
+				break;
+			case 'format':
+				editor.getAction('pretty-format-query')?.run();
+				break;
+			case 'command-palette':
+				editor.trigger('contextmenu', 'editor.action.quickCommand', {});
+				break;
+		}
+	}
 
 	async function scrollSelectedIntoView() {
 		await tick();
@@ -332,7 +366,8 @@
 			cursorSmoothCaretAnimation: 'on' as any, // animate left/right caret moves
 			cursorBlinking: 'smooth', // nicer blink animation (optional)
 			stickyTabStops: true, // nicer left/right in leading spaces
-			scrollBeyondLastColumn: 3 // avoids hugging the right edge (optional)
+			scrollBeyondLastColumn: 3, // avoids hugging the right edge (optional)
+			contextmenu: false // disable default context menu, we use our own
 		});
 
 		model = editor.getModel();
@@ -422,12 +457,20 @@
 			}
 		});
 
-		// Register "Pretty Format Query" in the right-click context menu
+		// Register "Run Query" action with Alt+Enter keybinding
+		editor.addAction({
+			id: 'run-query',
+			label: 'Run Query',
+			keybindings: [monaco.KeyMod.Alt | monaco.KeyCode.Enter],
+			run: () => {
+				onRunQuery();
+			}
+		});
+
+		// Register "Pretty Format Query" action
 		editor.addAction({
 			id: 'pretty-format-query',
 			label: 'Pretty Format Query',
-			contextMenuGroupId: 'modification',
-			contextMenuOrder: 1.5,
 			keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyF],
 			run: (ed) => {
 				if (!model) return;
@@ -452,6 +495,13 @@
 					console.error('Failed to format SQL query:', e);
 				}
 			}
+		});
+
+		// Custom context menu (replaces Monaco's default)
+		editorContainer.addEventListener('contextmenu', (e) => {
+			e.preventDefault();
+			e.stopPropagation();
+			showCustomMenu(e.clientX, e.clientY);
 		});
 
 		isInitialized = true;
@@ -512,6 +562,43 @@
 					<div class="px-3 py-4 text-[#6c6c6c] text-sm text-center">No matching queries</div>
 				{/if}
 			</div>
+		</div>
+	</div>
+{/if}
+
+{#if showContextMenu}
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div
+		class="fixed inset-0 z-50"
+		onmousedown={hideCustomMenu}
+	>
+		<div
+			class="absolute bg-[#252526] border border-[#3c3c3c] rounded-md shadow-2xl py-1 min-w-[200px]"
+			style="left: {contextMenuX}px; top: {contextMenuY}px;"
+			onmousedown={(e) => e.stopPropagation()}
+		>
+			<button
+				class="w-full text-left px-4 py-1.5 text-sm text-[#cccccc] hover:bg-[#094771] flex justify-between items-center"
+				onmousedown={() => handleContextMenuAction('run')}
+			>
+				<span>Run Query</span>
+				<span class="text-xs text-[#6c6c6c] ml-4">⌥Enter</span>
+			</button>
+			<button
+				class="w-full text-left px-4 py-1.5 text-sm text-[#cccccc] hover:bg-[#094771] flex justify-between items-center"
+				onmousedown={() => handleContextMenuAction('format')}
+			>
+				<span>Pretty Format Query</span>
+				<span class="text-xs text-[#6c6c6c] ml-4">⇧⌘F</span>
+			</button>
+			<div class="border-t border-[#3c3c3c] my-1"></div>
+			<button
+				class="w-full text-left px-4 py-1.5 text-sm text-[#cccccc] hover:bg-[#094771] flex justify-between items-center"
+				onmousedown={() => handleContextMenuAction('command-palette')}
+			>
+				<span>Command Palette</span>
+				<span class="text-xs text-[#6c6c6c] ml-4">F1</span>
+			</button>
 		</div>
 	</div>
 {/if}

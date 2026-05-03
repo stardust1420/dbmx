@@ -1265,6 +1265,7 @@
 										bind:value={editor}
 										bind:selectedQuery={$selectedQuery}
 										suggestions={Array.from($suggestions)}
+										onRunQuery={executeQuery}
 									/>
 								</Resizable.Pane>
 
