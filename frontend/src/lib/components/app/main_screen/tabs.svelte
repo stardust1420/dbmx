@@ -211,11 +211,7 @@
 						// Cache the processed rows in the tab object
 						// We need to cast to any to avoid TS error if model definition isn't updated instantly in IDE
 						(tab as any).processedRows = processedRows;
-					}
-
-					// Update active rows from cache
-					if ((tab as any).processedRows) {
-						rows.set((tab as any).processedRows);
+						rows.set(processedRows);
 					}
 				}
 			}
@@ -737,6 +733,8 @@
 		// Execute query
 		ExecuteQuery($activePoolID, $selectedQuery, tabID, explain)
 			.then((result) => {
+				let currentTab = tabsMap.get(currentTabID);
+
 				// Update the map with cached rows
 				if (!result.ok) {
 					queryLoading = false;
@@ -808,6 +806,7 @@
 				queryLoading = false;
 
 				// Update the tab state in memory
+				let currentTab = tabsMap.get(currentTabID);
 				if (currentTab) {
 					currentTab.IsQueryRunning = false;
 					tabsMap.set(currentTabID, currentTab);
@@ -844,11 +843,38 @@
 
 		queryLoading = true;
 
+		// Set the current output to empty
+		columns.set([]);
+		rows.set([]);
+
+		// Save in a const to prevent reactive tabID from changing in the middle of execution and causing issues with tabsMap updates
+		const currentTabID = tabID;
+
+		// Update loading state in the current tab to show spinner on the tab itself
+		let currentTab = tabsMap.get(currentTabID);
+		if (currentTab) {
+			currentTab.IsQueryRunning = true;
+			// Delete the previous output data
+			currentTab.columns = [];
+			currentTab.rows = [];
+			(currentTab as any).processedRows = []; // Clear cached rows as well
+			tabsMap.set(currentTabID, currentTab);
+		}
+
 		// Execute query
 		GetTableData(tabTableDBPoolID, tabID, tabName, select, limit, offset, where, orderBy, groupBy, false)
 			.then((result) => {
+				let currentTab = tabsMap.get(currentTabID);
+
 				if (!result.ok) {
 					queryLoading = false;
+
+					// Update the tab state in memory
+					if (currentTab) {
+						currentTab.IsQueryRunning = false;
+						tabsMap.set(currentTabID, currentTab);
+					}
+
 					toast.error('Query Failed', {
 						description: result.message,
 						action: {
@@ -859,48 +885,58 @@
 					return;
 				}
 
-				totalRows.set(result.totalRows);
-				currentPage.set(0);
-				currentPageSize.set(20);
+				if (currentTabID == tabID) {
+					totalRows.set(result.totalRows);
+					currentPage.set(0);
+					currentPageSize.set(20);
 
-				// Update columns
-				if (result.columns) {
-					columns.set(result.columns.map((column) => ({
-						accessorKey: column,
-						id: column,
-						header: column,
-						size: 270,
-					})));
-				}
-
-				// Update rows and map
-				if (result.rows) {
-					let newRows: any[] = [];
-					for (const row of result.rows) {
-						let cell: Record<string, any> = {};
-						for (const resultCell of row) {
-							if (resultCell.column && resultCell.value) {
-								cell[resultCell.column] = resultCell.value;
-							}
-						}
-						newRows.push(cell);
+					// Update columns
+					if (result.columns) {
+						columns.set(result.columns.map((column) => ({
+							accessorKey: column,
+							id: column,
+							header: column,
+							size: 270,
+						})));
 					}
-					rows.set(newRows);
+
+					// Update rows and map
+					if (result.rows) {
+						let newRows: any[] = [];
+						for (const row of result.rows) {
+							let cell: Record<string, any> = {};
+							for (const resultCell of row) {
+								if (resultCell.column && resultCell.value) {
+									cell[resultCell.column] = resultCell.value;
+								}
+							}
+							newRows.push(cell);
+						}
+						rows.set(newRows);
+					}
 				}
 				// Update the map with cached rows
-				let currentTab = tabsMap.get(tabID);
 				if (currentTab) {
 					currentTab.columns = result.columns;
 					currentTab.rows = result.rows; // result.rows is Cell[][]
 					currentTab.totalRows = result.totalRows;
 					currentTab.Limit = '20';
 					currentTab.currentPage = 0;
-					tabsMap.set(tabID, currentTab);
+					currentTab.IsQueryRunning = false;
+					tabsMap.set(currentTabID, currentTab);
 				}
 				queryLoading = false;
 			})
 			.catch((error) => {
 				queryLoading = false;
+
+				// Update the tab state in memory
+				let currentTab = tabsMap.get(currentTabID);
+				if (currentTab) {
+					currentTab.IsQueryRunning = false;
+					tabsMap.set(currentTabID, currentTab);
+				}
+
 				// Handle errors from the ExecuteQuery call
 				toast.error('Query Failed', {
 					description: error,
@@ -930,11 +966,38 @@
 
 		queryLoading = true;
 
+		// Set the current output to empty
+		// columns.set([]);
+		// rows.set([]);
+
+		// Save in a const to prevent reactive tabID from changing in the middle of execution and causing issues with tabsMap updates
+		const currentTabID = tabID;
+
+		// Update loading state in the current tab to show spinner on the tab itself
+		let currentTab = tabsMap.get(currentTabID);
+		if (currentTab) {
+			currentTab.IsQueryRunning = true;
+			// Delete the previous output data
+			currentTab.columns = [];
+			currentTab.rows = [];
+			(currentTab as any).processedRows = []; // Clear cached rows as well
+			tabsMap.set(currentTabID, currentTab);
+		}
+
 		// Execute query
 		GetTableData(tabTableDBPoolID, tabID, tabName, select, limit, offset, where, orderBy, groupBy, true)
 			.then((result) => {
+				let currentTab = tabsMap.get(currentTabID);
+
 				if (!result.ok) {
 					queryLoading = false;
+
+					// Update the tab state in memory
+					if (currentTab) {
+						currentTab.IsQueryRunning = false;
+						tabsMap.set(currentTabID, currentTab);
+					}
+
 					toast.error('Query Failed', {
 						description: result.message,
 						action: {
@@ -945,42 +1008,53 @@
 					return;
 				}
 
-				// Update columns
-				if (result.columns) {
-					columns.set(result.columns.map((column) => ({
-						accessorKey: column,
-						id: column,
-						header: column
-					})));
+				if (currentTabID == tabID) {
+					// Update columns
+					if (result.columns) {
+						columns.set(result.columns.map((column) => ({
+							accessorKey: column,
+							id: column,
+							header: column
+						})));
+					}
+
+					// Update rows and map
+					if (result.rows) {
+						let newRows: any[] = [];
+						for (const row of result.rows) {
+							let cell: Record<string, any> = {};
+							for (const resultCell of row) {
+								if (resultCell.column && resultCell.value) {
+									cell[resultCell.column] = resultCell.value;
+								}
+							}
+							newRows.push(cell);
+						}
+						rows.set(newRows);
+					}
 				}
 
-				// Update rows and map
-				if (result.rows) {
-					let newRows: any[] = [];
-					for (const row of result.rows) {
-						let cell: Record<string, any> = {};
-						for (const resultCell of row) {
-							if (resultCell.column && resultCell.value) {
-								cell[resultCell.column] = resultCell.value;
-							}
-						}
-						newRows.push(cell);
-					}
-					rows.set(newRows);
-				}
 				// Update the map with cached rows
-				let currentTab = tabsMap.get(tabID);
 				if (currentTab) {
 					currentTab.columns = result.columns;
 					currentTab.rows = result.rows; // result.rows is Cell[][]
 					currentTab.Limit = limit;
 					currentTab.currentPage = $currentPage;
-					tabsMap.set(tabID, currentTab);
+					currentTab.IsQueryRunning = false;
+					tabsMap.set(currentTabID, currentTab);
 				}
 				queryLoading = false;
 			})
 			.catch((error) => {
 				queryLoading = false;
+
+				// Update the tab state in memory
+				let currentTab = tabsMap.get(currentTabID);
+				if (currentTab) {
+					currentTab.IsQueryRunning = false;
+					tabsMap.set(currentTabID, currentTab);
+				}
+
 				// Handle errors from the ExecuteQuery call
 				toast.error('Query Failed', {
 					description: error,
