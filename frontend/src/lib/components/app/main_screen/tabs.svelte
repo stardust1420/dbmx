@@ -45,6 +45,7 @@
 	import { columns, rows, totalRows, currentPage, currentPageSize } from '$lib/state.svelte';
 	import ManageTable from './manage_table.svelte';
 	import DataTableManual from './data-table-manual.svelte';
+	import { Play } from 'lucide-svelte';
 
 	let editorHeight = $state(50); // Percentage of the container height
 	let outputHeight = $state(50); // Percentage of the container height
@@ -481,7 +482,7 @@
 
 	let executeQueryTableName = $state("")
 
-	function executeQuery() {
+	function executeQuery(isExplain?: boolean) {
 		if (tabType == 'table') {
 			return;
 		}
@@ -507,8 +508,9 @@
 		}
 
 		queryLoading = true;
+		let explain = isExplain || false;
 		// Execute query
-		ExecuteQuery($activePoolID, $selectedQuery, tabID)
+		ExecuteQuery($activePoolID, $selectedQuery, tabID, explain)
 			.then((result) => {
 				if (!result.ok) {
 					queryLoading = false;
@@ -809,14 +811,12 @@
 	function handleKeyDown(event: KeyboardEvent) {
         // Alt + Enter
         if (event.altKey && event.key === 'Enter') {
+			if (tabType == 'editor') {
+				return;
+			}
             event.preventDefault();
-            if (tabType == 'table') {
-                console.log('get table data');
-                getTableData();
-            } else {
-                console.log('execute query');
-                executeQuery();
-            }
+			console.log('get table data');
+			getTableData();
         }
         
         // // Command/Ctrl + S
@@ -852,7 +852,7 @@
 							{@const tab = tabsMap.get(id)}
 							{#if tab}
 								<div
-									class="group relative flex items-center rounded-t-lg px-3 py-1.5 cursor-grab transition-all duration-150 select-none
+									class="group relative flex items-center rounded-t-lg px-3 py-1.5 transition-all duration-150 select-none
 										{tab.ID === tabID
 											? 'bg-neutral-800 text-white z-10'
 											: 'bg-neutral-900 text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-200'}"
@@ -930,16 +930,18 @@
 										</Breadcrumb.Item>
 										<Breadcrumb.Separator />
 										<Breadcrumb.Item>
-											<Breadcrumb.Page>{tabName}</Breadcrumb.Page>
+											<Breadcrumb.Page class='{tabTableDBPoolID === '' ? "text-red-500" : "text-green-500"}'>{tabName}</Breadcrumb.Page>
 										</Breadcrumb.Item>
+										{#if tabTableDBPoolID}
+											<button
+												class="flex items-center self-center mx-2 rounded-full border border-green-400 p-1 text-green-400 hover:bg-green-900 hover:text-green transition-colors"
+												onclick={getTableData}
+											>
+												<Play size={16} />
+											</button>
+										{/if}
 									</Breadcrumb.List>
 								</Breadcrumb.Root>
-								{#if tabTableDBPoolID === ''}
-									<Label class="ml-2 text-red-500">Disconnected</Label>
-								{:else}
-									<Label class="ml-2 text-green-500">Connected</Label>
-									<Label class="ml-4 text-white">Run with ⌥(option) + return</Label>
-								{/if}
 							</div>
 							<div class="flex px-2">
 								<Tabs.Root value={tableViewTab}>
@@ -1248,7 +1250,12 @@
 										</Select.Group>
 									</Select.Content>
 								</Select.Root>
-								<Label class="text-white mr-4">Run with ⌥(option) + return</Label>
+								<button
+									class="flex items-center self-center m-1 mr-8 rounded-full border border-green-400 p-1 text-green-400 hover:bg-green-900 hover:text-green transition-colors"
+									onclick={() => executeQuery()}
+								>
+									<Play size={16} />
+								</button>
 								
 							</div>
 							
@@ -1265,6 +1272,7 @@
 										bind:value={editor}
 										bind:selectedQuery={$selectedQuery}
 										suggestions={Array.from($suggestions)}
+										executeQuery={executeQuery}
 									/>
 								</Resizable.Pane>
 

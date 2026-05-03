@@ -795,7 +795,11 @@ func isWriteOperation(query string) bool {
 	return false
 }
 
-func (c *Connections) ExecuteQuery(activePoolID uuid.UUID, query string, tabID int64) model.QueryResult {
+func (c *Connections) ExecuteQuery(activePoolID uuid.UUID, query string, tabID int64, isExplain bool) model.QueryResult {
+	if isExplain {
+		query = "EXPLAIN " + query
+	}
+
 	pool, exists := c.PM.GetPool(activePoolID)
 	if !exists {
 		return model.QueryResult{OK: false, Message: "pool doesn't exist"}

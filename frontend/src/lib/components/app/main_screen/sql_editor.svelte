@@ -23,7 +23,8 @@
 		selectedQuery = $bindable(''),
 		height = '100%',
 		width = '100%',
-		suggestions = $bindable<string[]>([])
+		suggestions = $bindable<string[]>([]),
+		executeQuery
 	} = $props();
 
 	// Query history picker state
@@ -393,31 +394,34 @@
 			editor!.trigger('focus', 'editor.action.triggerSuggest', {});
 		});
 
-		// Register Cmd+H / Ctrl+H to show query history quick pick
 		editor.addAction({
-			id: 'show-query-history',
-			label: 'Show Query History',
-			keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyH],
-			run: async () => {
+			id: 'run-query',
+			label: 'Run Query',
+			contextMenuGroupId: 'modification',
+			contextMenuOrder: 1,
+			keybindings: [monaco.KeyMod.Alt | monaco.KeyCode.Enter],
+			run: (ed) => {
 				try {
-					const history = await GetQueryHistory();
-					if (!history || history.length === 0) {
-						return;
-					}
-					historyItems = history.map((h) => ({
-						label: h.query,
-						detail: formatTimestamp(h.executedAt)
-					}));
-					filteredItems = historyItems;
-					historySearchTerm = '';
-					historyCursorPosition = editor?.getSelection() ?? null;
-					showHistoryPicker = true;
-					// Focus the search input after DOM update
-					requestAnimationFrame(() => {
-						historySearchInput?.focus();
-					});
+					console.log('Executing query from editor action');
+					executeQuery();
 				} catch (e) {
-					console.error('Failed to load query history:', e);
+					console.error('Failed to run SQL query:', e);
+				}
+			}
+		});
+
+		editor.addAction({
+			id: 'explain-query',
+			label: 'Explain Query',
+			contextMenuGroupId: 'modification',
+			contextMenuOrder: 2,
+			keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyE],
+			run: (ed) => {
+				try {
+					console.log('Executing query from editor action');
+					executeQuery(true);
+				} catch (e) {
+					console.error('Failed to run SQL query:', e);
 				}
 			}
 		});
@@ -427,7 +431,7 @@
 			id: 'pretty-format-query',
 			label: 'Pretty Format Query',
 			contextMenuGroupId: 'modification',
-			contextMenuOrder: 1.5,
+			contextMenuOrder: 3,
 			keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyF],
 			run: (ed) => {
 				if (!model) return;
@@ -450,6 +454,37 @@
 					value = model!.getValue();
 				} catch (e) {
 					console.error('Failed to format SQL query:', e);
+				}
+			}
+		});
+
+		// Register Cmd+H / Ctrl+H to show query history quick pick
+		editor.addAction({
+			id: 'show-query-history',
+			label: 'Show Query History',
+			contextMenuGroupId: 'modification',
+			contextMenuOrder: 4,
+			keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyH],
+			run: async () => {
+				try {
+					const history = await GetQueryHistory();
+					if (!history || history.length === 0) {
+						return;
+					}
+					historyItems = history.map((h) => ({
+						label: h.query,
+						detail: formatTimestamp(h.executedAt)
+					}));
+					filteredItems = historyItems;
+					historySearchTerm = '';
+					historyCursorPosition = editor?.getSelection() ?? null;
+					showHistoryPicker = true;
+					// Focus the search input after DOM update
+					requestAnimationFrame(() => {
+						historySearchInput?.focus();
+					});
+				} catch (e) {
+					console.error('Failed to load query history:', e);
 				}
 			}
 		});
