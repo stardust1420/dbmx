@@ -945,14 +945,6 @@ func (c *Connections) ExecuteQuery(activePoolID uuid.UUID, query string, tabID i
 		}
 
 		if err := resultRows.Err(); err != nil {
-			// If the error is a timeout or cancellation and we have partial rows,
-			// return the partial results with a warning instead of failing
-			if (errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled)) && len(rows) > 0 {
-				response.Rows = rows
-				response.Message = "Query timed out. Partial results returned."
-				response.ExecutionTime = time.Since(startTime).Milliseconds()
-				return response
-			}
 			return c.handleQueryError(err)
 		}
 
