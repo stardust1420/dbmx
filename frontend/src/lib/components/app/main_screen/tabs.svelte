@@ -649,6 +649,9 @@
 			(tab as any).processedRows = newRows;
 			rows.set(newRows);
 		}
+
+		lastQueryExecutionTime = tab.LastQueryExecutionTime
+
 		tabsMap.set(tabID, tab);
 
 		// SetActiveTab(id)
@@ -683,7 +686,7 @@
 	}
 
 	let executeQueryTableName = $state("")
-	let executionTime = $state(0);
+	let lastQueryExecutionTime = $state(0)
 
 	function executeQuery(isExplain?: boolean) {
 		if (tabType == 'table') {
@@ -755,6 +758,7 @@
 					return;
 				}
 
+				// If current tab is still the tab for which the query was run
 				if (currentTabID == tabID) {
 					// Update columns
 					if (result.columns) {
@@ -779,17 +783,19 @@
 						}
 						rows.set(newRows);
 					}
+
+					lastQueryExecutionTime = result.executionTime
 				}
 				
 				if (currentTab) {
 					currentTab.columns = result.columns;
 					currentTab.rows = result.rows; // result.rows is Cell[][]
 					currentTab.IsQueryRunning = false;
+					currentTab.LastQueryExecutionTime = result.executionTime || 0;
 					tabsMap.set(currentTabID, currentTab);
 				}
 				queryLoading = false;
 				executeQueryTableName = result.tableName;
-				executionTime = result.executionTime || 0;
 
 				// Show warning toast if partial results were returned
 				if (result.message) {
@@ -809,6 +815,7 @@
 				let currentTab = tabsMap.get(currentTabID);
 				if (currentTab) {
 					currentTab.IsQueryRunning = false;
+					currentTab.LastQueryExecutionTime = 0
 					tabsMap.set(currentTabID, currentTab);
 				}
 
@@ -885,6 +892,8 @@
 					return;
 				}
 
+				// If current tab is still the tab for which the query was run
+
 				if (currentTabID == tabID) {
 					totalRows.set(result.totalRows);
 					currentPage.set(0);
@@ -914,6 +923,8 @@
 						}
 						rows.set(newRows);
 					}
+
+					lastQueryExecutionTime = result.executionTime
 				}
 				// Update the map with cached rows
 				if (currentTab) {
@@ -923,6 +934,7 @@
 					currentTab.Limit = '20';
 					currentTab.currentPage = 0;
 					currentTab.IsQueryRunning = false;
+					currentTab.LastQueryExecutionTime = result.executionTime || 0
 					tabsMap.set(currentTabID, currentTab);
 				}
 				queryLoading = false;
@@ -934,6 +946,7 @@
 				let currentTab = tabsMap.get(currentTabID);
 				if (currentTab) {
 					currentTab.IsQueryRunning = false;
+					currentTab.LastQueryExecutionTime = 0
 					tabsMap.set(currentTabID, currentTab);
 				}
 
@@ -1526,6 +1539,7 @@
 													tabTableDBPoolID={tabTableDBPoolID}
 													tableName={tabName}
 													getTablePageData={getTablePageData}
+													{lastQueryExecutionTime}
 												/>
 											{/key}
 										{/if}
@@ -1544,7 +1558,7 @@
 					<Tabs.Content value={tabID.toString()} class="flex flex-col flex-1 overflow-hidden">
 						<div class="flex h-full flex-col">
 							<!-- Active DB Selector and Execute Query Button -->
-							<div class="flex items-center justify-between h-10">
+							<div class="flex items-center h-10">
 								<Select.Root type="single" name="activeDatabase">
 									<Select.Trigger
 										class="{getColorClass(
@@ -1573,7 +1587,7 @@
 									</Select.Content>
 								</Select.Root>
 								<button
-									class="flex items-center self-center m-1 mr-8 rounded-full border border-green-400 p-1 text-green-400 hover:bg-green-900 hover:text-green transition-colors"
+									class="flex items-center self-center m-1 mx-2 rounded-full border border-green-400 p-1 text-green-400 hover:bg-green-900 hover:text-green transition-colors"
 									onclick={() => executeQuery()}
 								>
 									<Play size={16} />
@@ -1615,7 +1629,7 @@
 												<DataTable 
 													tableName={executeQueryTableName} 
 													executeQuery={executeQuery}
-													{executionTime}
+													{lastQueryExecutionTime}
 												/>
 											{/key}
 										{/if}

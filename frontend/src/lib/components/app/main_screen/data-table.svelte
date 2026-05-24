@@ -30,7 +30,7 @@
 	let {
 		tableName,
 		executeQuery,
-		executionTime = 0
+		lastQueryExecutionTime = 0
 	} = $props();
 
 	let pagination = $state<PaginationState>({ pageIndex: 0, pageSize: 20 });
@@ -110,6 +110,7 @@
 	import { SvelteMap } from 'svelte/reactivity';
 	import type { model } from '$lib/wailsjs/go/models';
 	import { UpdateCells } from '$lib/wailsjs/go/app/Connections';
+	import { Clock } from 'lucide-svelte';
 
 
 
@@ -172,7 +173,7 @@
 				updateCellPayload = [];
 				editedCellsMap.clear();
 				toast.success('Changes Cleared', {
-					description: 'Your changes are cleared successfully.',
+					description: 'Your changes have been cleared successfully.',
 				});
 			}
 		}
@@ -181,7 +182,7 @@
 
 <svelte:document onkeydown={handleKeyDown} />
 
-<div class="h-full overflow-auto bg-black rounded-3xl">
+<div class="h-full w-full overflow-auto bg-black rounded-3xl">
 	<div class="flex h-full flex-col">
 		<div class="position-sticky top-0 flex flex-1 overflow-auto">
 			<Table.Root class="border">
@@ -270,8 +271,9 @@
 		>
 			<div class="text-muted-foreground hidden flex-1 text-sm lg:flex items-center gap-4">
 				<span>{table.getFilteredRowModel().rows.length} row(s)</span>
-				{#if executionTime > 0}
-					<span class="text-muted-foreground/70">⏱ {executionTime}ms</span>
+				{#if lastQueryExecutionTime > 0}
+					
+					<span class="text-green-500 text-sm lg:flex flex-1"> <Clock size=16 class='mx-2 self-center' color='yellow' /> {lastQueryExecutionTime} ms</span>
 				{/if}
 			</div>
 			<div class="flex w-full items-center gap-8 lg:w-fit">

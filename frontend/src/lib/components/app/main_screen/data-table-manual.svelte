@@ -30,12 +30,14 @@
 	import { SvelteMap } from 'svelte/reactivity';
 	import type { model } from '$lib/wailsjs/go/models';
 	import { UpdateCells } from '$lib/wailsjs/go/app/Connections';
+	import { Clock } from 'lucide-svelte';
 
 
 	let {
 		tabTableDBPoolID,
         tableName,
-        getTablePageData
+        getTablePageData,
+		lastQueryExecutionTime = 0
 	} = $props();
 
 	let sorting = $state<SortingState>([]);
@@ -195,7 +197,7 @@
 				updateCellPayload = [];
 				editedCellsMap.clear();
 				toast.success('Changes Cleared', {
-					description: 'Your changes are cleared successfully.',
+					description: 'Your changes have been cleared successfully.',
 				});
 			}
 		}
@@ -205,7 +207,7 @@
 
 <svelte:document onkeydown={handleKeyDown} />
 
-<div class="h-full overflow-auto bg-black rounded-3xl">
+<div class="h-full w-full overflow-auto bg-black rounded-3xl">
 	<div class="flex h-full flex-col">
 		<div class="position-sticky top-0 flex flex-1 overflow-auto">
 			<Table.Root class="border">
@@ -295,9 +297,9 @@
 			<div class="text-muted-foreground hidden flex-1 text-sm lg:flex">
 				Total Rows: {$totalRows}
 			</div>
-			<div class="text-muted-foreground hidden flex-1 text-sm lg:flex">
-				Current Page Rows: {$rows?.length ?? 0} of {$totalRows}
-			</div>
+			{#if lastQueryExecutionTime > 0}
+				<span class="text-green-500 text-sm lg:flex flex-1"> <Clock size=16 class='mx-2 self-center' color='yellow' /> {lastQueryExecutionTime} ms</span>
+			{/if}
 			<div class="flex w-full items-center gap-8 lg:w-fit">
 				<div class="hidden items-center gap-2 lg:flex">
 					<Label for="rows-per-page" class="text-sm font-medium">Rows per page</Label>
@@ -374,7 +376,7 @@
 		height: 32px;
 		min-width: 100px;
 		max-width: 400px;
-		width: fit-content;
+		/* width: fit-content; */
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
