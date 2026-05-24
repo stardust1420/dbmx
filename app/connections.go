@@ -831,10 +831,11 @@ func (c *Connections) ExecuteQuery(activePoolID uuid.UUID, query string, tabID i
 	}()
 	// ----------------------------------------------
 
-	startTime := time.Now()
 	response := model.QueryResult{OK: true}
 	normalizedQuery := strings.ToLower(strings.TrimSpace(query))
 	isWrite := isWriteOperation(normalizedQuery)
+
+	startTime := time.Now()
 
 	if isWrite {
 		tag, err := pool.Exec(ctx, query)
@@ -1059,6 +1060,8 @@ func (c *Connections) GetTableData(activePoolID uuid.UUID, tabID int64, tableNam
 		query += fmt.Sprintf(" OFFSET %s", strings.TrimSpace(offset))
 	}
 
+	start := time.Now()
+
 	// Use Query for read operations
 	resultRows, err := pool.Query(ctx, query)
 	if err != nil {
@@ -1119,6 +1122,7 @@ func (c *Connections) GetTableData(activePoolID uuid.UUID, tabID int64, tableNam
 	}
 
 	response.Rows = rows
+	response.ExecutionTime = time.Since(start).Milliseconds()
 
 	return response
 }

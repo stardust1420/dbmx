@@ -41,7 +41,8 @@ type Tab struct {
 	// AI chat
 	AIChat []AIMsg
 
-	IsQueryRunning bool
+	IsQueryRunning         bool
+	LastQueryExecutionTime int
 }
 
 type AIMsg struct {
