@@ -893,7 +893,6 @@
 				}
 
 				// If current tab is still the tab for which the query was run
-
 				if (currentTabID == tabID) {
 					totalRows.set(result.totalRows);
 					currentPage.set(0);
@@ -1021,6 +1020,7 @@
 					return;
 				}
 
+				// If current tab is still the tab for which the query was run
 				if (currentTabID == tabID) {
 					// Update columns
 					if (result.columns) {
@@ -1045,6 +1045,8 @@
 						}
 						rows.set(newRows);
 					}
+
+					lastQueryExecutionTime = result.executionTime
 				}
 
 				// Update the map with cached rows
@@ -1054,6 +1056,7 @@
 					currentTab.Limit = limit;
 					currentTab.currentPage = $currentPage;
 					currentTab.IsQueryRunning = false;
+					currentTab.LastQueryExecutionTime = result.executionTime || 0
 					tabsMap.set(currentTabID, currentTab);
 				}
 				queryLoading = false;
@@ -1065,6 +1068,7 @@
 				let currentTab = tabsMap.get(currentTabID);
 				if (currentTab) {
 					currentTab.IsQueryRunning = false;
+					currentTab.LastQueryExecutionTime = 0
 					tabsMap.set(currentTabID, currentTab);
 				}
 
