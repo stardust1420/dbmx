@@ -225,7 +225,7 @@
 														return;
 													}
 													editedCellsMap.set(cell.id, editingCellValue);
-													addUpdateCellPayload(cell.id, Number(row.original["id"]), cell.column.id, editingCellValue);
+													addUpdateCellPayload(cell.id, Number(row.original["id"]), cell.column.columnDef.header as string, editingCellValue);
 												} else {
 													editedCellsMap.delete(cell.id);
 													removeUpdateCellPayload(cell.id);

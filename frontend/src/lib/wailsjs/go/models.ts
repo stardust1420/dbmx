@@ -170,24 +170,6 @@ export namespace model {
 		    return a;
 		}
 	}
-	export class SavedQuery {
-	    id: number;
-	    title: string;
-	    query: string;
-	    savedAt: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new SavedQuery(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
-	        this.title = source["title"];
-	        this.query = source["query"];
-	        this.savedAt = source["savedAt"];
-	    }
-	}
 	export class QueryHistory {
 	    id: number;
 	    query: string;
@@ -279,6 +261,24 @@ export namespace model {
 		    }
 		    return a;
 		}
+	}
+	export class SavedQuery {
+	    id: number;
+	    title: string;
+	    query: string;
+	    savedAt: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new SavedQuery(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.title = source["title"];
+	        this.query = source["query"];
+	        this.savedAt = source["savedAt"];
+	    }
 	}
 	export class Structure {
 	    columns: string[];

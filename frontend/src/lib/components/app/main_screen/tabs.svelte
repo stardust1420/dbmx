@@ -187,9 +187,9 @@
 
 					// Update columns
 					if (tab.columns) {
-						columns.set(tab.columns.map((column) => ({
+						columns.set(tab.columns.map((column, index) => ({
 							accessorKey: column,
-							id: column,
+							id: String(index),
 							header: column
 						})));
 					}
@@ -621,9 +621,9 @@
 		// Update columns
 		columns.set([]);
 		if (tab.columns) {
-			columns.set(tab.columns.map((column) => ({
+			columns.set(tab.columns.map((column, index) => ({
 				accessorKey: column,
-				id: column,
+				id: String(index),
 				header: column
 			})));
 		}
@@ -762,9 +762,9 @@
 				if (currentTabID == tabID) {
 					// Update columns
 					if (result.columns) {
-						columns.set(result.columns.map((column) => ({
+						columns.set(result.columns.map((column, index) => ({
 							accessorKey: column,
-							id: column,
+							id: String(index), 
 							header: column
 						})));
 					}
@@ -900,9 +900,9 @@
 
 					// Update columns
 					if (result.columns) {
-						columns.set(result.columns.map((column) => ({
+						columns.set(result.columns.map((column, index) => ({
 							accessorKey: column,
-							id: column,
+							id: String(index),
 							header: column,
 							size: 270,
 						})));
@@ -1024,9 +1024,9 @@
 				if (currentTabID == tabID) {
 					// Update columns
 					if (result.columns) {
-						columns.set(result.columns.map((column) => ({
+						columns.set(result.columns.map((column, index) => ({
 							accessorKey: column,
-							id: column,
+							id: String(index),
 							header: column
 						})));
 					}
