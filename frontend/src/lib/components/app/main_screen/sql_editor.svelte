@@ -2,6 +2,7 @@
 	import loader from '@monaco-editor/loader';
 	import { onMount, onDestroy, tick } from 'svelte';
 	import { GetQueryHistory } from '$lib/wailsjs/go/app/QueryHistory.js';
+	import { SaveQuery, GetSavedQueries } from '$lib/wailsjs/go/app/SavedQueries.js';
 	import { format as formatSQL } from 'sql-formatter';
 
 	// ----- Types (strict & runtime-safe) -----
@@ -40,6 +41,28 @@
 	let historySearchInput: HTMLInputElement | null = $state(null);
 	let historyCursorPosition: import('monaco-editor').IRange | null = $state(null);
 	let historyListContainer: HTMLElement | null = $state(null);
+
+	// Save query dialog state
+	let showSaveDialog = $state(false);
+	let saveQueryTitle = $state('');
+	let saveQueryText = $state('');
+	let saveQueryTitleInput: HTMLInputElement | null = $state(null);
+
+	// Saved queries picker state
+	interface SavedItem {
+		id: number;
+		label: string;
+		title: string;
+		detail: string;
+	}
+	let showSavedQueriesPicker = $state(false);
+	let savedItems = $state<SavedItem[]>([]);
+	let filteredSavedItems = $state<SavedItem[]>([]);
+	let savedSearchTerm = $state('');
+	let savedSelectedIndex = $state(0);
+	let savedSearchInput: HTMLInputElement | null = $state(null);
+	let savedCursorPosition: import('monaco-editor').IRange | null = $state(null);
+	let savedListContainer: HTMLElement | null = $state(null);
 
 	async function scrollSelectedIntoView() {
 		await tick();
@@ -107,6 +130,84 @@
 			e.preventDefault();
 			if (filteredItems.length > 0) {
 				selectHistoryItem(filteredItems[historySelectedIndex]);
+				editor?.focus();
+			}
+		}
+	}
+
+	// Save query dialog functions
+	async function handleSaveQuery() {
+		if (!saveQueryTitle.trim()) return;
+		try {
+			await SaveQuery(saveQueryTitle.trim(), saveQueryText);
+			showSaveDialog = false;
+			saveQueryTitle = '';
+			saveQueryText = '';
+			editor?.focus();
+		} catch (e) {
+			console.error('Failed to save query:', e);
+		}
+	}
+
+	function handleSaveDialogKeydown(e: KeyboardEvent) {
+		if (e.key === 'Escape') {
+			showSaveDialog = false;
+			editor?.focus();
+		} else if (e.key === 'Enter') {
+			e.preventDefault();
+			handleSaveQuery();
+		}
+	}
+
+	// Saved queries picker functions
+	async function scrollSavedSelectedIntoView() {
+		await tick();
+		if (!savedListContainer) return;
+		const selected = savedListContainer.children[savedSelectedIndex] as HTMLElement | undefined;
+		selected?.scrollIntoView({ block: 'nearest' });
+	}
+
+	function filterSavedQueries() {
+		const term = savedSearchTerm.toLowerCase();
+		if (!term) {
+			filteredSavedItems = savedItems;
+		} else {
+			filteredSavedItems = savedItems.filter(
+				(item) => item.title.toLowerCase().includes(term) || item.label.toLowerCase().includes(term)
+			);
+		}
+		savedSelectedIndex = 0;
+	}
+
+	function selectSavedItem(item: SavedItem) {
+		if (editor && model) {
+			const range = savedCursorPosition
+				? savedCursorPosition
+				: model.getFullModelRange();
+			editor.pushUndoStop();
+			editor.executeEdits('savedQueryPick', [{ range, text: item.label }]);
+			editor.pushUndoStop();
+			value = model.getValue();
+		}
+		showSavedQueriesPicker = false;
+	}
+
+	function handleSavedQueriesKeydown(e: KeyboardEvent) {
+		if (e.key === 'Escape') {
+			showSavedQueriesPicker = false;
+			editor?.focus();
+		} else if (e.key === 'ArrowDown') {
+			e.preventDefault();
+			savedSelectedIndex = Math.min(savedSelectedIndex + 1, filteredSavedItems.length - 1);
+			scrollSavedSelectedIntoView();
+		} else if (e.key === 'ArrowUp') {
+			e.preventDefault();
+			savedSelectedIndex = Math.max(savedSelectedIndex - 1, 0);
+			scrollSavedSelectedIntoView();
+		} else if (e.key === 'Enter') {
+			e.preventDefault();
+			if (filteredSavedItems.length > 0) {
+				selectSavedItem(filteredSavedItems[savedSelectedIndex]);
 				editor?.focus();
 			}
 		}
@@ -489,6 +590,58 @@
 			}
 		});
 
+		// Register "Save Query" in right-click context menu
+		editor.addAction({
+			id: 'save-query',
+			label: 'Save Query',
+			contextMenuGroupId: 'modification',
+			contextMenuOrder: 5,
+			keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
+			run: () => {
+				if (!model) return;
+				const queryText = selectedQuery || '';
+				if (!queryText.trim()) return;
+				saveQueryText = queryText;
+				saveQueryTitle = '';
+				showSaveDialog = true;
+				requestAnimationFrame(() => {
+					saveQueryTitleInput?.focus();
+				});
+			}
+		});
+
+		// Register "Show Saved Queries" in right-click context menu
+		editor.addAction({
+			id: 'show-saved-queries',
+			label: 'Show Saved Queries',
+			contextMenuGroupId: 'modification',
+			contextMenuOrder: 6,
+			keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyS],
+			run: async () => {
+				try {
+					const queries = await GetSavedQueries();
+					if (!queries || queries.length === 0) {
+						return;
+					}
+					savedItems = queries.map((q) => ({
+						id: q.id,
+						label: q.query,
+						title: q.title,
+						detail: `${q.title} · ${formatTimestamp(q.savedAt)}`
+					}));
+					filteredSavedItems = savedItems;
+					savedSearchTerm = '';
+					savedCursorPosition = editor?.getSelection() ?? null;
+					showSavedQueriesPicker = true;
+					requestAnimationFrame(() => {
+						savedSearchInput?.focus();
+					});
+				} catch (e) {
+					console.error('Failed to load saved queries:', e);
+				}
+			}
+		});
+
 		isInitialized = true;
 	});
 
@@ -545,6 +698,76 @@
 				{/each}
 				{#if filteredItems.length === 0}
 					<div class="px-3 py-4 text-[#6c6c6c] text-sm text-center">No matching queries</div>
+				{/if}
+			</div>
+		</div>
+	</div>
+{/if}
+
+{#if showSaveDialog}
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div
+		class="fixed inset-0 z-50 flex items-start justify-center pt-[10%]"
+		onmousedown={(e) => { if (e.target === e.currentTarget) { showSaveDialog = false; editor?.focus(); } }}
+	>
+		<div class="w-[400px] bg-[#1e1e1e] border border-[#3c3c3c] rounded-md shadow-2xl flex flex-col overflow-hidden">
+			<div class="px-3 py-2 border-b border-[#3c3c3c] text-[#cccccc] text-sm font-medium">Save Query</div>
+			<div class="px-3 py-2">
+				<label class="text-[#9c9c9c] text-xs block mb-1">Title</label>
+				<input
+					bind:this={saveQueryTitleInput}
+					bind:value={saveQueryTitle}
+					onkeydown={handleSaveDialogKeydown}
+					type="text"
+					placeholder="Enter a title for this query..."
+					class="w-full px-3 py-2 bg-[#252526] text-[#cccccc] text-sm border border-[#3c3c3c] rounded outline-none placeholder-[#6c6c6c] focus:border-[#007acc]"
+				/>
+				<div class="mt-2 text-[#6c6c6c] text-xs font-mono truncate">{saveQueryText}</div>
+			</div>
+			<div class="px-3 py-2 flex justify-end gap-2 border-t border-[#3c3c3c]">
+				<button
+					class="px-3 py-1 text-sm text-[#cccccc] bg-[#3c3c3c] rounded hover:bg-[#4c4c4c]"
+					onmousedown={() => { showSaveDialog = false; editor?.focus(); }}
+				>Cancel</button>
+				<button
+					class="px-3 py-1 text-sm text-white bg-[#007acc] rounded hover:bg-[#006bb3] disabled:opacity-50"
+					disabled={!saveQueryTitle.trim()}
+					onmousedown={handleSaveQuery}
+				>Save</button>
+			</div>
+		</div>
+	</div>
+{/if}
+
+{#if showSavedQueriesPicker}
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div
+		class="fixed inset-0 z-50 flex items-start justify-center pt-[10%]"
+		onmousedown={(e) => { if (e.target === e.currentTarget) { showSavedQueriesPicker = false; editor?.focus(); } }}
+	>
+		<div class="w-[600px] max-h-[400px] bg-[#1e1e1e] border border-[#3c3c3c] rounded-md shadow-2xl flex flex-col overflow-hidden">
+			<input
+				bind:this={savedSearchInput}
+				bind:value={savedSearchTerm}
+				oninput={filterSavedQueries}
+				onkeydown={handleSavedQueriesKeydown}
+				type="text"
+				placeholder="Search saved queries..."
+				class="w-full px-3 py-2 bg-[#252526] text-[#cccccc] text-sm border-b border-[#3c3c3c] outline-none placeholder-[#6c6c6c]"
+			/>
+			<div class="overflow-y-auto flex-1" bind:this={savedListContainer}>
+				{#each filteredSavedItems as item, i}
+					<button
+						class="w-full text-left px-3 py-2 text-sm cursor-pointer hover:bg-[#2a2d2e] {i === savedSelectedIndex ? 'bg-[#04395e]' : ''}"
+						onmousedown={() => { selectSavedItem(item); editor?.focus(); }}
+					>
+						<div class="text-[#e0e0e0] text-xs font-medium">{item.title}</div>
+						<div class="text-[#cccccc] truncate font-mono text-xs mt-0.5">{item.label}</div>
+						<div class="text-[#6c6c6c] text-xs mt-0.5">{item.detail}</div>
+					</button>
+				{/each}
+				{#if filteredSavedItems.length === 0}
+					<div class="px-3 py-4 text-[#6c6c6c] text-sm text-center">No saved queries</div>
 				{/if}
 			</div>
 		</div>
