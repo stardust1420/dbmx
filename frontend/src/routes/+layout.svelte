@@ -110,7 +110,7 @@
 				<span>Billing</span>
 				<Command.Shortcut>⌘B</Command.Shortcut>
 			</Command.Item>
-			<Command.Item onSelect={() => goToRoute('/settings')}>
+			<Command.Item onSelect={() => goToRoute('/llm_manager')}>
 				<BotIcon class="mr-2 size-4" />
 				<span>LLM Manager</span>
 				<Command.Shortcut>⌘S</Command.Shortcut>
