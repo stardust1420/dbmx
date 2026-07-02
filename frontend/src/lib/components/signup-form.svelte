@@ -8,6 +8,7 @@
 	import { SignUp } from '$lib/wailsjs/go/app/Auth';
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$app/navigation';
+	import { Spinner } from "$lib/components/ui/spinner/index.js";
 
 	let { class: className, ...restProps }: HTMLAttributes<HTMLDivElement> = $props();
 
@@ -15,14 +16,19 @@
 	let email = $state('');
 	let password = $state('');
 	let confirmPassword = $state('');
+	let signupLoading = $state(false);
+
 
 	let signup = () => {
+		signupLoading = true
 		SignUp(fullname, email, password, confirmPassword)
 			.then(() => {
+				signupLoading = false
 				toast.success('Signed up successfully');
 				goto('/');
 			})
 			.catch((error) => {
+				signupLoading = false
 				toast.error('Failed to sign up', {
 					description: error,
 					action: {
@@ -65,7 +71,13 @@
 						<Field.Description>Must be at least 8 characters long.</Field.Description>
 					</Field.Field>
 					<Field.Field>
-						<Button type="submit" onclick={signup}>Create Account</Button>
+						{#if signupLoading}
+							<Button variant="outline" disabled>
+								<Spinner />
+							</Button>
+						{:else}
+							<Button type="submit" onclick={signup}>Create Account</Button>
+						{/if}
 						<Field.Description class="text-center">
 							Already have an account? <a href="/user/login">Sign in</a>
 						</Field.Description>

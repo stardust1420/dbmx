@@ -130,7 +130,7 @@ func (a *Auth) SignUp(fullname, email, password, confirmPassword string) (bool, 
 	return true, nil
 }
 
-func (a *Auth) Login(email, password string) (bool, error) {
+func (a *Auth) Login(email, password string) (model.User, error) {
 	// Log in a user (get access and refresh tokens)
 	token, err := a.SupabaseClient.Token(types.TokenRequest{
 		GrantType: "password",
@@ -138,12 +138,12 @@ func (a *Auth) Login(email, password string) (bool, error) {
 		Password:  password,
 	})
 	if err != nil {
-		return false, err
+		return model.User{}, err
 	}
 
 	// Save session in db
 	if err := a.saveSession(token.Session); err != nil {
-		return false, err
+		return model.User{}, err
 	}
 
 	// Create a new client with the user's access token
@@ -160,13 +160,27 @@ func (a *Auth) Login(email, password string) (bool, error) {
 	if err != nil {
 		// TODO handle expired token
 		log.Println("Error getting user:", err)
-		return false, err
+		return model.User{}, err
 	}
 
 	// Store logged in user in memory
 	a.User = &userRes.User
 
-	return true, nil
+	user := model.User{
+		ID:    a.User.ID,
+		Email: a.User.Email,
+	}
+	if fullName, ok := a.User.UserMetadata["fullname"]; ok {
+		user.Fullname = fullName.(string)
+	}
+	if customerID, ok := a.User.AppMetadata["customer_id"]; ok {
+		user.CustomerID = customerID.(string)
+	}
+	if useDefaultKey, ok := a.User.AppMetadata["use_default_key"]; ok {
+		user.UseDefaultKey = useDefaultKey.(bool)
+	}
+
+	return user, nil
 }
 
 func (a *Auth) saveSession(token types.Session) error {
@@ -192,11 +206,22 @@ func (a *Auth) GetLoggedInUser() (model.User, error) {
 	if a.User == nil {
 		return model.User{}, errors.New("user not found")
 	}
-	return model.User{
-		ID:       a.User.ID,
-		Email:    a.User.Email,
-		Fullname: a.User.UserMetadata["fullname"].(string),
-	}, nil
+
+	user := model.User{
+		ID:    a.User.ID,
+		Email: a.User.Email,
+	}
+	if fullName, ok := a.User.UserMetadata["fullname"]; ok {
+		user.Fullname = fullName.(string)
+	}
+	if customerID, ok := a.User.AppMetadata["customer_id"]; ok {
+		user.CustomerID = customerID.(string)
+	}
+	if useDefaultKey, ok := a.User.AppMetadata["use_default_key"]; ok {
+		user.UseDefaultKey = useDefaultKey.(bool)
+	}
+
+	return user, nil
 }
 
 func (a *Auth) refreshSession(refreshToken string) (types.TokenResponse, error) {

@@ -8,10 +8,13 @@
 	import { Login } from '$lib/wailsjs/go/app/Auth';
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$app/navigation';
+	 import { Spinner } from "$lib/components/ui/spinner/index.js";
+	import { isLoggedIn, userAvatar, userCustomerID, userEmail, userFullName, userUseDefaultKey } from '$lib/state.svelte';
 
 	let { class: className, ...restProps }: HTMLAttributes<HTMLDivElement> = $props();
 	let email = $state('');
 	let password = $state('');
+	let loginLoading = $state(false);
 	
 	let login = () => {
 		if (email.trim() === '') {
@@ -22,12 +25,21 @@
 			toast.error('Password is required');
 			return;
 		}
+		loginLoading = true
 		Login(email, password)
-			.then(() => {
+			.then((user) => {
+				$isLoggedIn = true
+				$userEmail= user.email
+				$userFullName = user.fullname
+				$userAvatar = "https://api.dicebear.com/9.x/fun-emoji/svg?seed=Aneka"
+				$userCustomerID = user.customer_id
+				$userUseDefaultKey = user.use_default_key
+				loginLoading = false
 				toast.success('Logged in successfully');
 				goto('/');
 			})
 			.catch((error) => {
+				loginLoading = false
 				toast.error('Failed to log in', {
 					description: error,
 					action: {
@@ -87,7 +99,13 @@
 							</div>
 							<Input id="password" type="password" bind:value={password} required />
 						</div>
-						<Button type="submit" class="w-full" onclick={login}>Login</Button>
+						{#if loginLoading}
+							<Button variant="outline" class="w-full" disabled>
+								<Spinner />
+							</Button>
+						{:else}
+							<Button type="submit" class="w-full" onclick={login}>Login</Button>	
+						{/if}
 					</div>
 					<div class="text-center text-sm">
 						Don&apos;t have an account?

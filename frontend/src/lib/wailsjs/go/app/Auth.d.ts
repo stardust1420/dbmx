@@ -4,7 +4,7 @@ import {model} from '../models';
 
 export function GetLoggedInUser():Promise<model.User>;
 
-export function Login(arg1:string,arg2:string):Promise<boolean>;
+export function Login(arg1:string,arg2:string):Promise<model.User>;
 
 export function Logout():Promise<void>;
 
