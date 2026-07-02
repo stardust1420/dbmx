@@ -6,32 +6,27 @@ import Label from '$lib/components/ui/label/label.svelte';
 import { Button } from '$lib/components/ui/button/index.js';
 import { toast } from 'svelte-sonner';
 import { ChevronLeft } from 'lucide-svelte';
+import { Spinner } from "$lib/components/ui/spinner/index.js";
+import { userAvatar, userEmail, userFullName, isLoggedIn, userCustomerID, userUseDefaultKey } from '$lib/state.svelte';
 
-let fullname = $state("No Account");
-let email = $state("No Account");
-let avatar = $state("https://api.dicebear.com/9.x/avataaars-neutral/svg?backgroundRotation=0,360");
-let isLoggedIn = $state(false);
-	
-onMount(() => {
-    GetLoggedInUser()
-        .then((user) => {
-            fullname = user.fullname;
-            email = user.email;
-            avatar = "https://api.dicebear.com/9.x/fun-emoji/svg?seed=Aneka";
-            isLoggedIn = true;
-        })
-        .catch((error) => {
-            console.log(error);
-        });
-});
+let logoutLoading = $state(false);
 
 let logout = () => {
+    logoutLoading = true
     Logout()
         .then(() => {
+            $isLoggedIn = false
+            $userFullName = 'No Account'
+            $userEmail= 'No Account'
+            $userAvatar = 'https://api.dicebear.com/9.x/avataaars-neutral/svg?backgroundRotation=0,360'
+            $userCustomerID = ''
+            $userUseDefaultKey = false
+            logoutLoading = false
             toast.success('Logged out successfully');
             goto('/');
         })
         .catch((error) => {
+            logoutLoading = false
             toast.error('Failed to log out', {
                 description: error,
                 action: {
@@ -49,10 +44,16 @@ let logout = () => {
         <a class="" href="/">
             <ChevronLeft size={32} />
         </a>
-        <Label>{email}</Label>
-        <Label>{fullname}</Label>
-        {#if isLoggedIn}
-            <Button onclick={logout}>Logout</Button>
+        <Label>{$userEmail}</Label>
+        <Label>{$userFullName}</Label>
+        {#if $isLoggedIn}
+			{#if logoutLoading}
+                <Button variant="outline" disabled>
+                    <Spinner />
+                </Button>
+			{:else}
+                <Button onclick={logout}>Logout</Button>
+			{/if}
         {:else}
             <Button onclick={() => goto('/user/login')}>Login</Button>
         {/if}

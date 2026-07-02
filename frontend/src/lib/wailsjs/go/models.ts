@@ -452,6 +452,8 @@ export namespace model {
 	    id: number[];
 	    email: string;
 	    fullname: string;
+	    customer_id: string;
+	    use_default_key: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new User(source);
@@ -462,6 +464,8 @@ export namespace model {
 	        this.id = source["id"];
 	        this.email = source["email"];
 	        this.fullname = source["fullname"];
+	        this.customer_id = source["customer_id"];
+	        this.use_default_key = source["use_default_key"];
 	    }
 	}
 

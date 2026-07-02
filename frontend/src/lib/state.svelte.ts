@@ -30,6 +30,13 @@ export let selectedQuery = writable('');
 
 export let activeDBs = writable<Array<model.Database>>([]);
 
+export let isLoggedIn = writable(false)
+export let userFullName = writable('')
+export let userEmail = writable('')
+export let userAvatar = writable('')
+export let userCustomerID = writable('')
+export let userUseDefaultKey = writable(false)
+
 export let suggestions = writable<Set<string>>(new Set([
     'SELECT',
     'FROM',
