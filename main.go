@@ -38,6 +38,7 @@ func main() {
 	queryHistory := a.NewQueryHistory(db.DB)
 	savedQueries := a.NewSavedQueries(db.DB)
 	auth := a.InitAuth(db.DB, env.SupabaseConfig)
+	stardust := a.NewStardust(db.DB, env)
 	app := NewApp(conn)
 
 	// Create application with options
@@ -75,6 +76,7 @@ func main() {
 			queryHistory,
 			savedQueries,
 			auth,
+			stardust,
 		},
 		// Mac platform specific options
 		Mac: &mac.Options{

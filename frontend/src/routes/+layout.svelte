@@ -16,7 +16,7 @@
 	import { toast } from 'svelte-sonner';
 	import { GetAllConnections } from '$lib/wailsjs/go/app/Connections';
 
-	import {isLoggedIn, postgresConnectionsMap, userFullName, userEmail, userAvatar, userCustomerID, userUseDefaultKey } from '$lib/state.svelte';
+	import {isLoggedIn, postgresConnectionsMap, userFullName, userEmail, userAvatar, userUseDefaultKey, userIsAIEnabled } from '$lib/state.svelte';
 	import { GetLoggedInUser } from '$lib/wailsjs/go/app/Auth';
 
 	// Fetch all connections when the root layout is mounted
@@ -55,7 +55,7 @@
 				$userFullName = user.fullname;
 				$userEmail= user.email;
 				$userAvatar = "https://api.dicebear.com/9.x/fun-emoji/svg?seed=Aneka";
-				$userCustomerID = user.customer_id
+				$userIsAIEnabled = user.is_ai_enabled
 				$userUseDefaultKey = user.use_default_key
 				$isLoggedIn = true
 			})

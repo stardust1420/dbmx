@@ -14,6 +14,7 @@ var configFiles embed.FS
 type Env struct {
 	Sqlite3        Sqlite3        `mapstructure:"sqlite3"`
 	SupabaseConfig SupabaseConfig `mapstructure:"supabase"`
+	DBMXConfig     DBMXConfig     `mapstructure:"dbmx"`
 }
 
 type Sqlite3 struct {
@@ -23,6 +24,10 @@ type Sqlite3 struct {
 type SupabaseConfig struct {
 	ProjectID string `mapstructure:"project_id"`
 	AnonKey   string `mapstructure:"anon_key"`
+}
+
+type DBMXConfig struct {
+	BaseURL string `mapstructure:"base_url"`
 }
 
 // GetConfig returns entire project configuration

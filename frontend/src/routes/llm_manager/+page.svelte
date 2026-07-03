@@ -4,18 +4,91 @@
 	import * as Accordion from "$lib/components/ui/accordion/index.js";
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import { isLoggedIn, userCustomerID, userUseDefaultKey } from '$lib/state.svelte';
+	import { isLoggedIn, userIsAIEnabled, userUseDefaultKey } from '$lib/state.svelte';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
+	import { DisableStardustAI, EnableStardustAI, SwitchDefaultKey } from '$lib/wailsjs/go/app/Stardust';
+	import { toast } from 'svelte-sonner';
 
 
 	let isAIEnabled = $state(false);
 	let useStardustModels = $state(true);
 
 	onMount(() => {
-		isAIEnabled = $userCustomerID !== '';
+		isAIEnabled = $userIsAIEnabled;
 		useStardustModels = $userUseDefaultKey;
 	});
+
+	let toggleStardustAI = (checked: boolean) => {
+		if (checked) {
+			EnableStardustAI()
+			.then((customer) => {
+				$userIsAIEnabled = true
+				$userUseDefaultKey = true
+				toast.success('Success', {
+					description: "Enabled Stardust AI",
+					action: {
+						label: 'OK',
+						onClick: () => console.info('OK')
+					}
+				});
+			})
+			.catch((error) => {
+				isAIEnabled = !checked
+				toast.error('Failed to enable Stardust AI', {
+					description: error,
+					action: {
+						label: 'OK',
+						onClick: () => console.info('OK')
+					}
+				});
+			})
+		} else {
+			DisableStardustAI()
+				.then((success) => {
+					$userIsAIEnabled = false
+					$userUseDefaultKey = false
+					toast.success('Success', {
+						description: "Switched Default Key",
+						action: {
+							label: 'OK',
+							onClick: () => console.info('OK')
+						}
+					});
+				})
+				.catch((error) => {
+					toast.error('Failed to enable Stardust AI', {
+						description: error,
+						action: {
+							label: 'OK',
+							onClick: () => console.info('OK')
+						}
+					});
+				})
+		}
+	}
+
+	let toggleDefaultKey = (checked: boolean) => {
+		SwitchDefaultKey(checked)
+		.then((success) => {
+			toast.success('Success', {
+				description: "Switched Default Key",
+				action: {
+					label: 'OK',
+					onClick: () => console.info('OK')
+				}
+			});
+		})
+		.catch((error) => {
+			toast.error('Failed to enable Stardust AI', {
+				description: error,
+				action: {
+					label: 'OK',
+					onClick: () => console.info('OK')
+				}
+			});
+		})
+	}
 
 
 </script>
@@ -44,7 +117,7 @@
 							<p>Enables Stardust AI assistant that helps with Text-to-SQL generation</p>
 						</div>
 						<div class="flex flex-[2] items-center justify-center rounded-3xl border border-blue-600">
-							<Switch id="isAIEnabled" bind:checked={isAIEnabled}/>
+							<Switch id="isAIEnabled" bind:checked={isAIEnabled} onCheckedChange={toggleStardustAI}/>
 						</div>
 					</div>
 					{#if isAIEnabled}
@@ -52,10 +125,10 @@
 						<div class="flex h-16 px-4">
 							<div class="flex flex-[8] p-2 flex-col">
 								<h1 class="text-lg">Use Stardust models</h1>
-								<p>Use default models provided by DBMX. Disable this to bring your own keys</p>
+								<p>Use default models provided by DBMX. <span class="text-green-500 font-bold">Disable this to Bring Your Own Keys (BYOK)</span></p>
 							</div>
 							<div class="flex flex-[2] items-center justify-center rounded-3xl border border-green-600">
-								<Switch id="useStardustModels" bind:checked={useStardustModels}/>
+								<Switch id="useStardustModels" bind:checked={useStardustModels} onCheckedChange={toggleDefaultKey}/>
 							</div>
 						</div>
 						{#if !useStardustModels}

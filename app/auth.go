@@ -176,6 +176,9 @@ func (a *Auth) Login(email, password string) (model.User, error) {
 	if customerID, ok := a.User.AppMetadata["customer_id"]; ok {
 		user.CustomerID = customerID.(string)
 	}
+	if isAIEnabled, ok := a.User.AppMetadata["is_ai_enabled"]; ok {
+		user.IsAIEnabled = isAIEnabled.(bool)
+	}
 	if useDefaultKey, ok := a.User.AppMetadata["use_default_key"]; ok {
 		user.UseDefaultKey = useDefaultKey.(bool)
 	}
@@ -216,6 +219,9 @@ func (a *Auth) GetLoggedInUser() (model.User, error) {
 	}
 	if customerID, ok := a.User.AppMetadata["customer_id"]; ok {
 		user.CustomerID = customerID.(string)
+	}
+	if isAIEnabled, ok := a.User.AppMetadata["is_ai_enabled"]; ok {
+		user.IsAIEnabled = isAIEnabled.(bool)
 	}
 	if useDefaultKey, ok := a.User.AppMetadata["use_default_key"]; ok {
 		user.UseDefaultKey = useDefaultKey.(bool)

@@ -8,5 +8,6 @@ type User struct {
 	Fullname string    `json:"fullname"`
 
 	CustomerID    string `json:"customer_id"`
+	IsAIEnabled   bool   `json:"is_ai_enabled"`
 	UseDefaultKey bool   `json:"use_default_key"`
 }

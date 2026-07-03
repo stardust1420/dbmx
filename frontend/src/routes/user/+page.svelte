@@ -7,7 +7,7 @@ import { Button } from '$lib/components/ui/button/index.js';
 import { toast } from 'svelte-sonner';
 import { ChevronLeft } from 'lucide-svelte';
 import { Spinner } from "$lib/components/ui/spinner/index.js";
-import { userAvatar, userEmail, userFullName, isLoggedIn, userCustomerID, userUseDefaultKey } from '$lib/state.svelte';
+import { userAvatar, userEmail, userFullName, isLoggedIn, userUseDefaultKey, userIsAIEnabled } from '$lib/state.svelte';
 
 let logoutLoading = $state(false);
 
@@ -19,7 +19,7 @@ let logout = () => {
             $userFullName = 'No Account'
             $userEmail= 'No Account'
             $userAvatar = 'https://api.dicebear.com/9.x/avataaars-neutral/svg?backgroundRotation=0,360'
-            $userCustomerID = ''
+            $userIsAIEnabled = false
             $userUseDefaultKey = false
             logoutLoading = false
             toast.success('Logged out successfully');
