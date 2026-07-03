@@ -34,7 +34,7 @@ export let isLoggedIn = writable(false)
 export let userFullName = writable('')
 export let userEmail = writable('')
 export let userAvatar = writable('')
-export let userCustomerID = writable('')
+export let userIsAIEnabled = writable(false)
 export let userUseDefaultKey = writable(false)
 
 export let suggestions = writable<Set<string>>(new Set([

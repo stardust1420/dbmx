@@ -1,3 +1,22 @@
+export namespace dbmx {
+	
+	export class Customer {
+	    id: string;
+	    name: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Customer(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	    }
+	}
+
+}
+
 export namespace model {
 	
 	export class AIMsg {
@@ -453,6 +472,7 @@ export namespace model {
 	    email: string;
 	    fullname: string;
 	    customer_id: string;
+	    is_ai_enabled: boolean;
 	    use_default_key: boolean;
 	
 	    static createFrom(source: any = {}) {
@@ -465,6 +485,7 @@ export namespace model {
 	        this.email = source["email"];
 	        this.fullname = source["fullname"];
 	        this.customer_id = source["customer_id"];
+	        this.is_ai_enabled = source["is_ai_enabled"];
 	        this.use_default_key = source["use_default_key"];
 	    }
 	}

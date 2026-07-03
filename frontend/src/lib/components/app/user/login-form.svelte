@@ -9,7 +9,7 @@
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$app/navigation';
 	 import { Spinner } from "$lib/components/ui/spinner/index.js";
-	import { isLoggedIn, userAvatar, userCustomerID, userEmail, userFullName, userUseDefaultKey } from '$lib/state.svelte';
+	import { isLoggedIn, userAvatar, userEmail, userFullName, userIsAIEnabled, userUseDefaultKey } from '$lib/state.svelte';
 
 	let { class: className, ...restProps }: HTMLAttributes<HTMLDivElement> = $props();
 	let email = $state('');
@@ -32,7 +32,7 @@
 				$userEmail= user.email
 				$userFullName = user.fullname
 				$userAvatar = "https://api.dicebear.com/9.x/fun-emoji/svg?seed=Aneka"
-				$userCustomerID = user.customer_id
+				$userIsAIEnabled = user.is_ai_enabled
 				$userUseDefaultKey = user.use_default_key
 				loginLoading = false
 				toast.success('Logged in successfully');
