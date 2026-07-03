@@ -12,7 +12,7 @@
 
 
 	let isAIEnabled = $state(false);
-	let useStardustModels = $state(true);
+	let useStardustModels = $state(false);
 
 	onMount(() => {
 		isAIEnabled = $userIsAIEnabled;
@@ -25,6 +25,7 @@
 			.then((customer) => {
 				$userIsAIEnabled = true
 				$userUseDefaultKey = true
+				useStardustModels = true
 				toast.success('Success', {
 					description: "Enabled Stardust AI",
 					action: {
@@ -48,8 +49,9 @@
 				.then((success) => {
 					$userIsAIEnabled = false
 					$userUseDefaultKey = false
+					useStardustModels = false
 					toast.success('Success', {
-						description: "Switched Default Key",
+						description: "Disabled Stardust AI",
 						action: {
 							label: 'OK',
 							onClick: () => console.info('OK')
@@ -57,7 +59,7 @@
 					});
 				})
 				.catch((error) => {
-					toast.error('Failed to enable Stardust AI', {
+					toast.error('Failed to disable Stardust AI', {
 						description: error,
 						action: {
 							label: 'OK',
@@ -71,6 +73,7 @@
 	let toggleDefaultKey = (checked: boolean) => {
 		SwitchDefaultKey(checked)
 		.then((success) => {
+			$userUseDefaultKey = checked
 			toast.success('Success', {
 				description: "Switched Default Key",
 				action: {
