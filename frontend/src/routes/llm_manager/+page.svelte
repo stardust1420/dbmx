@@ -7,17 +7,124 @@
 	import { isLoggedIn, userIsAIEnabled, userUseDefaultKey } from '$lib/state.svelte';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
-	import { DisableStardustAI, EnableStardustAI, SwitchDefaultKey } from '$lib/wailsjs/go/app/Stardust';
+	import { AddProviderAPIKey, DeleteProviderAPIKey, DisableStardustAI, EnableStardustAI, ListUserProviders, SwitchDefaultKey, UpdateProviderAPIKey } from '$lib/wailsjs/go/app/Stardust';
 	import { toast } from 'svelte-sonner';
+	import { dbmx } from '$lib/wailsjs/go/models';
 
 
 	let isAIEnabled = $state(false);
 	let useStardustModels = $state(false);
+	let userProviders: dbmx.UserProvider[] = $state([])
 
 	onMount(() => {
 		isAIEnabled = $userIsAIEnabled;
 		useStardustModels = $userUseDefaultKey;
+		listUserProviders();
 	});
+
+	let listUserProviders = () => {
+		if (useStardustModels) {
+			return
+		}
+		ListUserProviders()
+		.then((providers) => {
+			userProviders = providers
+		})
+		.catch((error) => {
+			toast.error('Failed to fetch user providers', {
+				description: error,
+				action: {
+					label: 'OK',
+					onClick: () => console.info('OK')
+				}
+			});
+		})
+	}
+
+	let addProviderAPIKey = (provider:string, apiKey:string) => {
+		if (useStardustModels) {
+			return
+		}
+		AddProviderAPIKey(provider, apiKey)
+		.then(() => {
+			toast.success('Success', {
+				description: "API Key added successfully",
+				action: {
+					label: 'OK',
+					onClick: () => console.info('OK')
+				}
+			});
+		})
+		.catch((error) => {
+			toast.error('Failure', {
+				description: error,
+				action: {
+					label: 'OK',
+					onClick: () => console.info('OK')
+				}
+			});
+		})
+	}
+
+	let updateProviderAPIKey = (keyID: string, provider: string, apiKey: string) => {
+		if (useStardustModels) {
+			return
+		}
+		UpdateProviderAPIKey(keyID, provider, apiKey)
+		.then(() => {
+			toast.success('Success', {
+				description: "API Key updated successfully",
+				action: {
+					label: 'OK',
+					onClick: () => console.info('OK')
+				}
+			});
+		})
+		.catch((error) => {
+			toast.error('Failure', {
+				description: error,
+				action: {
+					label: 'OK',
+					onClick: () => console.info('OK')
+				}
+			});
+		})
+	}
+
+	let deleteProviderAPIKey = (keyID: string, provider: string) => {
+		if (useStardustModels) {
+			return
+		}
+		DeleteProviderAPIKey(keyID, provider)
+		.then(() => {
+			toast.success('Success', {
+				description: "API Key updated successfully",
+				action: {
+					label: 'OK',
+					onClick: () => console.info('OK')
+				}
+			});
+		})
+		.catch((error) => {
+			toast.error('Failure', {
+				description: error,
+				action: {
+					label: 'OK',
+					onClick: () => console.info('OK')
+				}
+			});
+		})
+	}
+
+	const providerNames: Record<string, string> = {
+		anthropic: "Anthropic",
+		gemini: "Google Gemini",
+		groq: "Groq",
+		mistral: "Mistral AI",
+		ollama: "Ollama",
+		openai: "OpenAI",
+		openrouter: "OpenRouter"
+	};
 
 	let toggleStardustAI = (checked: boolean) => {
 		if (checked) {
@@ -59,6 +166,7 @@
 					});
 				})
 				.catch((error) => {
+					isAIEnabled = !isAIEnabled
 					toast.error('Failed to disable Stardust AI', {
 						description: error,
 						action: {
@@ -73,6 +181,9 @@
 	let toggleDefaultKey = (checked: boolean) => {
 		SwitchDefaultKey(checked)
 		.then((success) => {
+			if (!checked) {
+				listUserProviders();
+			}
 			$userUseDefaultKey = checked
 			toast.success('Success', {
 				description: "Switched Default Key",
@@ -83,6 +194,7 @@
 			});
 		})
 		.catch((error) => {
+			useStardustModels = !useStardustModels
 			toast.error('Failed to enable Stardust AI', {
 				description: error,
 				action: {
@@ -143,76 +255,32 @@
 								<div class="flex flex-col gap-3 mr-24">
 									<Accordion.Root type="single" collapsible class="flex flex-col gap-3">
 		
-										<Accordion.Item value="openai" class="border-2 border-neutral-700 rounded-2xl px-4">
-											<Accordion.Trigger class="ml-3">OpenAI</Accordion.Trigger>
-											<Accordion.Content>
-												<div class="flex items-center gap-3">
-													<Input id="OpenAI" placeholder="OpenAI API Key" class="flex-1 m-0.5" />
-													<Button variant="secondary">Update</Button>
-													<Button variant="destructive">Remove</Button>
-												</div>
-											</Accordion.Content>
-										</Accordion.Item>
-
-										<Accordion.Item value="anthropic" class="border-2 border-neutral-700 rounded-2xl px-4">
-											<Accordion.Trigger class="ml-3">Anthropic</Accordion.Trigger>
-											<Accordion.Content>
-												<div class="flex items-center gap-3">
-													<Input id="Anthropic" placeholder="Anthropic API Key" class="flex-1 m-0.5" />
-													<Button variant="secondary">Update</Button>
-													<Button variant="destructive">Remove</Button>
-
-												</div>
-											</Accordion.Content>
-										</Accordion.Item>
-
-										<Accordion.Item value="groq" class="border-2 border-neutral-700 rounded-2xl px-4">
-											<Accordion.Trigger class="ml-3">Groq</Accordion.Trigger>
-											<Accordion.Content>
-												<div class="flex items-center gap-3">
-													<Input id="Groq" placeholder="Groq API Key" class="flex-1 m-0.5" />
-													<Button variant="secondary">Update</Button>
-													<Button variant="destructive">Remove</Button>
-
-												</div>
-											</Accordion.Content>
-										</Accordion.Item>
-
-										<Accordion.Item value="google" class="border-2 border-neutral-700 rounded-2xl px-4">
-											<Accordion.Trigger class="ml-3">Google</Accordion.Trigger>
-											<Accordion.Content>
-												<div class="flex items-center gap-3">
-													<Input id="Google" placeholder="Google API Key" class="flex-1 m-0.5" />
-													<Button variant="secondary">Update</Button>
-													<Button variant="destructive">Remove</Button>
-
-												</div>
-											</Accordion.Content>
-										</Accordion.Item>
-
-										<Accordion.Item value="openrouter" class="border-2 border-neutral-700 rounded-2xl px-4">
-											<Accordion.Trigger class="ml-3">OpenRouter</Accordion.Trigger>
-											<Accordion.Content>
-												<div class="flex items-center gap-3">
-													<Input id="OpenRouter" placeholder="OpenRouter API Key" class="flex-1 m-0.5" />
-													<Button variant="secondary">Update</Button>
-													<Button variant="destructive">Remove</Button>
-
-												</div>
-											</Accordion.Content>
-										</Accordion.Item>
-
-										<Accordion.Item value="ollama" class="border-2 border-neutral-700 rounded-2xl px-4">
-											<Accordion.Trigger class="ml-3">Ollama</Accordion.Trigger>
-											<Accordion.Content>
-												<div class="flex items-center gap-3">
-													<Input id="Ollama" placeholder="Ollama URL" class="flex-1 m-0.5" />
-													<Button variant="secondary">Update</Button>
-													<Button variant="destructive">Remove</Button>
-
-												</div>
-											</Accordion.Content>
-										</Accordion.Item>
+										{#each userProviders as item (item.provider)}
+											<Accordion.Item value={item.provider} class="border-2 border-neutral-700 rounded-2xl px-4">
+												<Accordion.Trigger class="ml-3">
+													{providerNames[item.provider] || item.provider}
+												</Accordion.Trigger>
+												<Accordion.Content>
+													<div class="flex items-center gap-3">
+														<Input 
+															id={item.provider} 
+															placeholder={`${providerNames[item.provider] || item.provider} API Key`} 
+															bind:value={item.api_key} 
+															class="flex-1 m-0.5" 
+														/>
+														<!-- {#if item.api_key && item.api_key.trim() !== ''} -->
+															<Button variant="secondary" onclick={() => updateProviderAPIKey(item.key_id, item.provider, item.api_key)} >Update</Button>
+															<Button variant="destructive" onclick={() => {
+																deleteProviderAPIKey(item.key_id, item.provider)
+																item.api_key = ''
+															}} >Remove</Button>
+														<!-- {:else} -->
+															<Button variant="secondary" onclick={() => addProviderAPIKey(item.provider, item.api_key)} >Add</Button>
+														<!-- {/if} -->
+													</div>
+												</Accordion.Content>
+											</Accordion.Item>
+										{/each}
 
 									</Accordion.Root>
 								</div>

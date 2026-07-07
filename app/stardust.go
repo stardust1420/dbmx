@@ -90,3 +90,97 @@ func (s *Stardust) SwitchDefaultKey(switchValue bool) error {
 
 	return nil
 }
+
+func (s *Stardust) ListUserProviders() ([]dbmx.UserProvider, error) {
+	// Fetch the active session from db
+	var token types.TokenResponse
+	err := s.DB.QueryRow("SELECT access_token, refresh_token, expires_at FROM active_session").Scan(&token.AccessToken, &token.RefreshToken, &token.ExpiresAt)
+	if err != nil {
+		return nil, err
+	}
+
+	dbmxClient := dbmx.NewClient(dbmx.Credentials{
+		BaseURL:     s.Env.DBMXConfig.BaseURL,
+		AccessToken: token.AccessToken,
+	})
+
+	userProviders, err := dbmxClient.ListUserProviders(context.TODO())
+	if err != nil {
+		return nil, err
+	}
+
+	return userProviders, nil
+}
+
+func (s *Stardust) AddProviderAPIKey(provider, apiKey string) error {
+	// Fetch the active session from db
+	var token types.TokenResponse
+	err := s.DB.QueryRow("SELECT access_token, refresh_token, expires_at FROM active_session").Scan(&token.AccessToken, &token.RefreshToken, &token.ExpiresAt)
+	if err != nil {
+		return err
+	}
+
+	dbmxClient := dbmx.NewClient(dbmx.Credentials{
+		BaseURL:     s.Env.DBMXConfig.BaseURL,
+		AccessToken: token.AccessToken,
+	})
+
+	_, err = dbmxClient.AddProviderAPIKey(context.TODO(), dbmx.AddProviderAPIKeyReq{
+		Provider: provider,
+		APIKey:   apiKey,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Stardust) UpdateProviderAPIKey(keyID, provider, apiKey string) error {
+	// Fetch the active session from db
+	var token types.TokenResponse
+	err := s.DB.QueryRow("SELECT access_token, refresh_token, expires_at FROM active_session").Scan(&token.AccessToken, &token.RefreshToken, &token.ExpiresAt)
+	if err != nil {
+		return err
+	}
+
+	dbmxClient := dbmx.NewClient(dbmx.Credentials{
+		BaseURL:     s.Env.DBMXConfig.BaseURL,
+		AccessToken: token.AccessToken,
+	})
+
+	_, err = dbmxClient.UpdateProviderAPIKey(context.TODO(), dbmx.UpdateProviderAPIKeyReq{
+		KeyID:    keyID,
+		Provider: provider,
+		APIKey:   apiKey,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Stardust) DeleteProviderAPIKey(keyID, provider string) error {
+	// Fetch the active session from db
+	var token types.TokenResponse
+	err := s.DB.QueryRow("SELECT access_token, refresh_token, expires_at FROM active_session").Scan(&token.AccessToken, &token.RefreshToken, &token.ExpiresAt)
+	if err != nil {
+		return err
+	}
+
+	dbmxClient := dbmx.NewClient(dbmx.Credentials{
+		BaseURL:     s.Env.DBMXConfig.BaseURL,
+		AccessToken: token.AccessToken,
+	})
+
+	_, err = dbmxClient.DeleteProviderAPIKey(context.TODO(), dbmx.DeleteProviderAPIKeyReq{
+		KeyID:    keyID,
+		Provider: provider,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

@@ -8,7 +8,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.24
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/viper v1.19.0
-	github.com/stardust1420/dbmx-go v1.0.3
+	github.com/stardust1420/dbmx-go v1.0.7
 	github.com/supabase-community/auth-go v1.5.0
 	github.com/wailsapp/wails/v2 v2.12.0
 	golang.org/x/crypto v0.33.0
