@@ -14,6 +14,22 @@ export namespace dbmx {
 	        this.name = source["name"];
 	    }
 	}
+	export class UserProvider {
+	    key_id: string;
+	    provider: string;
+	    api_key: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new UserProvider(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.key_id = source["key_id"];
+	        this.provider = source["provider"];
+	        this.api_key = source["api_key"];
+	    }
+	}
 
 }
 
