@@ -7,25 +7,25 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/stardust1420/dbmx-go"
-	"github.com/supabase-community/auth-go/types"
 )
 
 type Stardust struct {
-	DB  *sql.DB
-	Env *env.Env
+	DB   *sql.DB
+	Env  *env.Env
+	Auth *Auth
 }
 
-func NewStardust(db *sql.DB, env *env.Env) *Stardust {
+func NewStardust(db *sql.DB, env *env.Env, auth *Auth) *Stardust {
 	return &Stardust{
-		DB:  db,
-		Env: env,
+		DB:   db,
+		Env:  env,
+		Auth: auth,
 	}
 }
 
 func (s *Stardust) EnableStardustAI() (dbmx.Customer, error) {
 	// Fetch the active session from db
-	var token types.TokenResponse
-	err := s.DB.QueryRow("SELECT access_token, refresh_token, expires_at FROM active_session").Scan(&token.AccessToken, &token.RefreshToken, &token.ExpiresAt)
+	token, err := s.Auth.GetToken()
 	if err != nil {
 		return dbmx.Customer{}, err
 	}
@@ -45,8 +45,7 @@ func (s *Stardust) EnableStardustAI() (dbmx.Customer, error) {
 
 func (s *Stardust) DisableStardustAI() error {
 	// Fetch the active session from db
-	var token types.TokenResponse
-	err := s.DB.QueryRow("SELECT access_token, refresh_token, expires_at FROM active_session").Scan(&token.AccessToken, &token.RefreshToken, &token.ExpiresAt)
+	token, err := s.Auth.GetToken()
 	if err != nil {
 		return err
 	}
@@ -69,8 +68,7 @@ func (s *Stardust) DisableStardustAI() error {
 
 func (s *Stardust) SwitchDefaultKey(switchValue bool) error {
 	// Fetch the active session from db
-	var token types.TokenResponse
-	err := s.DB.QueryRow("SELECT access_token, refresh_token, expires_at FROM active_session").Scan(&token.AccessToken, &token.RefreshToken, &token.ExpiresAt)
+	token, err := s.Auth.GetToken()
 	if err != nil {
 		return err
 	}
@@ -93,8 +91,7 @@ func (s *Stardust) SwitchDefaultKey(switchValue bool) error {
 
 func (s *Stardust) ListUserProviders() ([]dbmx.UserProvider, error) {
 	// Fetch the active session from db
-	var token types.TokenResponse
-	err := s.DB.QueryRow("SELECT access_token, refresh_token, expires_at FROM active_session").Scan(&token.AccessToken, &token.RefreshToken, &token.ExpiresAt)
+	token, err := s.Auth.GetToken()
 	if err != nil {
 		return nil, err
 	}
@@ -114,8 +111,7 @@ func (s *Stardust) ListUserProviders() ([]dbmx.UserProvider, error) {
 
 func (s *Stardust) AddProviderAPIKey(provider, apiKey string) error {
 	// Fetch the active session from db
-	var token types.TokenResponse
-	err := s.DB.QueryRow("SELECT access_token, refresh_token, expires_at FROM active_session").Scan(&token.AccessToken, &token.RefreshToken, &token.ExpiresAt)
+	token, err := s.Auth.GetToken()
 	if err != nil {
 		return err
 	}
@@ -138,8 +134,7 @@ func (s *Stardust) AddProviderAPIKey(provider, apiKey string) error {
 
 func (s *Stardust) UpdateProviderAPIKey(keyID, provider, apiKey string) error {
 	// Fetch the active session from db
-	var token types.TokenResponse
-	err := s.DB.QueryRow("SELECT access_token, refresh_token, expires_at FROM active_session").Scan(&token.AccessToken, &token.RefreshToken, &token.ExpiresAt)
+	token, err := s.Auth.GetToken()
 	if err != nil {
 		return err
 	}
@@ -163,8 +158,7 @@ func (s *Stardust) UpdateProviderAPIKey(keyID, provider, apiKey string) error {
 
 func (s *Stardust) DeleteProviderAPIKey(keyID, provider string) error {
 	// Fetch the active session from db
-	var token types.TokenResponse
-	err := s.DB.QueryRow("SELECT access_token, refresh_token, expires_at FROM active_session").Scan(&token.AccessToken, &token.RefreshToken, &token.ExpiresAt)
+	token, err := s.Auth.GetToken()
 	if err != nil {
 		return err
 	}

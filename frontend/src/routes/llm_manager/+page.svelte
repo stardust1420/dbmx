@@ -47,6 +47,7 @@
 		}
 		AddProviderAPIKey(provider, apiKey)
 		.then(() => {
+			listUserProviders();
 			toast.success('Success', {
 				description: "API Key added successfully",
 				action: {
@@ -72,6 +73,7 @@
 		}
 		UpdateProviderAPIKey(keyID, provider, apiKey)
 		.then(() => {
+			listUserProviders();
 			toast.success('Success', {
 				description: "API Key updated successfully",
 				action: {
@@ -97,6 +99,7 @@
 		}
 		DeleteProviderAPIKey(keyID, provider)
 		.then(() => {
+			listUserProviders();
 			toast.success('Success', {
 				description: "API Key updated successfully",
 				action: {
@@ -268,15 +271,12 @@
 															bind:value={item.api_key} 
 															class="flex-1 m-0.5" 
 														/>
-														<!-- {#if item.api_key && item.api_key.trim() !== ''} -->
+														{#if item.key_id && item.key_id.trim() !== ''}
 															<Button variant="secondary" onclick={() => updateProviderAPIKey(item.key_id, item.provider, item.api_key)} >Update</Button>
-															<Button variant="destructive" onclick={() => {
-																deleteProviderAPIKey(item.key_id, item.provider)
-																item.api_key = ''
-															}} >Remove</Button>
-														<!-- {:else} -->
+															<Button variant="destructive" onclick={() => deleteProviderAPIKey(item.key_id, item.provider)} >Remove</Button>
+														{:else}
 															<Button variant="secondary" onclick={() => addProviderAPIKey(item.provider, item.api_key)} >Add</Button>
-														<!-- {/if} -->
+														{/if}
 													</div>
 												</Accordion.Content>
 											</Accordion.Item>
