@@ -51,23 +51,9 @@ func (a *Auth) getLatestSession() {
 	var err error
 
 	// Fetch the latest session from db
-	var token types.TokenResponse
-	err = a.DB.QueryRow("SELECT access_token, refresh_token, expires_at FROM active_session").Scan(&token.AccessToken, &token.RefreshToken, &token.ExpiresAt)
+	token, err := a.GetToken()
 	if err != nil {
-		log.Println("Error getting latest session:", err)
-		return
-	}
-
-	// Check for expired access token token
-	if time.Now().UTC().Unix() > token.ExpiresAt {
-		fmt.Println("token expired, refreshing...")
-		// Token expired, try to refresh
-		// TODO: handle multi retries
-		token, err = a.refreshSession(token.RefreshToken)
-		if err != nil {
-			log.Println("Error refreshing token:", err)
-			return
-		}
+		log.Println("Error getting token:", err)
 	}
 
 	// Set logged in user's params
@@ -84,6 +70,26 @@ func (a *Auth) getLatestSession() {
 
 	// Store logged in user in memory
 	a.User = &userRes.User
+}
+
+func (a *Auth) GetToken() (types.TokenResponse, error) {
+	// Fetch the latest session from db
+	var token types.TokenResponse
+	err := a.DB.QueryRow("SELECT access_token, refresh_token, expires_at FROM active_session").Scan(&token.AccessToken, &token.RefreshToken, &token.ExpiresAt)
+	if err != nil {
+		return types.TokenResponse{}, errors.Wrap(err, "Error getting latest session")
+	}
+
+	// Check for expired access token token
+	// Check if the current time is past the expiration minus the 10-minute buffer
+	if time.Now().UTC().Unix() > (token.ExpiresAt - 10*60) {
+		fmt.Println("token expired, refreshing...")
+		// Token expired, try to refresh
+		// TODO: handle multi retries
+		return a.refreshSession(token.RefreshToken)
+	}
+
+	return token, nil
 }
 
 func (a *Auth) SignUp(fullname, email, password, confirmPassword string) (bool, error) {
