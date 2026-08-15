@@ -25,7 +25,7 @@ func NewStardust(db *sql.DB, env *env.Env, auth *Auth) *Stardust {
 
 func (s *Stardust) EnableStardustAI() (dbmx.Customer, error) {
 	// Fetch the active session from db
-	token, err := s.Auth.GetToken()
+	token, err := s.Auth.getToken()
 	if err != nil {
 		return dbmx.Customer{}, err
 	}
@@ -45,7 +45,7 @@ func (s *Stardust) EnableStardustAI() (dbmx.Customer, error) {
 
 func (s *Stardust) DisableStardustAI() error {
 	// Fetch the active session from db
-	token, err := s.Auth.GetToken()
+	token, err := s.Auth.getToken()
 	if err != nil {
 		return err
 	}
@@ -68,7 +68,7 @@ func (s *Stardust) DisableStardustAI() error {
 
 func (s *Stardust) SwitchDefaultKey(switchValue bool) error {
 	// Fetch the active session from db
-	token, err := s.Auth.GetToken()
+	token, err := s.Auth.getToken()
 	if err != nil {
 		return err
 	}
@@ -91,7 +91,7 @@ func (s *Stardust) SwitchDefaultKey(switchValue bool) error {
 
 func (s *Stardust) ListUserProviders() ([]dbmx.UserProvider, error) {
 	// Fetch the active session from db
-	token, err := s.Auth.GetToken()
+	token, err := s.Auth.getToken()
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +111,7 @@ func (s *Stardust) ListUserProviders() ([]dbmx.UserProvider, error) {
 
 func (s *Stardust) AddProviderAPIKey(provider, apiKey string) error {
 	// Fetch the active session from db
-	token, err := s.Auth.GetToken()
+	token, err := s.Auth.getToken()
 	if err != nil {
 		return err
 	}
@@ -134,7 +134,7 @@ func (s *Stardust) AddProviderAPIKey(provider, apiKey string) error {
 
 func (s *Stardust) UpdateProviderAPIKey(keyID, provider, apiKey string) error {
 	// Fetch the active session from db
-	token, err := s.Auth.GetToken()
+	token, err := s.Auth.getToken()
 	if err != nil {
 		return err
 	}
@@ -158,7 +158,7 @@ func (s *Stardust) UpdateProviderAPIKey(keyID, provider, apiKey string) error {
 
 func (s *Stardust) DeleteProviderAPIKey(keyID, provider string) error {
 	// Fetch the active session from db
-	token, err := s.Auth.GetToken()
+	token, err := s.Auth.getToken()
 	if err != nil {
 		return err
 	}

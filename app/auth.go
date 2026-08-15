@@ -51,7 +51,7 @@ func (a *Auth) getLatestSession() {
 	var err error
 
 	// Fetch the latest session from db
-	token, err := a.GetToken()
+	token, err := a.getToken()
 	if err != nil {
 		log.Println("Error getting token:", err)
 	}
@@ -72,7 +72,7 @@ func (a *Auth) getLatestSession() {
 	a.User = &userRes.User
 }
 
-func (a *Auth) GetToken() (types.TokenResponse, error) {
+func (a *Auth) getToken() (types.TokenResponse, error) {
 	// Fetch the latest session from db
 	var token types.TokenResponse
 	err := a.DB.QueryRow("SELECT access_token, refresh_token, expires_at FROM active_session").Scan(&token.AccessToken, &token.RefreshToken, &token.ExpiresAt)
