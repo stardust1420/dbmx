@@ -7,7 +7,7 @@
 	import { isLoggedIn, userIsAIEnabled, userUseDefaultKey } from '$lib/state.svelte';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
-	import { AddProviderAPIKey, DeleteProviderAPIKey, DisableStardustAI, EnableStardustAI, ListUserProviders, SwitchDefaultKey, UpdateProviderAPIKey } from '$lib/wailsjs/go/app/Stardust';
+	import { AddProviderAPIKey, DeleteProviderAPIKey, DisableStardustAI, EnableStardustAI, ListProviders, SwitchDefaultKey, UpdateProviderAPIKey } from '$lib/wailsjs/go/app/Stardust';
 	import { toast } from 'svelte-sonner';
 	import { dbmx } from '$lib/wailsjs/go/models';
 
@@ -19,14 +19,14 @@
 	onMount(() => {
 		isAIEnabled = $userIsAIEnabled;
 		useStardustModels = $userUseDefaultKey;
-		listUserProviders();
+		listProviders();
 	});
 
-	let listUserProviders = () => {
+	let listProviders = () => {
 		if (useStardustModels) {
 			return
 		}
-		ListUserProviders()
+		ListProviders()
 		.then((providers) => {
 			userProviders = providers
 		})
@@ -47,7 +47,7 @@
 		}
 		AddProviderAPIKey(provider, apiKey)
 		.then(() => {
-			listUserProviders();
+			listProviders();
 			toast.success('Success', {
 				description: "API Key added successfully",
 				action: {
@@ -73,7 +73,7 @@
 		}
 		UpdateProviderAPIKey(keyID, provider, apiKey)
 		.then(() => {
-			listUserProviders();
+			listProviders();
 			toast.success('Success', {
 				description: "API Key updated successfully",
 				action: {
@@ -99,7 +99,7 @@
 		}
 		DeleteProviderAPIKey(keyID, provider)
 		.then(() => {
-			listUserProviders();
+			listProviders();
 			toast.success('Success', {
 				description: "API Key updated successfully",
 				action: {
@@ -185,7 +185,7 @@
 		SwitchDefaultKey(checked)
 		.then((success) => {
 			if (!checked) {
-				listUserProviders();
+				listProviders();
 			}
 			$userUseDefaultKey = checked
 			toast.success('Success', {

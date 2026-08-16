@@ -21,25 +21,51 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	import * as Select from "$lib/components/ui/select/index.js";
 	import Label from '$lib/components/ui/label/label.svelte';
-	import { tick } from 'svelte';
-	import { model } from '$lib/wailsjs/go/models';
-	import { tabsMap } from '$lib/state.svelte';
+	import { onMount, tick } from 'svelte';
+	import { dbmx, model } from '$lib/wailsjs/go/models';
+	import { tabsMap, modelID, availableModels } from '$lib/state.svelte';
 	import { SaveNewChatMessage } from '$lib/wailsjs/go/app/Tabs';
+	import { Chat, ListAvailableModels } from '$lib/wailsjs/go/app/Stardust';
+	import { mode } from 'mode-watcher';
+
+	let listAvailableModels = () => {
+		ListAvailableModels()
+		.then((models) => {
+			if (models.length == 0) {
+				toast.error('No Models Configured', {
+					description: "Please add models in the LLM Manager",
+					action: {
+						label: 'OK',
+						onClick: () => console.info('OK')
+					}
+				});
+			}
+			models.forEach((model) => {
+				$availableModels.push(model)
+			})
+			$modelID = models[0].id
+		})
+		.catch((error) => {
+			toast.error('Failed to fetch available models', {
+				description: error,
+				action: {
+					label: 'OK',
+					onClick: () => console.info('OK')
+				}
+			});
+		})
+	}
 
 
-	const models = [
-		{ value: "gemini-3.1-pro-high", label: "Gemini 3.1 Pro (High)" },
-		{ value: "gemini-3.1-pro-low", label: "Gemini 3.1 Pro (Low)" },
-		{ value: "gemini-3-flash-preview", label: "Gemini 3 Flash" },
-		{ value: "claude-sonnet-4.6-thinking", label: "Claude Sonnet 4.6 (Thinking)" },
-		{ value: "claude-opus-4.6-thinking", label: "Claude Opus 4.6 (Thinking)" },
-		{ value: "gpt-oss-120b-medium", label: "GPT OSS 120B (Medium)" }
-	];
+	onMount(() => {
+		if ($availableModels.length == 0) {
+			listAvailableModels();
+		}
+	});
  
-	let value = $state("Claude Sonnet 4.6 (Thinking)");
 	
 	const triggerContent = $derived(
-		models.find((f) => f.value === value)?.label ?? "Claude Sonnet 4.6 (Thinking)"
+		$availableModels.find((f) => f.id === $modelID)?.normalized_name ?? ""
 	);
 
 	// Active tab properties
@@ -61,10 +87,6 @@
 	let groupBy = $state('');
 	let tableColumns = $state([]);
 	let aiChat: model.AIMsg[] = $state([]);
-
-	$effect(() => {
-		console.log(aiChat);
-	});
 
 	// Reference to the Tabs component
 	let tabsComponent: Tabs;
@@ -188,19 +210,42 @@
 		isAiTyping = true;
 		await scrollToBottom();
 
-		// Simulate AI response (replace with real API call)
-		setTimeout(async () => {
+		Chat($modelID, aiChat)
+		.then((chatRes) => {
 			isAiTyping = false;
 			const aiMsg = new model.AIMsg();
-			aiMsg.ID = crypto.randomUUID().toString();
-			aiMsg.Role = 'assistant';
-			aiMsg.Content = 'I can help you with that! Let me analyze your database schema and get back to you.';
+			aiMsg.ID = chatRes.ID;
+			aiMsg.Role = chatRes.Role;
+			aiMsg.Content = chatRes.Content;
 			aiMsg.CreatedAt = new Date().toISOString();
 
 			saveMsg(currentTabId, aiMsg);
 
-			await scrollToBottom();
-		}, 1500);
+			scrollToBottom();
+		})
+		.catch((error) => {
+			toast.error('Failed to chat', {
+				description: error,
+				action: {
+					label: 'OK',
+					onClick: () => console.info('OK')
+				}
+			});
+		})
+
+		// // Simulate AI response (replace with real API call)
+		// setTimeout(async () => {
+		// 	isAiTyping = false;
+		// 	const aiMsg = new model.AIMsg();
+		// 	aiMsg.ID = crypto.randomUUID().toString();
+		// 	aiMsg.Role = 'assistant';
+		// 	aiMsg.Content = 'I can help you with that! Let me analyze your database schema and get back to you.';
+		// 	aiMsg.CreatedAt = new Date().toISOString();
+
+		// 	saveMsg(currentTabId, aiMsg);
+
+		// 	await scrollToBottom();
+		// }, 1500);
 	}
 
 	function handleChatKeydown(e: KeyboardEvent) {
@@ -359,23 +404,27 @@
 						</Tooltip.Content>
 					</Tooltip.Root>
 				</Tooltip.Provider>
-				<Select.Root type="single" name="model" bind:value>
-					<Select.Trigger class="w-auto m-1">
-						{triggerContent}
-					</Select.Trigger>
-					<Select.Content>
-						<Select.Group>
-						{#each models as model (model.value)}
-							<Select.Item
-							value={model.value}
-							label={model.label}
-							>
-							{model.label}
-							</Select.Item>
-						{/each}
-						</Select.Group>
-					</Select.Content>
-				</Select.Root>
+				{#if $modelID === ""}
+					Loading...
+				{:else}
+					<Select.Root type="single" name="model" bind:value={$modelID}>
+						<Select.Trigger class="w-auto m-1">
+							{triggerContent}
+						</Select.Trigger>
+						<Select.Content>
+							<Select.Group>
+							{#each $availableModels as model (model.id)}
+								<Select.Item
+								value={model.id}
+								label={model.normalized_name}
+								>
+								{model.normalized_name}
+								</Select.Item>
+							{/each}
+							</Select.Group>
+						</Select.Content>
+					</Select.Root>
+				{/if}
 				<Button variant="outline" class="m-1 rounded-full dark:hover:bg-white" onclick={sendMessage}><Play size={12} fill="black" /></Button>
 				</div>
 			</div>

@@ -6,6 +6,10 @@ export function AddProviderAPIKey(arg1, arg2) {
   return window['go']['app']['Stardust']['AddProviderAPIKey'](arg1, arg2);
 }
 
+export function Chat(arg1, arg2) {
+  return window['go']['app']['Stardust']['Chat'](arg1, arg2);
+}
+
 export function DeleteProviderAPIKey(arg1, arg2) {
   return window['go']['app']['Stardust']['DeleteProviderAPIKey'](arg1, arg2);
 }
@@ -18,8 +22,12 @@ export function EnableStardustAI() {
   return window['go']['app']['Stardust']['EnableStardustAI']();
 }
 
-export function ListUserProviders() {
-  return window['go']['app']['Stardust']['ListUserProviders']();
+export function ListAvailableModels() {
+  return window['go']['app']['Stardust']['ListAvailableModels']();
+}
+
+export function ListProviders() {
+  return window['go']['app']['Stardust']['ListProviders']();
 }
 
 export function SwitchDefaultKey(arg1) {

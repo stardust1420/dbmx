@@ -1,5 +1,5 @@
 import { SvelteMap } from 'svelte/reactivity';
-import { model } from '$lib/wailsjs/go/models';
+import { dbmx, model } from '$lib/wailsjs/go/models';
 import { writable } from 'svelte/store';
 
 import type { ColumnDef, RowData } from '@tanstack/table-core';
@@ -36,6 +36,11 @@ export let userEmail = writable('')
 export let userAvatar = writable('')
 export let userIsAIEnabled = writable(false)
 export let userUseDefaultKey = writable(false)
+
+export let modelID = writable('')
+
+export let availableModels = writable<dbmx.Model[]>([])
+
 
 export let suggestions = writable<Set<string>>(new Set([
     'SELECT',
