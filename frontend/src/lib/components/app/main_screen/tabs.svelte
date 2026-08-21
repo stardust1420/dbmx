@@ -1301,7 +1301,7 @@
 							<div class="flex h-screen flex-1 flex-col">
 								<div class="h-18 flex flex-col">
 									<Collapsible.Root>
-										<div class="flex flex-1 items-center p-1 pt-0">
+										<div class="flex flex-1 items-center px-1 pt-0">
 											<div class="flex flex-1 items-center gap-2 p-1">
 												<Label for="where">Where</Label>
 												<DropdownMenu.Root bind:open={isWhereDropdownOpen}>
@@ -1362,7 +1362,7 @@
 											</Collapsible.Trigger>
 										</div>
 										<Collapsible.Content>
-											<div class="flex flex-1 items-center gap-2 p-1">
+											<div class="flex flex-1 items-center gap-2 px-1">
 												<Label for="select">Select</Label>
 												<DropdownMenu.Root bind:open={isSelectDropdownOpen}>
 													<DropdownMenu.Trigger
@@ -1417,7 +1417,7 @@
 													</DropdownMenu.Content>
 												</DropdownMenu.Root>
 											</div>
-											<div class="flex flex-1 items-center p-1 pt-0">
+											<div class="flex flex-1 items-center px-1 pt-0">
 												<div class="flex flex-1 items-center gap-2 p-1">
 													<Label for="orderBy">Order</Label>
 													<DropdownMenu.Root bind:open={isOrderByDropdownOpen}>
@@ -1533,7 +1533,7 @@
 									</Collapsible.Root>
 								</div>
 								<div class="relative flex h-full flex-1 overflow-hidden">
-									<div class="flex h-full w-full overflow-hidden px-2 pb-2">
+									<div class="flex h-full w-full overflow-hidden mx-1 pb-1">
 										{#if queryLoading}
 										<LaserLoader />
 									{/if}
@@ -1606,7 +1606,7 @@
 								<Resizable.Pane
 									defaultSize={editorHeight}
 									minSize={10}
-									class="rsz-pane rounded-3xl mx-2"
+									class="rsz-pane rounded-t-3xl rounded-b mx-1 pt-1"
 								>
 									<SqlEditor
 										bind:value={editor}
@@ -1624,7 +1624,7 @@
 									minSize={10}
 									class="rsz-pane"
 								>
-									<div class="relative h-full p-2">
+									<div class="relative h-full mx-1 pb-1">
 										{#if queryLoading}
 											<LaserLoader />
 										{/if}
