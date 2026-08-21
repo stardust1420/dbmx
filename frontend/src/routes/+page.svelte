@@ -9,6 +9,7 @@
 	import Ellipsis from '@lucide/svelte/icons/ellipsis';
 	import Paperclip from '@lucide/svelte/icons/paperclip';
 	import Sparkles from '@lucide/svelte/icons/sparkles';
+	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import User from '@lucide/svelte/icons/user';
 	import * as Tooltip from "$lib/components/ui/tooltip/index.js";
 	import * as Avatar from '$lib/components/ui/avatar/index.js';
@@ -46,6 +47,31 @@
             }
         })
 	);
+
+	function renderMarkdown(content: string): string {
+		let html = marked.parse(content) as string;
+		// Wrap <table> elements in a scrollable container
+		html = html.replace(/<table>/g, '<div class="table-wrapper"><table>').replace(/<\/table>/g, '</table></div>');
+		// Add copy button to code blocks
+		html = html.replace(/<pre><code(.*?)>/g, '<pre class="code-block-wrapper"><button class="copy-btn" onclick="(function(btn){const code=btn.parentElement.querySelector(\'code\').innerText;navigator.clipboard.writeText(code);btn.textContent=\'Copied!\';setTimeout(()=>btn.textContent=\'Copy\',1500)})(this)">Copy</button><code$1>');
+		return html;
+	}
+
+	function splitThinking(content: string): { thinking: string | null; response: string } {
+		const thinkMatch = content.match(/<think>([\s\S]*?)<\/think>/);
+		if (thinkMatch) {
+			const thinking = thinkMatch[1].trim();
+			const response = content.replace(/<think>[\s\S]*?<\/think>/, '').trim();
+			return { thinking, response };
+		}
+		return { thinking: null, response: content };
+	}
+
+	let expandedThinking: Record<string, boolean> = $state({});
+
+	function toggleThinking(id: string) {
+		expandedThinking[id] = !expandedThinking[id];
+	}
 
 	let availableModelsLoading = $state(false)
 
@@ -247,6 +273,7 @@
 			scrollToBottom();
 		})
 		.catch((error) => {
+			isAiTyping = false;
 			toast.error('Failed to chat', {
 				description: String(error),
 				action: {
@@ -376,16 +403,32 @@
 										</div>
 									</div>
 								{:else}
+									{@const parts = splitThinking(message.Content)}
 									<!-- AI message -->
 									<div class="chat-message-in flex items-end gap-2">
 										<div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500/30 to-purple-500/30 ring-1 ring-white/10">
 											<Sparkles size={14} class="text-indigo-400" />
 										</div>
 										<div class="flex flex-col gap-1 max-w-[85%]">
-											<div class="rounded-2xl rounded-bl-md bg-neutral-800/80 px-3.5 py-2.5 text-sm text-neutral-200 shadow-lg ring-1 ring-white/5">
-												<!-- <p class="leading-relaxed whitespace-pre-wrap">{message.Content}</p> -->
-												 <!-- Render HTML directly instead of <p> -->
-            									{@html marked.parse(message.Content)}
+											{#if parts.thinking}
+												<button
+													class="thinking-toggle flex items-center gap-1 text-[11px] text-indigo-400/80 hover:text-indigo-300 transition-colors px-1 py-0.5"
+													onclick={() => toggleThinking(message.ID)}
+												>
+													<ChevronRight
+														size={12}
+														class="transition-transform duration-500 {expandedThinking[message.ID] ? 'rotate-90' : ''}"
+													/>
+													Thinking
+												</button>
+												{#if expandedThinking[message.ID]}
+													<div class="ai-prose thinking-content rounded-xl bg-neutral-900/60 px-3 py-2 text-xs text-neutral-400 ring-1 ring-white/5">
+														{@html renderMarkdown(parts.thinking)}
+													</div>
+												{/if}
+											{/if}
+											<div class="ai-prose rounded-2xl rounded-bl-md bg-neutral-800/80 px-3.5 py-2.5 text-sm text-neutral-200 shadow-lg ring-1 ring-white/5">
+												{@html renderMarkdown(parts.response)}
 											</div>
 											<span class="text-[10px] text-neutral-500 px-1">{formatTime(new Date(message.CreatedAt))}</span>
 										</div>
@@ -516,5 +559,177 @@
 
 	:global(.chat-scroll::-webkit-scrollbar-thumb:hover) {
 		background-color: rgba(255, 255, 255, 0.2);
+	}
+
+	/* Markdown prose styling for AI messages */
+	:global(.ai-prose) {
+		line-height: 1.6;
+		word-wrap: break-word;
+		overflow-wrap: break-word;
+	}
+
+	:global(.ai-prose p) {
+		margin: 0.5em 0;
+	}
+
+	:global(.ai-prose p:first-child) {
+		margin-top: 0;
+	}
+
+	:global(.ai-prose p:last-child) {
+		margin-bottom: 0;
+	}
+
+	:global(.ai-prose h1),
+	:global(.ai-prose h2),
+	:global(.ai-prose h3),
+	:global(.ai-prose h4) {
+		font-weight: 600;
+		margin: 1em 0 0.5em;
+		line-height: 1.3;
+	}
+
+	:global(.ai-prose h1) { font-size: 1.25em; }
+	:global(.ai-prose h2) { font-size: 1.15em; }
+	:global(.ai-prose h3) { font-size: 1.05em; }
+
+	:global(.ai-prose ul),
+	:global(.ai-prose ol) {
+		margin: 0.5em 0;
+		padding-left: 1.5em;
+	}
+
+	:global(.ai-prose li) {
+		margin: 0.25em 0;
+	}
+
+	:global(.ai-prose code) {
+		font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+		font-size: 0.85em;
+		background: rgba(255, 255, 255, 0.08);
+		padding: 0.15em 0.4em;
+		border-radius: 4px;
+	}
+
+	:global(.ai-prose pre) {
+		position: relative;
+		margin: 0.75em 0;
+		border-radius: 8px;
+		overflow-x: auto;
+		background: #1a1b26 !important;
+		border: 1px solid rgba(255, 255, 255, 0.08);
+	}
+
+	:global(.ai-prose pre .copy-btn) {
+		position: absolute;
+		top: 6px;
+		right: 6px;
+		padding: 2px 8px;
+		font-size: 0.7em;
+		background: rgba(255, 255, 255, 0.1);
+		border: 1px solid rgba(255, 255, 255, 0.15);
+		border-radius: 4px;
+		color: #a0a0b0;
+		cursor: pointer;
+		opacity: 0;
+		transition: opacity 0.2s;
+	}
+
+	:global(.ai-prose pre:hover .copy-btn) {
+		opacity: 1;
+	}
+
+	:global(.ai-prose pre .copy-btn:hover) {
+		background: rgba(255, 255, 255, 0.2);
+		color: #e0e0e0;
+	}
+
+	:global(.ai-prose pre code) {
+		display: block;
+		padding: 0.85em 1em;
+		background: transparent !important;
+		font-size: 0.8em;
+		line-height: 1.5;
+		white-space: pre;
+		overflow-x: auto;
+	}
+
+	:global(.ai-prose blockquote) {
+		border-left: 3px solid rgba(99, 102, 241, 0.5);
+		margin: 0.75em 0;
+		padding: 0.25em 0.75em;
+		color: rgba(255, 255, 255, 0.7);
+	}
+
+	:global(.ai-prose a) {
+		color: #818cf8;
+		text-decoration: underline;
+		text-underline-offset: 2px;
+	}
+
+	:global(.ai-prose strong) {
+		font-weight: 600;
+		color: #e2e8f0;
+	}
+
+	:global(.ai-prose .table-wrapper) {
+		overflow-x: auto;
+		margin: 0.75em 0;
+		border-radius: 6px;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
+	:global(.ai-prose table) {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: 0.85em;
+	}
+
+	:global(.ai-prose th),
+	:global(.ai-prose td) {
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		padding: 0.4em 0.6em;
+		text-align: left;
+	}
+
+	:global(.ai-prose th) {
+		background: rgba(255, 255, 255, 0.05);
+		font-weight: 600;
+	}
+
+	:global(.ai-prose hr) {
+		border: none;
+		border-top: 1px solid rgba(255, 255, 255, 0.1);
+		margin: 1em 0;
+	}
+
+	/* Thinking accordion */
+	.thinking-toggle {
+		cursor: pointer;
+		background: none;
+		border: none;
+		font-family: inherit;
+	}
+
+	:global(.thinking-content) {
+		animation: thinkingFadeIn 0.5s ease-out;
+	}
+
+	@keyframes thinkingFadeIn {
+		from {
+			opacity: 0;
+			transform: translateY(-4px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	:global(.thinking-content.ai-prose) {
+		max-height: 200px;
+		overflow-y: auto;
+		scrollbar-width: thin;
+		scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
 	}
 </style>
