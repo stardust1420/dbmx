@@ -27,23 +27,21 @@
 	import { SaveNewChatMessage } from '$lib/wailsjs/go/app/Tabs';
 	import { Chat, ListAvailableModels } from '$lib/wailsjs/go/app/Stardust';
 	import { mode } from 'mode-watcher';
+	import Spinner from '$lib/components/ui/spinner/spinner.svelte';
+
+	let availableModelsLoading = $state(false)
 
 	let listAvailableModels = () => {
+		availableModelsLoading = true
 		ListAvailableModels()
 		.then((models) => {
-			if (models.length == 0) {
-				toast.error('No Models Configured', {
-					description: "Please add models in the LLM Manager",
-					action: {
-						label: 'OK',
-						onClick: () => console.info('OK')
-					}
-				});
-			}
-			models.forEach((model) => {
+			models.forEach((model, index) => {
+				if (index == 0) {
+					$modelID = model.id
+				}
 				$availableModels.push(model)
 			})
-			$modelID = models[0].id
+			availableModelsLoading = false
 		})
 		.catch((error) => {
 			toast.error('Failed to fetch available models', {
@@ -53,6 +51,7 @@
 					onClick: () => console.info('OK')
 				}
 			});
+			availableModelsLoading = false
 		})
 	}
 
@@ -390,43 +389,48 @@
 			<div
 				class="flex flex-[1] flex-col items-center justify-center rounded-3xl bg-neutral-800 mr-2"
 			>
-				<div class="flex w-full flex-[5] items-center justify-center">
-					<Textarea bind:value={chatInput} onkeydown={handleChatKeydown} class="max-h-48 m-1 focus-visible:ring-0 border-0" placeholder="Ask anything..." />
-				</div>
-				<div class="flex w-full flex-[1] items-end justify-between">
-				<Tooltip.Provider>
-					<Tooltip.Root>
-						<Tooltip.Trigger>
-							<Button variant="ghost" class="m-1"><Plus size={12} /></Button>
-						</Tooltip.Trigger>
-						<Tooltip.Content>
-							<p>Add context</p>
-						</Tooltip.Content>
-					</Tooltip.Root>
-				</Tooltip.Provider>
-				{#if $modelID === ""}
-					Loading...
+			{#if availableModelsLoading}
+				<Spinner class="size-6 text-yellow-500"/>
+				<span>Loading models...</span>
+			{:else}
+				{#if $availableModels.length == 0}
+					<span>No models found. Please configure them in LLM Manager</span>
 				{:else}
-					<Select.Root type="single" name="model" bind:value={$modelID}>
-						<Select.Trigger class="w-auto m-1">
-							{triggerContent}
-						</Select.Trigger>
-						<Select.Content>
-							<Select.Group>
-							{#each $availableModels as model (model.id)}
-								<Select.Item
-								value={model.id}
-								label={model.normalized_name}
-								>
-								{model.normalized_name}
-								</Select.Item>
-							{/each}
-							</Select.Group>
-						</Select.Content>
-					</Select.Root>
+					<div class="flex w-full flex-[5] items-center justify-center">
+						<Textarea bind:value={chatInput} onkeydown={handleChatKeydown} class="max-h-48 m-1 focus-visible:ring-0 border-0" placeholder="Ask anything..." />
+					</div>
+					<div class="flex w-full flex-[1] items-end justify-between">
+					<Tooltip.Provider>
+						<Tooltip.Root>
+							<Tooltip.Trigger>
+								<Button variant="ghost" class="m-1"><Plus size={12} /></Button>
+							</Tooltip.Trigger>
+							<Tooltip.Content>
+								<p>Add context</p>
+							</Tooltip.Content>
+						</Tooltip.Root>
+					</Tooltip.Provider>
+						<Select.Root type="single" name="model" bind:value={$modelID}>
+							<Select.Trigger class="w-auto m-1">
+								{triggerContent}
+							</Select.Trigger>
+							<Select.Content>
+								<Select.Group>
+								{#each $availableModels as model (model.id)}
+									<Select.Item
+									value={model.id}
+									label={model.normalized_name}
+									>
+									{model.normalized_name}
+									</Select.Item>
+								{/each}
+								</Select.Group>
+							</Select.Content>
+						</Select.Root>
+					<Button variant="outline" class="m-1 rounded-full dark:hover:bg-white" onclick={sendMessage}><Play size={12} fill="black" /></Button>
+					</div>
 				{/if}
-				<Button variant="outline" class="m-1 rounded-full dark:hover:bg-white" onclick={sendMessage}><Play size={12} fill="black" /></Button>
-				</div>
+			{/if}
 			</div>
 		</div>
 	</Resizable.Pane>
