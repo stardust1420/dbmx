@@ -207,7 +207,7 @@
 
 <svelte:document onkeydown={handleKeyDown} />
 
-<div class="h-full w-full overflow-auto bg-black rounded-3xl">
+<div class="h-full w-full overflow-auto rounded-3xl">
 	<div class="flex h-full flex-col">
 		<div class="position-sticky top-0 flex flex-1 overflow-auto">
 			<Table.Root class="border">
@@ -227,7 +227,7 @@
 						</Table.Row>
 					{/each}
 				</Table.Header>
-				<Table.Body class="text-sm">
+				<Table.Body class="text-sm bg-black">
 					{#each table.getRowModel().rows as row (row.id)}
 						<Table.Row>
 							{#each row.getVisibleCells() as cell (cell.id)}
@@ -292,7 +292,7 @@
 		</div>
 
 		<div
-			class="position-sticky bottom-0 my-0.5 flex w-full items-center justify-between px-4 py-1"
+			class="position-sticky bottom-0 flex w-full items-center justify-between px-4 pb-1 mt-1 bg-black"
 		>
 			<div class="text-muted-foreground hidden flex-1 text-sm lg:flex">
 				Total Rows: {$totalRows}
