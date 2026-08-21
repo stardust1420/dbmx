@@ -76,6 +76,10 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  html {
+    font-size: 13px;
+  }
 }
 
 @plugin 'flowbite/plugin';
