@@ -8,13 +8,20 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { AddProviderAPIKey, DeleteProviderAPIKey, DisableStardustAI, EnableStardustAI, ListProviders, SwitchDefaultKey, UpdateProviderAPIKey } from '$lib/wailsjs/go/app/Stardust';
-	import { toast } from 'svelte-sonner';
+	import { Loader, toast } from 'svelte-sonner';
 	import { dbmx } from '$lib/wailsjs/go/models';
+	import { Spinner } from "$lib/components/ui/spinner/index.js";
+	import { SvelteMap } from 'svelte/reactivity';
+
 
 
 	let isAIEnabled = $state(false);
 	let useStardustModels = $state(false);
+
 	let userProviders: dbmx.UserProvider[] = $state([])
+	let userProvidersLoading = $state(false);
+	let providerKeyUpdateLoadingMap = $state(new SvelteMap<string, boolean>());
+
 
 	onMount(() => {
 		isAIEnabled = $userIsAIEnabled;
@@ -26,11 +33,14 @@
 		if (useStardustModels) {
 			return
 		}
+		userProvidersLoading = true
 		ListProviders()
 		.then((providers) => {
 			userProviders = providers
+			userProvidersLoading = false
 		})
 		.catch((error) => {
+			userProvidersLoading = false
 			toast.error('Failed to fetch user providers', {
 				description: error,
 				action: {
@@ -45,6 +55,7 @@
 		if (useStardustModels) {
 			return
 		}
+		providerKeyUpdateLoadingMap.set(provider, true)
 		AddProviderAPIKey(provider, apiKey)
 		.then(() => {
 			listProviders();
@@ -55,6 +66,7 @@
 					onClick: () => console.info('OK')
 				}
 			});
+			providerKeyUpdateLoadingMap.set(provider, false)
 		})
 		.catch((error) => {
 			toast.error('Failure', {
@@ -64,6 +76,7 @@
 					onClick: () => console.info('OK')
 				}
 			});
+			providerKeyUpdateLoadingMap.set(provider, false)
 		})
 	}
 
@@ -71,6 +84,7 @@
 		if (useStardustModels) {
 			return
 		}
+		providerKeyUpdateLoadingMap.set(provider, true)
 		UpdateProviderAPIKey(keyID, provider, apiKey)
 		.then(() => {
 			listProviders();
@@ -81,6 +95,7 @@
 					onClick: () => console.info('OK')
 				}
 			});
+			providerKeyUpdateLoadingMap.set(provider, false)
 		})
 		.catch((error) => {
 			toast.error('Failure', {
@@ -90,6 +105,7 @@
 					onClick: () => console.info('OK')
 				}
 			});
+			providerKeyUpdateLoadingMap.set(provider, false)
 		})
 	}
 
@@ -97,6 +113,7 @@
 		if (useStardustModels) {
 			return
 		}
+		providerKeyUpdateLoadingMap.set(provider, true)
 		DeleteProviderAPIKey(keyID, provider)
 		.then(() => {
 			listProviders();
@@ -107,6 +124,7 @@
 					onClick: () => console.info('OK')
 				}
 			});
+			providerKeyUpdateLoadingMap.set(provider, false)
 		})
 		.catch((error) => {
 			toast.error('Failure', {
@@ -116,6 +134,7 @@
 					onClick: () => console.info('OK')
 				}
 			});
+			providerKeyUpdateLoadingMap.set(provider, false)
 		})
 	}
 
@@ -129,7 +148,9 @@
 		openrouter: "OpenRouter"
 	};
 
+	let toggleStardustAILoading = $state(false)
 	let toggleStardustAI = (checked: boolean) => {
+		toggleStardustAILoading = true
 		if (checked) {
 			EnableStardustAI()
 			.then((customer) => {
@@ -143,6 +164,7 @@
 						onClick: () => console.info('OK')
 					}
 				});
+				toggleStardustAILoading = false
 			})
 			.catch((error) => {
 				isAIEnabled = !checked
@@ -153,6 +175,7 @@
 						onClick: () => console.info('OK')
 					}
 				});
+				toggleStardustAILoading = false
 			})
 		} else {
 			DisableStardustAI()
@@ -167,6 +190,7 @@
 							onClick: () => console.info('OK')
 						}
 					});
+					toggleStardustAILoading = false
 				})
 				.catch((error) => {
 					isAIEnabled = !isAIEnabled
@@ -177,11 +201,13 @@
 							onClick: () => console.info('OK')
 						}
 					});
+					toggleStardustAILoading = false
 				})
 		}
 	}
 
 	let toggleDefaultKey = (checked: boolean) => {
+		userProvidersLoading = true
 		SwitchDefaultKey(checked)
 		.then((success) => {
 			if (!checked) {
@@ -205,6 +231,7 @@
 					onClick: () => console.info('OK')
 				}
 			});
+			userProvidersLoading = false
 		})
 	}
 
@@ -239,54 +266,70 @@
 						</div>
 					</div>
 					{#if isAIEnabled}
-					<div class="flex ml-8 h-full flex-col gap-4">
-						<div class="flex h-16 px-4">
-							<div class="flex flex-[8] p-2 flex-col">
-								<h1 class="text-lg">Use Stardust models</h1>
-								<p>Use default models provided by DBMX. <span class="text-green-500 font-bold">Disable this to Bring Your Own Keys (BYOK)</span></p>
-							</div>
-							<div class="flex flex-[2] items-center justify-center rounded-3xl border border-green-600">
-								<Switch id="useStardustModels" bind:checked={useStardustModels} onCheckedChange={toggleDefaultKey}/>
-							</div>
-						</div>
-						{#if !useStardustModels}
-							<div class="flex px-4 flex-col gap-4">
-								<div class="flex p-2 flex-col">
-									<h1 class="text-lg">Bring Your Own Key (BYOK)</h1>
-									<p>Add your API keys to enable AI models from different providers.</p>
+						{#if toggleStardustAILoading}
+							<Spinner class="size-6 text-blue-500 self-center" />
+							<span class="self-center">Enabling Stardust AI...</span>
+						{:else}
+							<div class="flex ml-8 h-full flex-col gap-4">
+								<div class="flex h-16 px-4">
+									<div class="flex flex-[8] p-2 flex-col">
+										<h1 class="text-lg">Use Stardust models</h1>
+										<p>Use default models provided by DBMX. <span class="text-green-500 font-bold">Disable this to Bring Your Own Keys (BYOK)</span></p>
+									</div>
+									<div class="flex flex-[2] items-center justify-center rounded-3xl border border-green-600">
+										<Switch id="useStardustModels" bind:checked={useStardustModels} onCheckedChange={toggleDefaultKey}/>
+									</div>
 								</div>
-								<div class="flex flex-col gap-3 mr-24">
-									<Accordion.Root type="single" collapsible class="flex flex-col gap-3">
-		
-										{#each userProviders as item (item.provider)}
-											<Accordion.Item value={item.provider} class="border-2 border-neutral-700 rounded-2xl px-4">
-												<Accordion.Trigger class="ml-3">
-													{providerNames[item.provider] || item.provider}
-												</Accordion.Trigger>
-												<Accordion.Content>
-													<div class="flex items-center gap-3">
-														<Input 
-															id={item.provider} 
-															placeholder={`${providerNames[item.provider] || item.provider} API Key`} 
-															bind:value={item.api_key} 
-															class="flex-1 m-0.5" 
-														/>
-														{#if item.key_id && item.key_id.trim() !== ''}
-															<Button variant="secondary" onclick={() => updateProviderAPIKey(item.key_id, item.provider, item.api_key)} >Update</Button>
-															<Button variant="destructive" onclick={() => deleteProviderAPIKey(item.key_id, item.provider)} >Remove</Button>
-														{:else}
-															<Button variant="secondary" onclick={() => addProviderAPIKey(item.provider, item.api_key)} >Add</Button>
-														{/if}
-													</div>
-												</Accordion.Content>
-											</Accordion.Item>
-										{/each}
+								{#if !useStardustModels}
+									<div class="flex px-4 flex-col gap-4">
+										<div class="flex p-2 flex-col">
+											<h1 class="text-lg">Bring Your Own Key (BYOK)</h1>
+											<p>Add your API keys to enable AI models from different providers.</p>
+										</div>
+										<div class="flex flex-col gap-3 mr-24 items-center justify-center">
 
-									</Accordion.Root>
-								</div>
+											{#if userProvidersLoading}
+												<Spinner class="size-6 text-green-500" />
+												<span>Loading providers...</span>
+											{:else}
+											<Accordion.Root type="single" collapsible class="flex flex-col gap-3 w-full">
+				
+												{#each userProviders as item (item.provider)}
+													<Accordion.Item value={item.provider} class="border-2 border-neutral-700 rounded-2xl px-4">
+														<Accordion.Trigger class="ml-3">
+															{providerNames[item.provider] || item.provider}
+														</Accordion.Trigger>
+														<Accordion.Content>
+															<div class="flex items-center gap-3">
+																<Input 
+																	id={item.provider} 
+																	placeholder={`${providerNames[item.provider] || item.provider} API Key`} 
+																	bind:value={item.api_key} 
+																	class="flex-1 m-0.5" 
+																/>
+																{#if providerKeyUpdateLoadingMap.get(item.provider)}
+																	<Spinner class="size-6 text-yellow-500" />
+																{:else}
+																	{#if item.key_id && item.key_id.trim() !== ''}
+																		<Button variant="secondary" onclick={() => updateProviderAPIKey(item.key_id, item.provider, item.api_key)} >Update</Button>
+																		<Button variant="destructive" onclick={() => deleteProviderAPIKey(item.key_id, item.provider)} >Remove</Button>
+																	{:else}
+																		<Button variant="secondary" onclick={() => addProviderAPIKey(item.provider, item.api_key)} >Add</Button>
+																	{/if}
+																{/if}
+															</div>
+														</Accordion.Content>
+													</Accordion.Item>
+												{/each}
+
+											</Accordion.Root>
+												
+											{/if}
+										</div>
+									</div>
+								{/if}
 							</div>
 						{/if}
-					</div>
 					{/if}
 				</div>
 			</div>
