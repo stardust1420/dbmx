@@ -393,7 +393,7 @@
 									<!-- User message -->
 									<div class="chat-message-in flex items-start justify-end gap-2">
 										<div class="flex flex-col items-end gap-0.5 max-w-[80%]">
-											<div class="rounded-2xl rounded-br-sm bg-neutral-700 px-3 py-1.5 text-[13px] text-neutral-100">
+											<div class="rounded-2xl rounded-br-sm bg-neutral-700 px-3 py-1.5 text-base text-neutral-100">
 												<p class="leading-relaxed whitespace-pre-wrap">{message.Content}</p>
 											</div>
 											<span class="text-[10px] text-neutral-500 px-1">{formatTime(new Date(message.CreatedAt))}</span>
@@ -427,7 +427,7 @@
 													</div>
 												{/if}
 											{/if}
-											<div class="ai-prose rounded-2xl rounded-tl-sm bg-neutral-800/60 px-3.5 py-2.5 text-[13px] text-neutral-200 border border-neutral-700/40">
+											<div class="ai-prose rounded-2xl rounded-tl-sm bg-neutral-800/60 px-3.5 py-2.5 text-base text-neutral-200 border border-neutral-700/40">
 												{@html renderMarkdown(parts.response)}
 											</div>
 											<span class="text-[10px] text-neutral-500 px-1">{formatTime(new Date(message.CreatedAt))}</span>

@@ -72,6 +72,25 @@
 	let open = $state(false);
 
 	function handleKeydown(e: KeyboardEvent) {
+		// Zoom controls
+		if ((e.metaKey || e.ctrlKey) && (e.key === '=' || e.key === '+')) {
+			e.preventDefault();
+			const current = parseFloat(getComputedStyle(document.documentElement).fontSize);
+			document.documentElement.style.fontSize = Math.min(current + 1, 20) + 'px';
+			return;
+		}
+		if ((e.metaKey || e.ctrlKey) && e.key === '-') {
+			e.preventDefault();
+			const current = parseFloat(getComputedStyle(document.documentElement).fontSize);
+			document.documentElement.style.fontSize = Math.max(current - 1, 10) + 'px';
+			return;
+		}
+		if ((e.metaKey || e.ctrlKey) && e.key === '0') {
+			e.preventDefault();
+			document.documentElement.style.fontSize = '13px';
+			return;
+		}
+
 		// Fetch the logged in user when the command palette is opened
 		getLoggedInUser();
 		if (e.key === 'p' && (e.metaKey || e.ctrlKey)) {
