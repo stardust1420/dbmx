@@ -81,7 +81,7 @@
 			.catch((error) => {
 				// Handle errors from the EstablishPostgresDatabaseConnection call
 				toast.error('Connection Failed', {
-					description: error,
+					description: String(error),
 					action: {
 						label: 'OK',
 						onClick: () => console.info('OK')
@@ -183,7 +183,7 @@
 				dbLoadingMap.set(dbID, false);
 
 				toast.error('Connection Failed', {
-					description: error,
+					description: String(error),
 					action: {
 						label: 'OK',
 						onClick: () => console.info('OK')
@@ -272,7 +272,7 @@
 				loadingMap.set(id, false);
 				console.log(error);
 				toast.error('Connection Failed', {
-					description: error,
+					description: String(error),
 					action: {
 						label: 'OK',
 						onClick: () => console.info('OK')
@@ -411,7 +411,7 @@
 			})
 			.catch((error) => {
 				toast.error('Failed to disconnect', {
-					description: error,
+					description: String(error),
 					action: {
 						label: 'OK',
 						onClick: () => console.info('OK')
@@ -439,7 +439,7 @@
 				dbLoadingMap.set(dbID, false);
 
 				toast.error('Failed to refresh', {
-					description: error,
+					description: String(error),
 					action: {
 						label: 'OK',
 						onClick: () => console.info('OK')

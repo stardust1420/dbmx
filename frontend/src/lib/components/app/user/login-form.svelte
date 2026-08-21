@@ -41,7 +41,7 @@
 			.catch((error) => {
 				loginLoading = false
 				toast.error('Failed to log in', {
-					description: error,
+					description: String(error),
 					action: {
 						label: 'OK',
 						onClick: () => console.info('OK')

@@ -4,7 +4,7 @@
 	import * as Accordion from "$lib/components/ui/accordion/index.js";
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import { isLoggedIn, userIsAIEnabled, userUseDefaultKey } from '$lib/state.svelte';
+	import { availableModels, isLoggedIn, userIsAIEnabled, userUseDefaultKey } from '$lib/state.svelte';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { AddProviderAPIKey, DeleteProviderAPIKey, DisableStardustAI, EnableStardustAI, ListProviders, SwitchDefaultKey, UpdateProviderAPIKey } from '$lib/wailsjs/go/app/Stardust';
@@ -12,6 +12,7 @@
 	import { dbmx } from '$lib/wailsjs/go/models';
 	import { Spinner } from "$lib/components/ui/spinner/index.js";
 	import { SvelteMap } from 'svelte/reactivity';
+	import { KeyIcon, KeyRound } from 'lucide-svelte';
 
 
 
@@ -42,7 +43,7 @@
 		.catch((error) => {
 			userProvidersLoading = false
 			toast.error('Failed to fetch user providers', {
-				description: error,
+				description: String(error),
 				action: {
 					label: 'OK',
 					onClick: () => console.info('OK')
@@ -52,6 +53,16 @@
 	}
 
 	let addProviderAPIKey = (provider:string, apiKey:string) => {
+		if (apiKey.trim() == "") {
+			toast.error('API Key is empty', {
+				description: "Please enter a valid API Key",
+				action: {
+					label: 'OK',
+					onClick: () => console.info('OK')
+				}
+			});
+			return
+		}
 		if (useStardustModels) {
 			return
 		}
@@ -70,7 +81,7 @@
 		})
 		.catch((error) => {
 			toast.error('Failure', {
-				description: error,
+				description: String(error),
 				action: {
 					label: 'OK',
 					onClick: () => console.info('OK')
@@ -99,7 +110,7 @@
 		})
 		.catch((error) => {
 			toast.error('Failure', {
-				description: error,
+				description: String(error),
 				action: {
 					label: 'OK',
 					onClick: () => console.info('OK')
@@ -128,7 +139,7 @@
 		})
 		.catch((error) => {
 			toast.error('Failure', {
-				description: error,
+				description: String(error),
 				action: {
 					label: 'OK',
 					onClick: () => console.info('OK')
@@ -137,16 +148,6 @@
 			providerKeyUpdateLoadingMap.set(provider, false)
 		})
 	}
-
-	const providerNames: Record<string, string> = {
-		anthropic: "Anthropic",
-		gemini: "Google Gemini",
-		groq: "Groq",
-		mistral: "Mistral AI",
-		ollama: "Ollama",
-		openai: "OpenAI",
-		openrouter: "OpenRouter"
-	};
 
 	let toggleStardustAILoading = $state(false)
 	let toggleStardustAI = (checked: boolean) => {
@@ -169,7 +170,7 @@
 			.catch((error) => {
 				isAIEnabled = !checked
 				toast.error('Failed to enable Stardust AI', {
-					description: error,
+					description: String(error),
 					action: {
 						label: 'OK',
 						onClick: () => console.info('OK')
@@ -183,6 +184,7 @@
 					$userIsAIEnabled = false
 					$userUseDefaultKey = false
 					useStardustModels = false
+					$availableModels = []
 					toast.success('Success', {
 						description: "Disabled Stardust AI",
 						action: {
@@ -195,7 +197,7 @@
 				.catch((error) => {
 					isAIEnabled = !isAIEnabled
 					toast.error('Failed to disable Stardust AI', {
-						description: error,
+						description: String(error),
 						action: {
 							label: 'OK',
 							onClick: () => console.info('OK')
@@ -225,7 +227,7 @@
 		.catch((error) => {
 			useStardustModels = !useStardustModels
 			toast.error('Failed to enable Stardust AI', {
-				description: error,
+				description: String(error),
 				action: {
 					label: 'OK',
 					onClick: () => console.info('OK')
@@ -296,14 +298,19 @@
 				
 												{#each userProviders as item (item.provider)}
 													<Accordion.Item value={item.provider} class="border-2 border-neutral-700 rounded-2xl px-4">
-														<Accordion.Trigger class="ml-3">
-															{providerNames[item.provider] || item.provider}
+														<Accordion.Trigger class="flex w-full items-center justify-between px-4">
+															<div class="flex items-center gap-2">
+																<span>{item.provider}</span>
+																{#if item.api_key != ""}
+																	<KeyRound size=16 color="green" class="shrink-0" />
+																{/if}
+															</div>
 														</Accordion.Trigger>
 														<Accordion.Content>
 															<div class="flex items-center gap-3">
 																<Input 
 																	id={item.provider} 
-																	placeholder={`${providerNames[item.provider] || item.provider} API Key`} 
+																	placeholder={`${item.provider} API Key`} 
 																	bind:value={item.api_key} 
 																	class="flex-1 m-0.5" 
 																/>

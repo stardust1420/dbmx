@@ -30,7 +30,7 @@
 			.catch((error) => {
 				signupLoading = false
 				toast.error('Failed to sign up', {
-					description: error,
+					description: String(error),
 					action: {
 						label: 'OK',
 						onClick: () => console.info('OK')
