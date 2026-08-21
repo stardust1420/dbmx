@@ -192,7 +192,7 @@
 			})
 			.catch((error) => {
 				toast.error('Failed to get connections', {
-					description: error,
+					description: String(error),
 					action: {
 						label: 'OK',
 						onClick: () => console.info('OK')
@@ -215,7 +215,7 @@
 			})
 			.catch((error) => {
 				toast.error('Failed to delete connection', {
-					description: error,
+					description: String(error),
 					action: {
 						label: 'OK',
 						onClick: () => console.info('OK')

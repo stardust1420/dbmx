@@ -180,7 +180,7 @@
 				})
 				.catch(error => {
 					toast.error('Failed to save changes.', {
-						description: error
+						description: String(error)
 					});
 				});
 			} else {

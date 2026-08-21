@@ -194,7 +194,7 @@ func (s *Stardust) ListAvailableModels() ([]dbmx.Model, error) {
 		AccessToken: token.AccessToken,
 	})
 
-	var response []dbmx.Model
+	response := []dbmx.Model{}
 
 	availableModels, err := dbmxClient.ListAvailableModels(context.TODO())
 	for _, model := range availableModels {

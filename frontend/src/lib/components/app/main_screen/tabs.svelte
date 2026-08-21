@@ -493,7 +493,7 @@
 			})
 			.catch((error) => {
 				toast.error('Failed to add tab', {
-					description: error,
+					description: String(error),
 					action: {
 						label: 'OK',
 						onClick: () => console.info('OK')
@@ -556,7 +556,7 @@
 			})
 			.catch((error) => {
 				toast.error('Failed to delete tab', {
-					description: error,
+					description: String(error),
 					action: {
 						label: 'OK',
 						onClick: () => console.info('OK')
@@ -661,7 +661,7 @@
 		// 	})
 		// 	.catch((error) => {
 		// 		toast.error('Failed to set active tab', {
-		// 			description: error,
+		// 			description: String(error),
 		// 			action: {
 		// 				label: 'OK',
 		// 				onClick: () => console.info('OK')
@@ -821,7 +821,7 @@
 
 				// Handle errors from the ExecuteQuery call
 				toast.error('Query Failed', {
-					description: error,
+					description: String(error),
 					action: {
 						label: 'OK',
 						onClick: () => console.info('OK')
@@ -951,7 +951,7 @@
 
 				// Handle errors from the ExecuteQuery call
 				toast.error('Query Failed', {
-					description: error,
+					description: String(error),
 					action: {
 						label: 'OK',
 						onClick: () => console.info('OK')
@@ -1074,7 +1074,7 @@
 
 				// Handle errors from the ExecuteQuery call
 				toast.error('Query Failed', {
-					description: error,
+					description: String(error),
 					action: {
 						label: 'OK',
 						onClick: () => console.info('OK')

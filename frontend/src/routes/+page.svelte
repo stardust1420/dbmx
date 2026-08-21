@@ -23,11 +23,29 @@
 	import Label from '$lib/components/ui/label/label.svelte';
 	import { onMount, tick } from 'svelte';
 	import { dbmx, model } from '$lib/wailsjs/go/models';
-	import { tabsMap, modelID, availableModels } from '$lib/state.svelte';
+	import { tabsMap, modelID, availableModels, userIsAIEnabled } from '$lib/state.svelte';
 	import { SaveNewChatMessage } from '$lib/wailsjs/go/app/Tabs';
 	import { Chat, ListAvailableModels } from '$lib/wailsjs/go/app/Stardust';
 	import { mode } from 'mode-watcher';
 	import Spinner from '$lib/components/ui/spinner/spinner.svelte';
+	import { Marked } from 'marked';
+	import { markedHighlight } from 'marked-highlight';
+    import hljs from 'highlight.js';
+
+	// Import a theme for code block styling
+    import 'highlight.js/styles/github-dark.css';
+
+	// Create a marked instance configured with highlight.js
+    const marked = new Marked(
+        markedHighlight({
+            emptyLangClass: 'hljs',
+            langPrefix: 'hljs language-',
+            highlight(code, lang) {
+                const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+                return hljs.highlight(code, { language }).value;
+            }
+        })
+	);
 
 	let availableModelsLoading = $state(false)
 
@@ -35,17 +53,15 @@
 		availableModelsLoading = true
 		ListAvailableModels()
 		.then((models) => {
-			models.forEach((model, index) => {
-				if (index == 0) {
-					$modelID = model.id
-				}
-				$availableModels.push(model)
-			})
+			if (models.length > 0) {
+				$modelID = models[0].id
+			}
+			$availableModels = models
 			availableModelsLoading = false
 		})
 		.catch((error) => {
 			toast.error('Failed to fetch available models', {
-				description: error,
+				description: String(error),
 				action: {
 					label: 'OK',
 					onClick: () => console.info('OK')
@@ -57,9 +73,7 @@
 
 
 	onMount(() => {
-		if ($availableModels.length == 0) {
-			listAvailableModels();
-		}
+		listAvailableModels();
 	});
  
 	
@@ -104,6 +118,16 @@
 	}
 
 	function toggleChatPane() {
+		if (!$userIsAIEnabled) {
+			toast.error('Not Enabled', {
+					description: "Stardust AI is not enabled. Please enable it in the LLM Manager",
+					action: {
+						label: 'OK',
+						onClick: () => console.info('OK')
+					}
+				});
+			return;
+		}
 		if (chatPaneCollapsed) {
 			if (tabsMap.size === 0) {
 				toast.error('No tab is open', {
@@ -224,7 +248,7 @@
 		})
 		.catch((error) => {
 			toast.error('Failed to chat', {
-				description: error,
+				description: String(error),
 				action: {
 					label: 'OK',
 					onClick: () => console.info('OK')
@@ -359,7 +383,9 @@
 										</div>
 										<div class="flex flex-col gap-1 max-w-[85%]">
 											<div class="rounded-2xl rounded-bl-md bg-neutral-800/80 px-3.5 py-2.5 text-sm text-neutral-200 shadow-lg ring-1 ring-white/5">
-												<p class="leading-relaxed whitespace-pre-wrap">{message.Content}</p>
+												<!-- <p class="leading-relaxed whitespace-pre-wrap">{message.Content}</p> -->
+												 <!-- Render HTML directly instead of <p> -->
+            									{@html marked.parse(message.Content)}
 											</div>
 											<span class="text-[10px] text-neutral-500 px-1">{formatTime(new Date(message.CreatedAt))}</span>
 										</div>
@@ -387,14 +413,14 @@
 				</div>
 			</div>
 			<div
-				class="flex flex-[1] flex-col items-center justify-center rounded-3xl bg-neutral-800 mr-2"
+				class="flex flex-[1] flex-col items-center justify-center rounded-3xl bg-neutral-800 mr-2 mt-1"
 			>
 			{#if availableModelsLoading}
 				<Spinner class="size-6 text-yellow-500"/>
 				<span>Loading models...</span>
 			{:else}
 				{#if $availableModels.length == 0}
-					<span>No models found. Please configure them in LLM Manager</span>
+					<span class="p-4">No models found. Please configure them in LLM Manager</span>
 				{:else}
 					<div class="flex w-full flex-[5] items-center justify-center">
 						<Textarea bind:value={chatInput} onkeydown={handleChatKeydown} class="max-h-48 m-1 focus-visible:ring-0 border-0" placeholder="Ask anything..." />

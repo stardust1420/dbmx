@@ -62,6 +62,15 @@ importers:
       d3-shape:
         specifier: ^3.2.0
         version: 3.2.0
+      highlight.js:
+        specifier: ^11.12.0
+        version: 11.12.0
+      marked:
+        specifier: ^18.0.10
+        version: 18.0.10
+      marked-highlight:
+        specifier: ^2.2.4
+        version: 2.2.4(marked@18.0.10)
       modifiers:
         specifier: link:@dnd-kit/abstract/modifiers
         version: link:@dnd-kit/abstract/modifiers
@@ -133,8 +142,8 @@ importers:
         specifier: ^0.469.0
         version: 0.469.0(svelte@5.45.6)
       mode-watcher:
-        specifier: ^0.5.1
-        version: 0.5.1(svelte@5.45.6)
+        specifier: ^1.1.0
+        version: 1.1.0(svelte@5.45.6)
       paneforge:
         specifier: ^1.0.0-next.4
         version: 1.0.2(svelte@5.45.6)
@@ -154,8 +163,8 @@ importers:
         specifier: ^4.0.0
         version: 4.3.4(picomatch@4.0.3)(svelte@5.45.6)(typescript@5.9.3)
       svelte-sonner:
-        specifier: ^0.3.28
-        version: 0.3.28(svelte@5.45.6)
+        specifier: ^1.2.1
+        version: 1.2.1(svelte@5.45.6)
       tailwind-merge:
         specifier: ^2.6.0
         version: 2.6.0
@@ -1429,6 +1438,10 @@ packages:
     resolution: {integrity: sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ==}
     engines: {node: '>= 0.4'}
 
+  highlight.js@11.12.0:
+    resolution: {integrity: sha512-nbfWpyRMcMrPMmDwJB+dhX/eiaPKtc2RB+0QZskqJ3WjRA/FDS0e9hZrx8EC/lbEv8gXy98FcDbNa/dspAaJMg==}
+    engines: {node: '>=12.0.0'}
+
   iconv-lite@0.6.3:
     resolution: {integrity: sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw==}
     engines: {node: '>=0.10.0'}
@@ -1560,6 +1573,16 @@ packages:
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
 
+  marked-highlight@2.2.4:
+    resolution: {integrity: sha512-PZxisNMJDduSjc0q6uvjsnqqHCXc9s0eyzxDO9sB1eNGJnd/H1/Fu+z6g/liC1dfJdFW4SftMwMlLvsBhUPrqQ==}
+    peerDependencies:
+      marked: '>=4 <19'
+
+  marked@18.0.10:
+    resolution: {integrity: sha512-FJeH4bRpYoXiggcgriCGItKCSv3xkngJc4QCZ/rkQCogU3VYaLxYJoZl8Nw/b4+x7iij/pd+09mZ6A1dXzpL0A==}
+    engines: {node: '>= 20'}
+    hasBin: true
+
   memoize@10.2.0:
     resolution: {integrity: sha512-DeC6b7QBrZsRs3Y02A6A7lQyzFbsQbqgjI6UW0GigGWV+u1s25TycMr0XHZE4cJce7rY/vyw2ctMQqfDkIhUEA==}
     engines: {node: '>=18'}
@@ -1587,10 +1610,10 @@ packages:
     resolution: {integrity: sha512-G6T0ZX48xgozx7587koeX9Ys2NYy6Gmv//P89sEte9V9whIapMNF4idKxnW2QtCcLiTWlb/wfCabAtAFWhhBow==}
     engines: {node: '>=16 || 14 >=14.17'}
 
-  mode-watcher@0.5.1:
-    resolution: {integrity: sha512-adEC6T7TMX/kzQlaO/MtiQOSFekZfQu4MC+lXyoceQG+U5sKpJWZ4yKXqw846ExIuWJgedkOIPqAYYRk/xHm+w==}
+  mode-watcher@1.1.0:
+    resolution: {integrity: sha512-mUT9RRGPDYenk59qJauN1rhsIMKBmWA3xMF+uRwE8MW/tjhaDSCCARqkSuDTq8vr4/2KcAxIGVjACxTjdk5C3g==}
     peerDependencies:
-      svelte: ^4.0.0 || ^5.0.0-next.1
+      svelte: ^5.27.0
 
   monaco-editor@0.52.2:
     resolution: {integrity: sha512-GEQWEZmfkOGLdd3XK8ryrfWz3AIP8YymVXiPHEdewrUq7mh0qrKrfHLNCXcbB6sTnMLnOZ3ztSiKcciFUkIJwQ==}
@@ -1912,6 +1935,11 @@ packages:
     peerDependencies:
       svelte: ^5.7.0
 
+  runed@0.25.0:
+    resolution: {integrity: sha512-7+ma4AG9FT2sWQEA0Egf6mb7PBT2vHyuHail1ie8ropfSjvZGtEAx8YTmUjv/APCsdRRxEVvArNjALk9zFSOrg==}
+    peerDependencies:
+      svelte: ^5.7.0
+
   runed@0.28.0:
     resolution: {integrity: sha512-k2xx7RuO9hWcdd9f+8JoBeqWtYrm5CALfgpkg2YDB80ds/QE4w0qqu34A7fqiAwiBBSBQOid7TLxwxVC27ymWQ==}
     peerDependencies:
@@ -2012,10 +2040,10 @@ packages:
       svelte:
         optional: true
 
-  svelte-sonner@0.3.28:
-    resolution: {integrity: sha512-K3AmlySeFifF/cKgsYNv5uXqMVNln0NBAacOYgmkQStLa/UoU0LhfAACU6Gr+YYC8bOCHdVmFNoKuDbMEsppJg==}
+  svelte-sonner@1.2.1:
+    resolution: {integrity: sha512-N00LOWb60fjKXULbpngku+7E9Krb16KpNq4/Eax5Vu7o1Dpbca55QpaLPsB+yp82JIEdFhfJuv5cVXLoe0ZtVA==}
     peerDependencies:
-      svelte: ^3.0.0 || ^4.0.0 || ^5.0.0-next.1
+      svelte: ^5.0.0
 
   svelte-spins@1.1.8:
     resolution: {integrity: sha512-xrYMZGddJ9Y5H8Bn12Rw/3iIc3NE7LGGwDfCYiMeIhYBzI3bP3dR39cBmjwEcKgBKcII8BoKEq4qQTlM8Ychlg==}
@@ -3485,6 +3513,8 @@ snapshots:
     dependencies:
       function-bind: 1.1.2
 
+  highlight.js@11.12.0: {}
+
   iconv-lite@0.6.3:
     dependencies:
       safer-buffer: 2.1.2
@@ -3612,6 +3642,12 @@ snapshots:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
 
+  marked-highlight@2.2.4(marked@18.0.10):
+    dependencies:
+      marked: 18.0.10
+
+  marked@18.0.10: {}
+
   memoize@10.2.0:
     dependencies:
       mimic-function: 5.0.1
@@ -3635,9 +3671,11 @@ snapshots:
     dependencies:
       brace-expansion: 2.0.2
 
-  mode-watcher@0.5.1(svelte@5.45.6):
+  mode-watcher@1.1.0(svelte@5.45.6):
     dependencies:
+      runed: 0.25.0(svelte@5.45.6)
       svelte: 5.45.6
+      svelte-toolbelt: 0.7.1(svelte@5.45.6)
 
   monaco-editor@0.52.2: {}
 
@@ -3870,6 +3908,11 @@ snapshots:
       esm-env: 1.2.2
       svelte: 5.45.6
 
+  runed@0.25.0(svelte@5.45.6):
+    dependencies:
+      esm-env: 1.2.2
+      svelte: 5.45.6
+
   runed@0.28.0(svelte@5.45.6):
     dependencies:
       esm-env: 1.2.2
@@ -3968,8 +4011,9 @@ snapshots:
     optionalDependencies:
       svelte: 5.45.6
 
-  svelte-sonner@0.3.28(svelte@5.45.6):
+  svelte-sonner@1.2.1(svelte@5.45.6):
     dependencies:
+      runed: 0.28.0(svelte@5.45.6)
       svelte: 5.45.6
 
   svelte-spins@1.1.8: {}
