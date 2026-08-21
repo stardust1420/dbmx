@@ -387,47 +387,47 @@
 							</p>
 						</div>
 					{:else}
-						<div class="flex flex-col gap-4">
+						<div class="flex flex-col gap-2.5 py-2">
 							{#each aiChat as message (message.ID)}
 								{#if message.Role === 'user'}
 									<!-- User message -->
-									<div class="chat-message-in flex items-end justify-end gap-2">
-										<div class="flex flex-col items-end gap-1 max-w-[85%]">
-											<div class="rounded-2xl rounded-br-md bg-gradient-to-br from-indigo-600 to-indigo-700 px-3.5 py-2.5 text-sm text-white shadow-lg shadow-indigo-500/10">
+									<div class="chat-message-in flex items-start justify-end gap-2">
+										<div class="flex flex-col items-end gap-0.5 max-w-[80%]">
+											<div class="rounded-2xl rounded-br-sm bg-neutral-700 px-3 py-1.5 text-[13px] text-neutral-100">
 												<p class="leading-relaxed whitespace-pre-wrap">{message.Content}</p>
 											</div>
 											<span class="text-[10px] text-neutral-500 px-1">{formatTime(new Date(message.CreatedAt))}</span>
 										</div>
-										<div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-neutral-700 ring-1 ring-white/10">
-											<User size={14} class="text-neutral-300" />
+										<div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-700/80 mt-0.5">
+											<User size={12} class="text-neutral-400" />
 										</div>
 									</div>
 								{:else}
 									{@const parts = splitThinking(message.Content)}
 									<!-- AI message -->
-									<div class="chat-message-in flex items-end gap-2">
-										<div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500/30 to-purple-500/30 ring-1 ring-white/10">
-											<Sparkles size={14} class="text-indigo-400" />
+									<div class="chat-message-in flex items-start gap-2">
+										<div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-700/50 mt-0.5">
+											<Sparkles size={12} class="text-neutral-400" />
 										</div>
-										<div class="flex flex-col gap-1 max-w-[85%]">
+										<div class="flex flex-col gap-1 max-w-[95%] min-w-0">
 											{#if parts.thinking}
 												<button
-													class="thinking-toggle flex items-center gap-1 text-[11px] text-indigo-400/80 hover:text-indigo-300 transition-colors px-1 py-0.5"
+													class="thinking-toggle flex items-center gap-1 text-[11px] text-neutral-500 hover:text-neutral-300 transition-colors py-0.5"
 													onclick={() => toggleThinking(message.ID)}
 												>
 													<ChevronRight
-														size={12}
+														size={11}
 														class="transition-transform duration-500 {expandedThinking[message.ID] ? 'rotate-90' : ''}"
 													/>
 													Thinking
 												</button>
 												{#if expandedThinking[message.ID]}
-													<div class="ai-prose thinking-content rounded-xl bg-neutral-900/60 px-3 py-2 text-xs text-neutral-400 ring-1 ring-white/5">
+													<div class="ai-prose thinking-content rounded-lg bg-neutral-900/50 px-3 py-2 text-xs text-neutral-500 border border-neutral-800">
 														{@html renderMarkdown(parts.thinking)}
 													</div>
 												{/if}
 											{/if}
-											<div class="ai-prose rounded-2xl rounded-bl-md bg-neutral-800/80 px-3.5 py-2.5 text-sm text-neutral-200 shadow-lg ring-1 ring-white/5">
+											<div class="ai-prose rounded-2xl rounded-tl-sm bg-neutral-800/60 px-3.5 py-2.5 text-[13px] text-neutral-200 border border-neutral-700/40">
 												{@html renderMarkdown(parts.response)}
 											</div>
 											<span class="text-[10px] text-neutral-500 px-1">{formatTime(new Date(message.CreatedAt))}</span>
@@ -438,15 +438,15 @@
 
 							{#if isAiTyping}
 								<!-- Typing indicator -->
-								<div class="chat-message-in flex items-end gap-2">
-									<div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500/30 to-purple-500/30 ring-1 ring-white/10">
-										<Sparkles size={14} class="text-indigo-400" />
+								<div class="chat-message-in flex items-start gap-2">
+									<div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-700/50 mt-0.5">
+										<Sparkles size={12} class="text-neutral-400" />
 									</div>
-									<div class="rounded-2xl rounded-bl-md bg-neutral-800/80 px-4 py-3 shadow-lg ring-1 ring-white/5">
-										<div class="flex items-center gap-1">
-											<span class="typing-dot h-1.5 w-1.5 rounded-full bg-indigo-400"></span>
-											<span class="typing-dot h-1.5 w-1.5 rounded-full bg-indigo-400" style="animation-delay: 0.15s"></span>
-											<span class="typing-dot h-1.5 w-1.5 rounded-full bg-indigo-400" style="animation-delay: 0.3s"></span>
+									<div class="rounded-2xl rounded-tl-sm bg-neutral-800/60 px-4 py-3 border border-neutral-700/40">
+										<div class="flex items-center gap-1.5">
+											<span class="typing-dot h-1.5 w-1.5 rounded-full bg-neutral-400"></span>
+											<span class="typing-dot h-1.5 w-1.5 rounded-full bg-neutral-400" style="animation-delay: 0.15s"></span>
+											<span class="typing-dot h-1.5 w-1.5 rounded-full bg-neutral-400" style="animation-delay: 0.3s"></span>
 										</div>
 									</div>
 								</div>
@@ -674,8 +674,18 @@
 
 	:global(.ai-prose .table-wrapper) {
 		overflow-x: auto;
+		overflow-y: hidden;
 		margin: 0.75em 0;
 		border-radius: 6px;
+		max-width: 100%;
+		scrollbar-width: thin;
+		scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+	}
+
+	:global(.ai-prose .table-wrapper table) {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: 0.85em;
 		border: 1px solid rgba(255, 255, 255, 0.1);
 	}
 
@@ -688,8 +698,14 @@
 	:global(.ai-prose th),
 	:global(.ai-prose td) {
 		border: 1px solid rgba(255, 255, 255, 0.1);
-		padding: 0.4em 0.6em;
+		padding: 0.4em 0.75em;
 		text-align: left;
+		white-space: normal !important;
+		overflow: visible !important;
+		text-overflow: unset !important;
+		max-width: none !important;
+		min-width: unset !important;
+		height: auto !important;
 	}
 
 	:global(.ai-prose th) {
