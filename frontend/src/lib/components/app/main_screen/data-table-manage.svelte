@@ -183,11 +183,11 @@
 
 <!-- <svelte:document onkeydown={handleKeyDown} /> -->
 
-<div class="h-full overflow-auto bg-black rounded-3xl">
+<div class="h-full overflow-auto bg-background rounded-3xl">
 	<div class="flex h-full flex-col">
 		<div class="position-sticky top-0 flex flex-1 overflow-auto">
 			<Table.Root class="border">
-				<Table.Header class="bg-black text-xs font-medium">
+				<Table.Header class="bg-background text-xs font-medium">
 					{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
 						<Table.Row>
 							{#each headerGroup.headers as header (header.id)}
@@ -209,7 +209,7 @@
 							{#each row.getVisibleCells() as cell (cell.id)}
 								<Table.Cell
 									class={`hover:bg-muted ${
-										editedCellsMap.has(cell.id) ? 'bg-red-900 hover:bg-red-800' : ''
+										editedCellsMap.has(cell.id) ? 'bg-destructive/20 hover:bg-destructive/30' : ''
 									} h-12 px-4 text-start focus-within:px-2 transition-[padding] w-fit`}
 									ondblclick={() => {
 										editingCell = cell.id;
@@ -357,7 +357,7 @@
 		vertical-align: middle;
 		text-overflow: ellipsis;
 		white-space: nowrap;
-		border-right: 1px solid #262734;
+		border-right: 1px solid hsl(var(--border));
 		max-width: 350px;
 		overflow: hidden;
 	}

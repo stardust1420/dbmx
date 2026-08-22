@@ -297,7 +297,7 @@
 											<Accordion.Root type="single" collapsible class="flex flex-col gap-3 w-full">
 				
 												{#each userProviders as item (item.provider)}
-													<Accordion.Item value={item.provider} class="border-2 border-neutral-700 rounded-2xl px-4">
+													<Accordion.Item value={item.provider} class="border-2 border-border rounded-2xl px-4">
 														<Accordion.Trigger class="flex w-full items-center justify-between px-4">
 															<div class="flex items-center gap-2">
 																<span>{item.provider}</span>

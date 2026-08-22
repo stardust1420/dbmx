@@ -4,6 +4,7 @@
 	import { GetQueryHistory } from '$lib/wailsjs/go/app/QueryHistory.js';
 	import { SaveQuery, GetSavedQueries } from '$lib/wailsjs/go/app/SavedQueries.js';
 	import { format as formatSQL } from 'sql-formatter';
+	import { mode } from 'mode-watcher';
 
 	// ----- Types (strict & runtime-safe) -----
 	import type * as MonacoNS from 'monaco-editor';
@@ -11,6 +12,7 @@
 	let editorContainer: HTMLElement;
 	let editor: MonacoNS.editor.IStandaloneCodeEditor | null = null;
 	let model: MonacoNS.editor.ITextModel | null = null;
+	let monacoInstance: typeof import('monaco-editor') | null = null;
 
 	let completionProviderDisposable: MonacoNS.IDisposable | null = null;
 	let cursorSub: MonacoNS.IDisposable | null = null;
@@ -329,7 +331,71 @@
 		}
 	};
 
-	// External → editor value sync (skip no-ops; keep undo)
+	const AuroraSQLLightTheme: MonacoNS.editor.IStandaloneThemeData = {
+		base: 'vs',
+		inherit: true,
+		rules: [
+			{ token: '', foreground: '1E293B', background: 'FFFFFF' },
+			{ token: 'comment', foreground: '94A3B8', fontStyle: 'italic' },
+			{ token: 'comment.sql', foreground: '94A3B8', fontStyle: 'italic' },
+			{ token: 'keyword', foreground: '2563EB' },
+			{ token: 'keyword.sql', foreground: '2563EB' },
+			{ token: 'type', foreground: '0D9488' },
+			{ token: 'type.sql', foreground: '0D9488' },
+			{ token: 'predefined', foreground: 'BE185D' },
+			{ token: 'predefined.sql', foreground: 'BE185D' },
+			{ token: 'string', foreground: '16A34A' },
+			{ token: 'string.sql', foreground: '16A34A' },
+			{ token: 'string.escape', foreground: '0D9488' },
+			{ token: 'number', foreground: 'EA580C' },
+			{ token: 'number.sql', foreground: 'EA580C' },
+			{ token: 'entity.name.function', foreground: 'D97706' },
+			{ token: 'support.function', foreground: 'D97706' },
+			{ token: 'identifier', foreground: '334155' },
+			{ token: 'identifier.sql', foreground: '334155' },
+			{ token: 'identifier.quote', foreground: '64748B' },
+			{ token: 'operator', foreground: '475569' },
+			{ token: 'operator.sql', foreground: '475569' },
+			{ token: 'delimiter', foreground: '94A3B8' },
+			{ token: 'delimiter.sql', foreground: '94A3B8' },
+			{ token: 'delimiter.bracket', foreground: '7C3AED' },
+			{ token: 'invalid', foreground: 'DC2626' },
+			{ token: 'invalid.deprecated', foreground: 'D97706' }
+		],
+		colors: {
+			'editor.background': '#FFFFFF',
+			'editor.foreground': '#1E293B',
+			'editorLineNumber.foreground': '#CBD5E1',
+			'editorLineNumber.activeForeground': '#475569',
+			'editorIndentGuide.background': '#F1F5F9',
+			'editorIndentGuide.activeBackground': '#E2E8F0',
+			'editorWhitespace.foreground': '#F1F5F9',
+			editorLineHighlightBackground: '#F8FAFC',
+			'editorCursor.foreground': '#1E293B',
+			'editor.selectionBackground': '#DBEAFE',
+			'editor.inactiveSelectionBackground': '#EFF6FF',
+			'editor.wordHighlightBackground': '#DBEAFE66',
+			'editor.wordHighlightStrongBackground': '#DBEAFE99',
+			'editor.findMatchBackground': '#FDE68A',
+			'editor.findMatchHighlightBackground': '#BBF7D080',
+			'editor.findRangeHighlightBackground': '#F1F5F966',
+			'editorBracketMatch.background': '#EDE9FE',
+			'editorBracketMatch.border': '#C4B5FD',
+			'editorSuggestWidget.background': '#FFFFFF',
+			'editorSuggestWidget.border': '#E2E8F0',
+			'editorSuggestWidget.foreground': '#334155',
+			'editorSuggestWidget.selectedBackground': '#F1F5F9',
+			'editorSuggestWidget.highlightForeground': '#2563EB',
+			'editorHoverWidget.background': '#FFFFFF',
+			'editorHoverWidget.border': '#E2E8F0',
+			'scrollbarSlider.background': '#CBD5E1AA',
+			'scrollbarSlider.hoverBackground': '#94A3B8AA',
+			'scrollbarSlider.activeBackground': '#64748BAA',
+			'editorError.foreground': '#DC2626',
+			'editorWarning.foreground': '#D97706',
+			'editorInfo.foreground': '#2563EB'
+		}
+	};
 	$effect(() => {
 		const incoming = value;
 		if (!editor || !isInitialized || !model) return;
@@ -341,6 +407,14 @@
 		editor.pushUndoStop();
 		editor.executeEdits('propSync', [{ range: fullRange, text: incoming }]);
 		editor.pushUndoStop();
+	});
+
+	// Switch Monaco theme when app mode changes
+	$effect(() => {
+		const currentMode = mode.current;
+		if (!monacoInstance || !editor) return;
+		const themeName = currentMode === 'light' ? 'aurora-sql-light' : 'aurora-sql';
+		monacoInstance.editor.setTheme(themeName);
 	});
 
 	// Helper: compute blank-line-delimited block range
@@ -377,9 +451,11 @@
 
 	onMount(async () => {
 		const monaco = await loader.init();
+		monacoInstance = monaco;
 
 		monaco.languages.register({ id: 'sql' });
 		monaco.editor.defineTheme('aurora-sql', AuroraSQLTheme);
+		monaco.editor.defineTheme('aurora-sql-light', AuroraSQLLightTheme);
 
 		// Completion provider (case-insensitive startsWith)
 		completionProviderDisposable = monaco.languages.registerCompletionItemProvider('sql', {
@@ -418,7 +494,7 @@
 		editor = monaco.editor.create(editorContainer, {
 			value,
 			language: 'sql', // ✅ matches provider
-			theme: 'aurora-sql',
+			theme: mode.current === 'light' ? 'aurora-sql-light' : 'aurora-sql',
 			automaticLayout: true,
 			minimap: { enabled: false },
 			fontSize: 14,
@@ -730,7 +806,7 @@
 					onmousedown={() => { showSaveDialog = false; editor?.focus(); }}
 				>Cancel</button>
 				<button
-					class="px-3 py-1 text-sm text-white bg-[#007acc] rounded hover:bg-[#006bb3] disabled:opacity-50"
+					class="px-3 py-1 text-sm text-primary-foreground bg-primary rounded hover:bg-primary/90 disabled:opacity-50"
 					disabled={!saveQueryTitle.trim()}
 					onmousedown={handleSaveQuery}
 				>Save</button>
