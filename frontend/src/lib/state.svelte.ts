@@ -41,6 +41,8 @@ export let modelID = writable('')
 
 export let availableModels = writable<dbmx.Model[]>([])
 
+export let editorFontSize = writable<number>(13)
+
 
 export let suggestions = writable<Set<string>>(new Set([
     'SELECT',

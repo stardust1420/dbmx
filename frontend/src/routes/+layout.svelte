@@ -16,7 +16,7 @@
 	import { toast } from 'svelte-sonner';
 	import { GetAllConnections } from '$lib/wailsjs/go/app/Connections';
 
-	import {isLoggedIn, postgresConnectionsMap, userFullName, userEmail, userAvatar, userUseDefaultKey, userIsAIEnabled } from '$lib/state.svelte';
+	import {isLoggedIn, postgresConnectionsMap, userFullName, userEmail, userAvatar, userUseDefaultKey, userIsAIEnabled, editorFontSize } from '$lib/state.svelte';
 	import { GetLoggedInUser } from '$lib/wailsjs/go/app/Auth';
 
 	// Fetch all connections when the root layout is mounted
@@ -76,18 +76,23 @@
 		if ((e.metaKey || e.ctrlKey) && (e.key === '=' || e.key === '+')) {
 			e.preventDefault();
 			const current = parseFloat(getComputedStyle(document.documentElement).fontSize);
-			document.documentElement.style.fontSize = Math.min(current + 1, 20) + 'px';
+			const newSize = Math.min(current + 1, 20);
+			document.documentElement.style.fontSize = newSize + 'px';
+			$editorFontSize = Math.min($editorFontSize + 1, 28);
 			return;
 		}
 		if ((e.metaKey || e.ctrlKey) && e.key === '-') {
 			e.preventDefault();
 			const current = parseFloat(getComputedStyle(document.documentElement).fontSize);
-			document.documentElement.style.fontSize = Math.max(current - 1, 10) + 'px';
+			const newSize = Math.max(current - 1, 10);
+			document.documentElement.style.fontSize = newSize + 'px';
+			$editorFontSize = Math.max($editorFontSize - 1, 8);
 			return;
 		}
 		if ((e.metaKey || e.ctrlKey) && e.key === '0') {
 			e.preventDefault();
 			document.documentElement.style.fontSize = '13px';
+			$editorFontSize = 14;
 			return;
 		}
 
