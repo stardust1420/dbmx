@@ -687,36 +687,36 @@
 	}
 
 	/* Light mode: override hljs dark theme colors */
-	:global(:not(.dark) .ai-prose pre code) {
+	:global(html:not(.dark) .ai-prose pre code) {
 		color: #24292e;
 	}
 
-	:global(:not(.dark) .ai-prose pre code .hljs-keyword),
-	:global(:not(.dark) .ai-prose pre code .hljs-selector-tag) {
+	:global(html:not(.dark) .ai-prose pre code .hljs-keyword),
+	:global(html:not(.dark) .ai-prose pre code .hljs-selector-tag) {
 		color: #d73a49;
 	}
 
-	:global(:not(.dark) .ai-prose pre code .hljs-string),
-	:global(:not(.dark) .ai-prose pre code .hljs-addition) {
+	:global(html:not(.dark) .ai-prose pre code .hljs-string),
+	:global(html:not(.dark) .ai-prose pre code .hljs-addition) {
 		color: #032f62;
 	}
 
-	:global(:not(.dark) .ai-prose pre code .hljs-comment) {
+	:global(html:not(.dark) .ai-prose pre code .hljs-comment) {
 		color: #6a737d;
 	}
 
-	:global(:not(.dark) .ai-prose pre code .hljs-built_in),
-	:global(:not(.dark) .ai-prose pre code .hljs-type) {
+	:global(html:not(.dark) .ai-prose pre code .hljs-built_in),
+	:global(html:not(.dark) .ai-prose pre code .hljs-type) {
 		color: #6f42c1;
 	}
 
-	:global(:not(.dark) .ai-prose pre code .hljs-number),
-	:global(:not(.dark) .ai-prose pre code .hljs-literal) {
+	:global(html:not(.dark) .ai-prose pre code .hljs-number),
+	:global(html:not(.dark) .ai-prose pre code .hljs-literal) {
 		color: #005cc5;
 	}
 
-	:global(:not(.dark) .ai-prose pre code .hljs-title),
-	:global(:not(.dark) .ai-prose pre code .hljs-function) {
+	:global(html:not(.dark) .ai-prose pre code .hljs-title),
+	:global(html:not(.dark) .ai-prose pre code .hljs-function) {
 		color: #6f42c1;
 	}
 

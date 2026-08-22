@@ -5,6 +5,8 @@
 	import { SaveQuery, GetSavedQueries } from '$lib/wailsjs/go/app/SavedQueries.js';
 	import { format as formatSQL } from 'sql-formatter';
 	import { mode } from 'mode-watcher';
+	import { get } from 'svelte/store';
+	import { editorFontSize } from '$lib/state.svelte';
 
 	// ----- Types (strict & runtime-safe) -----
 	import type * as MonacoNS from 'monaco-editor';
@@ -497,7 +499,7 @@
 			theme: mode.current === 'light' ? 'aurora-sql-light' : 'aurora-sql',
 			automaticLayout: true,
 			minimap: { enabled: false },
-			fontSize: 14,
+			fontSize: get(editorFontSize),
 			wordWrap: 'off',
 			scrollBeyondLastLine: false,
 			renderWhitespace: 'none',
@@ -721,7 +723,16 @@
 		isInitialized = true;
 	});
 
+	// Sync editor font size with global zoom
+	let fontSizeUnsub: (() => void) | null = null;
+	fontSizeUnsub = editorFontSize.subscribe((size) => {
+		if (editor) {
+			editor.updateOptions({ fontSize: size });
+		}
+	});
+
 	onDestroy(() => {
+		fontSizeUnsub?.();
 		cursorSub?.dispose();
 		mouseSub?.dispose();
 		completionProviderDisposable?.dispose();
