@@ -17,7 +17,7 @@
 	import { Logout } from '$lib/wailsjs/go/app/Auth';
 	import MoonIcon from "@lucide/svelte/icons/moon";
 	import SunIcon from "@lucide/svelte/icons/sun";
-	import { toggleMode } from "mode-watcher";
+	import { toggleMode, mode } from "mode-watcher";
 
 	const sidebar = useSidebar();
 
@@ -147,7 +147,12 @@
 						<MoonIcon
 							class="absolute h-[1.2rem] w-[1.2rem] scale-0 rotate-90 !transition-all dark:scale-100 dark:rotate-0"
 						/>
-						Theme
+						Theme - 
+						{#if mode.current == "light"}
+							Light
+						{:else}
+							Dark
+						{/if} 
 					</DropdownMenu.Item>
 				</DropdownMenu.Group>
 			</DropdownMenu.Content>
