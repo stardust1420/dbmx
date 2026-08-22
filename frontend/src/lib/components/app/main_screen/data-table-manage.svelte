@@ -183,10 +183,10 @@
 
 <!-- <svelte:document onkeydown={handleKeyDown} /> -->
 
-<div class="h-full overflow-auto bg-background rounded-3xl">
+<div class="h-full overflow-auto">
 	<div class="flex h-full flex-col">
-		<div class="position-sticky top-0 flex flex-1 overflow-auto">
-			<Table.Root class="border">
+		<div class="position-sticky top-0 flex flex-1 overflow-auto rounded-3xl">
+			<Table.Root class="border rounded-3xl overflow-hidden">
 				<Table.Header class="bg-background text-xs font-medium">
 					{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
 						<Table.Row>
@@ -203,7 +203,7 @@
 						</Table.Row>
 					{/each}
 				</Table.Header>
-				<Table.Body class="text-sm">
+				<Table.Body class="text-sm bg-background">
 					{#each table.getRowModel().rows as row (row.id)}
 						<Table.Row>
 							{#each row.getVisibleCells() as cell (cell.id)}
@@ -268,9 +268,9 @@
 		</div>
 
 		<div
-			class="position-sticky bottom-0 my-0.5 flex w-full items-center justify-between px-4 py-1"
+			class="position-sticky bottom-0 mt-1 bg-background flex w-full items-center justify-between px-4 py-1 rounded-3xl"
 		>
-			<div class="text-muted-foreground hidden flex-1 text-sm lg:flex">
+			<div class="text-muted-foreground hidden flex-1 text-sm lg:flex items-center gap-4">
 				{table.getFilteredRowModel().rows.length} row(s)
 			</div>
 			<div class="flex w-full items-center gap-8 lg:w-fit">

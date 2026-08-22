@@ -33,7 +33,7 @@
 	import { markedHighlight } from 'marked-highlight';
     import hljs from 'highlight.js';
 
-	// Import a theme for code block styling
+	// Import themes for code block styling
     import 'highlight.js/styles/github-dark.css';
 
 	// Create a marked instance configured with highlight.js
@@ -406,8 +406,8 @@
 									{@const parts = splitThinking(message.Content)}
 									<!-- AI message -->
 									<div class="chat-message-in flex items-start gap-2">
-										<div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-700/50 mt-0.5">
-											<Sparkles size={12} class="text-neutral-400" />
+										<div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted mt-0.5">
+											<Sparkles size={12} class="text-muted-foreground" />
 										</div>
 										<div class="flex flex-col gap-1 max-w-[95%] min-w-0">
 											{#if parts.thinking}
@@ -427,7 +427,7 @@
 													</div>
 												{/if}
 											{/if}
-											<div class="ai-prose rounded-2xl rounded-tl-sm bg-muted px-3.5 py-2.5 text-base text-foreground border border-border">
+											<div class="ai-prose rounded-2xl rounded-tl-sm bg-muted px-3.5 py-2.5 border border-border">
 												{@html renderMarkdown(parts.response)}
 											</div>
 											<span class="text-[10px] text-muted-foreground px-1">{formatTime(new Date(message.CreatedAt))}</span>
@@ -541,6 +541,10 @@
 	/* Custom scrollbar for the chat area */
 	:global(.chat-scroll) {
 		scrollbar-width: thin;
+		scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
+	}
+
+	:global(.dark .chat-scroll) {
 		scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
 	}
 
@@ -553,11 +557,19 @@
 	}
 
 	:global(.chat-scroll::-webkit-scrollbar-thumb) {
-		background-color: rgba(255, 255, 255, 0.1);
+		background-color: rgba(0, 0, 0, 0.1);
 		border-radius: 4px;
 	}
 
+	:global(.dark .chat-scroll::-webkit-scrollbar-thumb) {
+		background-color: rgba(255, 255, 255, 0.1);
+	}
+
 	:global(.chat-scroll::-webkit-scrollbar-thumb:hover) {
+		background-color: rgba(0, 0, 0, 0.2);
+	}
+
+	:global(.dark .chat-scroll::-webkit-scrollbar-thumb:hover) {
 		background-color: rgba(255, 255, 255, 0.2);
 	}
 
@@ -606,9 +618,13 @@
 	:global(.ai-prose code) {
 		font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
 		font-size: 0.85em;
-		background: rgba(255, 255, 255, 0.08);
+		background: rgba(0, 0, 0, 0.06);
 		padding: 0.15em 0.4em;
 		border-radius: 4px;
+	}
+
+	:global(.dark .ai-prose code) {
+		background: rgba(255, 255, 255, 0.08);
 	}
 
 	:global(.ai-prose pre) {
@@ -616,6 +632,11 @@
 		margin: 0.75em 0;
 		border-radius: 8px;
 		overflow-x: auto;
+		background: #f6f8fa !important;
+		border: 1px solid rgba(0, 0, 0, 0.1);
+	}
+
+	:global(.dark .ai-prose pre) {
 		background: #1a1b26 !important;
 		border: 1px solid rgba(255, 255, 255, 0.08);
 	}
@@ -626,13 +647,19 @@
 		right: 6px;
 		padding: 2px 8px;
 		font-size: 0.7em;
-		background: rgba(255, 255, 255, 0.1);
-		border: 1px solid rgba(255, 255, 255, 0.15);
+		background: rgba(0, 0, 0, 0.06);
+		border: 1px solid rgba(0, 0, 0, 0.1);
 		border-radius: 4px;
-		color: #a0a0b0;
+		color: #555;
 		cursor: pointer;
 		opacity: 0;
 		transition: opacity 0.2s;
+	}
+
+	:global(.dark .ai-prose pre .copy-btn) {
+		background: rgba(255, 255, 255, 0.1);
+		border: 1px solid rgba(255, 255, 255, 0.15);
+		color: #a0a0b0;
 	}
 
 	:global(.ai-prose pre:hover .copy-btn) {
@@ -640,6 +667,11 @@
 	}
 
 	:global(.ai-prose pre .copy-btn:hover) {
+		background: rgba(0, 0, 0, 0.12);
+		color: #333;
+	}
+
+	:global(.dark .ai-prose pre .copy-btn:hover) {
 		background: rgba(255, 255, 255, 0.2);
 		color: #e0e0e0;
 	}
@@ -654,21 +686,67 @@
 		overflow-x: auto;
 	}
 
+	/* Light mode: override hljs dark theme colors */
+	:global(:not(.dark) .ai-prose pre code) {
+		color: #24292e;
+	}
+
+	:global(:not(.dark) .ai-prose pre code .hljs-keyword),
+	:global(:not(.dark) .ai-prose pre code .hljs-selector-tag) {
+		color: #d73a49;
+	}
+
+	:global(:not(.dark) .ai-prose pre code .hljs-string),
+	:global(:not(.dark) .ai-prose pre code .hljs-addition) {
+		color: #032f62;
+	}
+
+	:global(:not(.dark) .ai-prose pre code .hljs-comment) {
+		color: #6a737d;
+	}
+
+	:global(:not(.dark) .ai-prose pre code .hljs-built_in),
+	:global(:not(.dark) .ai-prose pre code .hljs-type) {
+		color: #6f42c1;
+	}
+
+	:global(:not(.dark) .ai-prose pre code .hljs-number),
+	:global(:not(.dark) .ai-prose pre code .hljs-literal) {
+		color: #005cc5;
+	}
+
+	:global(:not(.dark) .ai-prose pre code .hljs-title),
+	:global(:not(.dark) .ai-prose pre code .hljs-function) {
+		color: #6f42c1;
+	}
+
 	:global(.ai-prose blockquote) {
 		border-left: 3px solid rgba(99, 102, 241, 0.5);
 		margin: 0.75em 0;
 		padding: 0.25em 0.75em;
+		color: rgba(0, 0, 0, 0.6);
+	}
+
+	:global(.dark .ai-prose blockquote) {
 		color: rgba(255, 255, 255, 0.7);
 	}
 
 	:global(.ai-prose a) {
-		color: #818cf8;
+		color: #6366f1;
 		text-decoration: underline;
 		text-underline-offset: 2px;
 	}
 
+	:global(.dark .ai-prose a) {
+		color: #818cf8;
+	}
+
 	:global(.ai-prose strong) {
 		font-weight: 600;
+		color: #1e293b;
+	}
+
+	:global(.dark .ai-prose strong) {
 		color: #e2e8f0;
 	}
 
@@ -679,6 +757,10 @@
 		border-radius: 6px;
 		max-width: 100%;
 		scrollbar-width: thin;
+		scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
+	}
+
+	:global(.dark .ai-prose .table-wrapper) {
 		scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
 	}
 
@@ -686,6 +768,10 @@
 		width: 100%;
 		border-collapse: collapse;
 		font-size: 0.85em;
+		border: 1px solid rgba(0, 0, 0, 0.1);
+	}
+
+	:global(.dark .ai-prose .table-wrapper table) {
 		border: 1px solid rgba(255, 255, 255, 0.1);
 	}
 
@@ -697,7 +783,7 @@
 
 	:global(.ai-prose th),
 	:global(.ai-prose td) {
-		border: 1px solid rgba(255, 255, 255, 0.1);
+		border: 1px solid rgba(0, 0, 0, 0.1);
 		padding: 0.4em 0.75em;
 		text-align: left;
 		white-space: normal !important;
@@ -708,15 +794,28 @@
 		height: auto !important;
 	}
 
+	:global(.dark .ai-prose th),
+	:global(.dark .ai-prose td) {
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
 	:global(.ai-prose th) {
-		background: rgba(255, 255, 255, 0.05);
+		background: rgba(0, 0, 0, 0.04);
 		font-weight: 600;
+	}
+
+	:global(.dark .ai-prose th) {
+		background: rgba(255, 255, 255, 0.05);
 	}
 
 	:global(.ai-prose hr) {
 		border: none;
-		border-top: 1px solid rgba(255, 255, 255, 0.1);
+		border-top: 1px solid rgba(0, 0, 0, 0.1);
 		margin: 1em 0;
+	}
+
+	:global(.dark .ai-prose hr) {
+		border-top: 1px solid rgba(255, 255, 255, 0.1);
 	}
 
 	/* Thinking accordion */
@@ -746,6 +845,10 @@
 		max-height: 200px;
 		overflow-y: auto;
 		scrollbar-width: thin;
+		scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
+	}
+
+	:global(.dark .thinking-content.ai-prose) {
 		scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
 	}
 </style>

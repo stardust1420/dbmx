@@ -182,10 +182,10 @@
 
 <svelte:document onkeydown={handleKeyDown} />
 
-<div class="h-full w-full overflow-auto rounded-t rounded-b-3xl">
+<div class="h-full w-full overflow-auto">
 	<div class="flex h-full flex-col">
-		<div class="position-sticky top-0 flex flex-1 overflow-auto">
-			<Table.Root class="border">
+		<div class="position-sticky top-0 flex flex-1 overflow-auto rounded-3xl">
+			<Table.Root class="border rounded-3xl overflow-hidden">
 				<Table.Header class="bg-background text-xs font-medium">
 					{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
 						<Table.Row>
@@ -267,7 +267,7 @@
 		</div>
 
 		<div
-			class="position-sticky bottom-0 mt-1 bg-background flex w-full items-center justify-between px-4 py-1"
+			class="position-sticky bottom-0 mt-1 bg-background flex w-full items-center justify-between px-4 py-1 rounded-3xl"
 		>
 			<div class="text-muted-foreground hidden flex-1 text-sm lg:flex items-center gap-4">
 				<span>{table.getFilteredRowModel().rows.length} row(s)</span>
