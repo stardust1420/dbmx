@@ -1177,10 +1177,10 @@
 
 <svelte:document onkeydown={handleKeyDown} />
 
-<div class="flex h-full flex-1 flex-col rounded-md bg-black mr-2">
+<div class="flex h-full flex-1 flex-col rounded-md bg-background mr-2">
 	<Tabs.Root value={tabID.toString()} class="flex h-full flex-1 flex-col overflow-hidden">
 		<!-- Tabs visible in the header - Chrome style -->
-		<header class="flex h-11 items-end bg-black pt-1">
+		<header class="flex h-11 items-end bg-background pt-1">
 			<div class="flex w-full items-end justify-between">
 				<div class="flex h-auto items-end overflow-x-auto">
 					<div class="flex items-center self-center px-1 mb-1">
@@ -1193,8 +1193,8 @@
 								<div
 									class="group relative flex items-center rounded-t-lg px-3 py-1.5 transition-all duration-150 select-none
 										{tab.ID === tabID
-											? 'bg-neutral-800 text-white z-10'
-											: 'bg-neutral-900 text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-200'}"
+											? 'bg-muted text-foreground z-10'
+											: 'bg-background text-muted-foreground hover:bg-muted/50 hover:text-foreground'}"
 									draggable="true"
 									ondragstart={(e) => onTabDragStart(e, tab.ID)}
 									ondragover={(e) => onTabDragOver(e, tab.ID)}
@@ -1210,28 +1210,28 @@
 										{tab.Name}
 									</button>
 									<button
-										class="ml-1 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity text-neutral-400 hover:text-red-400 hover:bg-neutral-700"
+										class="ml-1 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-muted"
 										onclick={(e) => { e.stopPropagation(); deleteTab(tab.ID); }}
 									>
 										<X size={14} />
 									</button>
 									<!-- Active tab connector to content below -->
 									{#if tab.ID === tabID}
-										<div class="absolute bottom-0 left-0 right-0 h-[2px] bg-neutral-800"></div>
+										<div class="absolute bottom-0 left-0 right-0 h-[2px] bg-muted"></div>
 									{/if}
 								</div>
 							{/if}
 						{/each}
 						{#if tabLoading}
 							<div class="flex items-center self-center ml-2">
-								<Button variant="ghost" size="sm" class="text-neutral-400">
+								<Button variant="ghost" size="sm" class="text-muted-foreground">
 									<Spinner />
 									Processing
 								</Button>
 							</div>
 						{/if}
 						<button
-							class="flex items-center self-center ml-1 mb-1 rounded-full border border-neutral-400 p-1 text-neutral-400 hover:bg-neutral-700 hover:text-white transition-colors"
+							class="flex items-center self-center ml-1 mb-1 rounded-full border border-muted-foreground p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
 							onclick={() => addTab()}
 						>
 							<Plus size={16} />
@@ -1249,7 +1249,7 @@
 			</div>
 		</header>
 
-		<div class="flex h-screen flex-1 flex-col rounded-3xl bg-neutral-800">
+		<div class="flex h-screen flex-1 flex-col rounded-3xl bg-muted">
 		{#if tabsMap.size > 0}
 			<!-- Main Content on screen -->
 
@@ -1273,7 +1273,7 @@
 										</Breadcrumb.Item>
 										{#if tabTableDBPoolID}
 											<button
-												class="flex items-center self-center mx-2 rounded-full border border-green-400 p-1 text-green-400 hover:bg-green-900 hover:text-green transition-colors"
+												class="flex items-center self-center mx-2 rounded-full border border-green-500 p-1 text-green-500 hover:bg-green-500/10 hover:text-green-600 transition-colors"
 												onclick={getTableData}
 											>
 												<Play size={16} />
@@ -1285,10 +1285,10 @@
 							<div class="flex px-2">
 								<Tabs.Root value={tableViewTab}>
 									<Tabs.List class="flex items-center justify-center gap-2">
-										<Tabs.Trigger class="h-8 bg-black" value="data" onclick={() => (tableViewTab = 'data')}
+										<Tabs.Trigger class="h-8 bg-background" value="data" onclick={() => (tableViewTab = 'data')}
 											>Data</Tabs.Trigger
 										>
-										<Tabs.Trigger class="h-8 bg-black" value="manage" onclick={() => (tableViewTab = 'manage')}
+										<Tabs.Trigger class="h-8 bg-background" value="manage" onclick={() => (tableViewTab = 'manage')}
 											>Manage</Tabs.Trigger
 										>
 									</Tabs.List>
@@ -1307,7 +1307,7 @@
 												<DropdownMenu.Root bind:open={isWhereDropdownOpen}>
 													<DropdownMenu.Trigger
 														disabled={true}
-														class="flex flex-1 items-center gap-2 bg-black rounded-md"
+														class="flex flex-1 items-center gap-2 bg-background rounded-md"
 													>
 														<Input
 															type="text"
@@ -1358,7 +1358,7 @@
 												</DropdownMenu.Root>
 											</div>
 											<Collapsible.Trigger>
-												<Button size="sm" variant="secondary" class="bg-black">Advanced</Button>
+												<Button size="sm" variant="secondary" class="bg-background">Advanced</Button>
 											</Collapsible.Trigger>
 										</div>
 										<Collapsible.Content>
@@ -1367,7 +1367,7 @@
 												<DropdownMenu.Root bind:open={isSelectDropdownOpen}>
 													<DropdownMenu.Trigger
 														disabled={true}
-														class="flex flex-1 items-center gap-2 rounded-md bg-black"
+														class="flex flex-1 items-center gap-2 rounded-md bg-background"
 													>
 														<Input
 															type="text"
@@ -1423,7 +1423,7 @@
 													<DropdownMenu.Root bind:open={isOrderByDropdownOpen}>
 														<DropdownMenu.Trigger
 															disabled={true}
-															class="flex flex-1 items-center gap-2 rounded-md bg-black"
+															class="flex flex-1 items-center gap-2 rounded-md bg-background"
 														>
 															<Input
 																type="text"
@@ -1478,7 +1478,7 @@
 													<DropdownMenu.Root bind:open={isGroupByDropdownOpen}>
 														<DropdownMenu.Trigger
 															disabled={true}
-															class="flex flex-1 items-center rounded-md bg-black"
+															class="flex flex-1 items-center rounded-md bg-background"
 														>
 															<Input
 																type="text"
@@ -1591,7 +1591,7 @@
 									</Select.Content>
 								</Select.Root>
 								<button
-									class="flex items-center self-center m-1 mx-2 rounded-full border border-green-400 p-1 text-green-400 hover:bg-green-900 hover:text-green transition-colors"
+									class="flex items-center self-center m-1 mx-2 rounded-full border border-green-500 p-1 text-green-500 hover:bg-green-500/10 hover:text-green-600 transition-colors"
 									onclick={() => executeQuery()}
 								>
 									<Play size={16} />

@@ -352,7 +352,7 @@
 		onCollapse={() => (chatPaneCollapsed = true)}
 		onExpand={() => (chatPaneCollapsed = false)}
 		bind:this={chatPane}
-		class="flex rounded-lg bg-black my-2"
+		class="flex rounded-lg bg-background my-2"
 	>
 		<div class="flex w-full h-full flex-col">
 			<!-- header -->
@@ -369,12 +369,12 @@
 					{#if aiChat.length === 0}
 						<!-- Empty state -->
 						<div class="flex h-full flex-col items-center justify-center gap-4 opacity-60">
-							<div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 ring-1 ring-white/10">
+							<div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 ring-1 ring-border">
 								<Sparkles size={22} class="text-indigo-400" />
 							</div>
 							<div class="flex flex-col items-center gap-1">
-								<p class="text-sm font-medium text-neutral-300">Start a conversation</p>
-								<p class="text-xs text-neutral-500 text-center leading-relaxed">
+								<p class="text-sm font-medium text-foreground">Start a conversation</p>
+								<p class="text-xs text-muted-foreground text-center leading-relaxed">
 									Ask about your data, generate queries,<br/>or explore your schema.
 								</p>
 							</div>
@@ -393,13 +393,13 @@
 									<!-- User message -->
 									<div class="chat-message-in flex items-start justify-end gap-2">
 										<div class="flex flex-col items-end gap-0.5 max-w-[80%]">
-											<div class="rounded-2xl rounded-br-sm bg-neutral-700 px-3 py-1.5 text-base text-neutral-100">
+											<div class="rounded-2xl rounded-br-sm bg-primary px-3 py-1.5 text-base text-primary-foreground">
 												<p class="leading-relaxed whitespace-pre-wrap">{message.Content}</p>
 											</div>
-											<span class="text-[10px] text-neutral-500 px-1">{formatTime(new Date(message.CreatedAt))}</span>
+											<span class="text-[10px] text-muted-foreground px-1">{formatTime(new Date(message.CreatedAt))}</span>
 										</div>
-										<div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-700/80 mt-0.5">
-											<User size={12} class="text-neutral-400" />
+										<div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted mt-0.5">
+											<User size={12} class="text-muted-foreground" />
 										</div>
 									</div>
 								{:else}
@@ -412,7 +412,7 @@
 										<div class="flex flex-col gap-1 max-w-[95%] min-w-0">
 											{#if parts.thinking}
 												<button
-													class="thinking-toggle flex items-center gap-1 text-[11px] text-neutral-500 hover:text-neutral-300 transition-colors py-0.5"
+													class="thinking-toggle flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors py-0.5"
 													onclick={() => toggleThinking(message.ID)}
 												>
 													<ChevronRight
@@ -422,15 +422,15 @@
 													Thinking
 												</button>
 												{#if expandedThinking[message.ID]}
-													<div class="ai-prose thinking-content rounded-lg bg-neutral-900/50 px-3 py-2 text-xs text-neutral-500 border border-neutral-800">
+													<div class="ai-prose thinking-content rounded-lg bg-muted/50 px-3 py-2 text-xs text-muted-foreground border border-border">
 														{@html renderMarkdown(parts.thinking)}
 													</div>
 												{/if}
 											{/if}
-											<div class="ai-prose rounded-2xl rounded-tl-sm bg-neutral-800/60 px-3.5 py-2.5 text-base text-neutral-200 border border-neutral-700/40">
+											<div class="ai-prose rounded-2xl rounded-tl-sm bg-muted px-3.5 py-2.5 text-base text-foreground border border-border">
 												{@html renderMarkdown(parts.response)}
 											</div>
-											<span class="text-[10px] text-neutral-500 px-1">{formatTime(new Date(message.CreatedAt))}</span>
+											<span class="text-[10px] text-muted-foreground px-1">{formatTime(new Date(message.CreatedAt))}</span>
 										</div>
 									</div>
 								{/if}
@@ -439,14 +439,14 @@
 							{#if isAiTyping}
 								<!-- Typing indicator -->
 								<div class="chat-message-in flex items-start gap-2">
-									<div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-700/50 mt-0.5">
-										<Sparkles size={12} class="text-neutral-400" />
+									<div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted mt-0.5">
+										<Sparkles size={12} class="text-muted-foreground" />
 									</div>
-									<div class="rounded-2xl rounded-tl-sm bg-neutral-800/60 px-4 py-3 border border-neutral-700/40">
+									<div class="rounded-2xl rounded-tl-sm bg-muted px-4 py-3 border border-border">
 										<div class="flex items-center gap-1.5">
-											<span class="typing-dot h-1.5 w-1.5 rounded-full bg-neutral-400"></span>
-											<span class="typing-dot h-1.5 w-1.5 rounded-full bg-neutral-400" style="animation-delay: 0.15s"></span>
-											<span class="typing-dot h-1.5 w-1.5 rounded-full bg-neutral-400" style="animation-delay: 0.3s"></span>
+											<span class="typing-dot h-1.5 w-1.5 rounded-full bg-muted-foreground"></span>
+											<span class="typing-dot h-1.5 w-1.5 rounded-full bg-muted-foreground" style="animation-delay: 0.15s"></span>
+											<span class="typing-dot h-1.5 w-1.5 rounded-full bg-muted-foreground" style="animation-delay: 0.3s"></span>
 										</div>
 									</div>
 								</div>
@@ -456,7 +456,7 @@
 				</div>
 			</div>
 			<div
-				class="flex flex-[1] flex-col items-center justify-center rounded-3xl bg-neutral-800 mr-2 mt-1"
+				class="flex flex-[1] flex-col items-center justify-center rounded-3xl bg-muted mr-2 mt-1"
 			>
 			{#if availableModelsLoading}
 				<Spinner class="size-6 text-yellow-500"/>
@@ -496,7 +496,7 @@
 								</Select.Group>
 							</Select.Content>
 						</Select.Root>
-					<Button variant="outline" class="m-1 rounded-full dark:hover:bg-white" onclick={sendMessage}><Play size={12} fill="black" /></Button>
+					<Button variant="outline" class="m-1 rounded-full hover:bg-accent" onclick={sendMessage}><Play size={12} fill="currentColor" /></Button>
 					</div>
 				{/if}
 			{/if}

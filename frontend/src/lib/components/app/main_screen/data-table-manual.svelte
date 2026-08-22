@@ -211,7 +211,7 @@
 	<div class="flex h-full flex-col">
 		<div class="position-sticky top-0 flex flex-1 overflow-auto">
 			<Table.Root class="border">
-				<Table.Header class="bg-black text-xs font-medium">
+				<Table.Header class="bg-background text-xs font-medium">
 					{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
 						<Table.Row>
 							{#each headerGroup.headers as header (header.id)}
@@ -227,13 +227,13 @@
 						</Table.Row>
 					{/each}
 				</Table.Header>
-				<Table.Body class="text-sm bg-black">
+				<Table.Body class="text-sm bg-background">
 					{#each table.getRowModel().rows as row (row.id)}
 						<Table.Row>
 							{#each row.getVisibleCells() as cell (cell.id)}
 								<Table.Cell
 									class={`hover:bg-muted ${
-										editedCellsMap.has(cell.id) ? 'bg-red-900 hover:bg-red-800' : ''
+										editedCellsMap.has(cell.id) ? 'bg-destructive/20 hover:bg-destructive/30' : ''
 									} h-12 px-4 text-start focus-within:px-2 transition-[padding] w-fit`}
 									ondblclick={() => {
 										editingCell = cell.id;
@@ -292,7 +292,7 @@
 		</div>
 
 		<div
-			class="position-sticky bottom-0 flex w-full items-center justify-between px-4 pb-1 mt-1 bg-black"
+			class="position-sticky bottom-0 flex w-full items-center justify-between px-4 pb-1 mt-1 bg-background"
 		>
 			<div class="text-muted-foreground hidden flex-1 text-sm lg:flex">
 				Total Rows: {$totalRows}
@@ -389,7 +389,7 @@
 		vertical-align: middle;
 		text-overflow: ellipsis;
 		white-space: nowrap;
-		border-right: 1px solid #262734;
+		border-right: 1px solid hsl(var(--border));
 		min-width: 100px;
 		max-width: 400px;
 		width: fit-content;

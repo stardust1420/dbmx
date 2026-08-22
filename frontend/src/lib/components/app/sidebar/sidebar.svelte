@@ -472,7 +472,7 @@
 	{...restProps}
 	variant="floating"
 >
-	<Sidebar.Content class="bg-black">
+	<Sidebar.Content class="bg-sidebar">
 		<Sidebar.Group>
 			<Sidebar.GroupLabel>
 				<div class="flex w-full items-center justify-between">
@@ -493,7 +493,7 @@
 								type="text"
 								placeholder="Search..."
 								bind:value={searchQuery}
-								class="pl-8 bg-black focus-visible:border-0 focus-visible:ring-[1px] rounded-3xl"
+								class="pl-8 bg-sidebar focus-visible:border-0 focus-visible:ring-[1px] rounded-3xl"
 							/>
 						</div>
 						</Sidebar.MenuItem>
@@ -617,7 +617,7 @@
 			</Sidebar.GroupContent>
 		</Sidebar.Group>
 	</Sidebar.Content>
-	<Sidebar.Footer class="border border-0 bg-black">
+	<Sidebar.Footer class="border border-0 bg-sidebar">
 		<NavUser />
 	</Sidebar.Footer>
 </Sidebar.Root>
