@@ -472,7 +472,7 @@
 	{...restProps}
 	variant="floating"
 >
-	<Sidebar.Content class="bg-sidebar">
+	<Sidebar.Content class="bg-background">
 		<Sidebar.Group>
 			<Sidebar.GroupLabel>
 				<div class="flex w-full items-center justify-between">
@@ -617,7 +617,7 @@
 			</Sidebar.GroupContent>
 		</Sidebar.Group>
 	</Sidebar.Content>
-	<Sidebar.Footer class="border border-0 bg-sidebar">
+	<Sidebar.Footer class="bg-background">
 		<NavUser />
 	</Sidebar.Footer>
 </Sidebar.Root>

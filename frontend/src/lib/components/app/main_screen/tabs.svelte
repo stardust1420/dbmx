@@ -1567,7 +1567,7 @@
 									<Select.Trigger
 										class="{getColorClass(
 											$currentColor
-										)} prevent:default w-auto bg-opacity-20 hover:bg-opacity-25 m-2 focus:ring-0 border-0"
+										)} prevent:default w-auto bg-opacity-20 hover:bg-opacity-25 m-2 focus:ring-0 ml-4 mt-4"
 									>
 										{$selectedDBDisplay}
 									</Select.Trigger>
@@ -1606,7 +1606,7 @@
 								<Resizable.Pane
 									defaultSize={editorHeight}
 									minSize={10}
-									class="rsz-pane rounded-t-3xl rounded-b mx-1 pt-1"
+									class="rsz-pane rounded-3xl mx-1 pt-1"
 								>
 									<SqlEditor
 										bind:value={editor}
