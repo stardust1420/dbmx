@@ -1,5 +1,6 @@
 <script lang="ts">
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
+	import KeyRound from '@lucide/svelte/icons/key-round';
 	import Switch from '$lib/components/ui/switch/switch.svelte';
 	import * as Accordion from "$lib/components/ui/accordion/index.js";
 	import Input from '$lib/components/ui/input/input.svelte';
@@ -293,7 +294,7 @@
 												<Spinner class="size-6 text-green-500" />
 												<span>Loading providers...</span>
 											{:else}
-											<Accordion.Root type="single" collapsible class="flex flex-col gap-3 w-full">
+											<Accordion.Root type="single" class="flex flex-col gap-3 w-full">
 				
 												{#each userProviders as item (item.provider)}
 													<Accordion.Item value={item.provider} class="border-2 border-border rounded-2xl px-4">

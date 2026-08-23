@@ -3,6 +3,7 @@
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import ChevronRight from 'lucide-svelte/icons/chevron-right';
 	import Plus from 'lucide-svelte/icons/plus';
+	import ArrowUpRight from 'lucide-svelte/icons/arrow-up-right';
 	import Activity from 'lucide-svelte/icons/activity';
 	import Table2 from 'lucide-svelte/icons/table-2';
 	import RefreshCw from 'lucide-svelte/icons/refresh-cw';
@@ -12,6 +13,8 @@
 	import NavUser from './user.svelte';
 	import { goto } from '$app/navigation';
 	import Input from '$lib/components/ui/input/input.svelte';
+	import BadgeCheckIcon from "@lucide/svelte/icons/badge-check";
+  	import { Badge } from "$lib/components/ui/badge/index.js";
 
 	function goToRoute(route: string) {
 		goto(route);
@@ -33,6 +36,7 @@
 			dbName: string,
 			addTabType: string,
 			tableName: string,
+			editorFromTable: boolean
 		) => void;
 	} = $props();
 
@@ -255,15 +259,15 @@
 
 	function getColorClass(color: string): string {
 		const colorMap: Record<string, string> = {
-			'bg-purple-500': 'bg-purple-500',
-			'bg-indigo-500': 'bg-indigo-500',
-			'bg-emerald-500': 'bg-emerald-500',
-			'bg-red-500': 'bg-red-500',
-			'bg-blue-500': 'bg-blue-500',
-			'bg-green-500': 'bg-green-500',
-			'bg-yellow-500': 'bg-yellow-500',
-			'bg-orange-500': 'bg-orange-500',
-			'bg-pink-500': 'bg-pink-500'
+			'bg-purple-500': 'border-l dark:border-purple-500 light:border-purple-500',
+			'bg-indigo-500': 'border-l dark:border-indigo-500 light:border-indigo-500',
+			'bg-emerald-500': 'border-l dark:border-emerald-500 light:border-emerald-500',
+			'bg-red-500': 'border-l dark:border-red-500 light:border-red-500',
+			'bg-blue-500': 'border-l dark:border-blue-500 light:border-blue-500',
+			'bg-green-500': 'border-l dark:border-green-500 light:border-green-500',
+			'bg-yellow-500': 'border-l dark:border-yellow-500 light:border-yellow-500',
+			'bg-orange-500': 'border-l dark:border-orange-500 light:border-orange-500',
+			'bg-pink-500': 'border-l dark:border-pink-500 light:border-pink5900'
 		};
 		return colorMap[color] || '';
 	}
@@ -414,9 +418,10 @@
 		dbName: string,
 		addTabType: string,
 		tableName: string,
+		editorFromTable: boolean
 	) {
 		if (onAddTab) {
-			onAddTab(connID, activeDBPoolID, dbName, addTabType, tableName);
+			onAddTab(connID, activeDBPoolID, dbName, addTabType, tableName, editorFromTable);
 		}
 	}
 </script>
@@ -505,31 +510,38 @@
 																		<ChevronRight className="transition-transform" />
 																		{databasesMap.get(databaseID)?.Name}
 																		{#if databasesMap.get(databaseID)?.IsActive}
-																			<Activity color="#4fff4d" />
+																			<Badge class="h-4 w-15 bg-green-500">Connected</Badge>
 																		{/if}
 																	</Sidebar.MenuButton>
 																</ContextMenu.Trigger>
 																<ContextMenu.Content>
-																	<ContextMenu.Item 
-																		onclick={() =>
-																			handleAddTab(
-																				connection.ID,
-																				databasesMap.get(databaseID)?.PoolID || "",
-																				databasesMap.get(databaseID)?.Name || "",
-																				"editor",
-																				"editor"
-																			)}
-																		>Open Editor
-																	</ContextMenu.Item>
-																	<ContextMenu.Item onclick={() => refreshDB(databaseID)}
-																		>Refresh
-																	</ContextMenu.Item>
-																	<ContextMenu.Item onclick={() => terminateDBConnection(databaseID)}
-																		>Disconnect
-																	</ContextMenu.Item>
+																	{#if databasesMap.get(databaseID)?.IsActive}
+																		<ContextMenu.Item 
+																			onclick={() =>
+																				handleAddTab(
+																					connection.ID,
+																					databasesMap.get(databaseID)?.PoolID || "",
+																					databasesMap.get(databaseID)?.Name || "",
+																					"editor",
+																					"editor",
+																					false
+																				)}
+																			>Open Editor
+																		</ContextMenu.Item>
+																		<ContextMenu.Item onclick={() => refreshDB(databaseID)}
+																			>Refresh
+																		</ContextMenu.Item>
+																		<ContextMenu.Item onclick={() => terminateDBConnection(databaseID)}
+																			>Disconnect
+																		</ContextMenu.Item>
+																	{:else}
+																		<ContextMenu.Item onclick={() => establishDatabaseConnection(connection.ID, databaseID)}
+																			>Connect
+																		</ContextMenu.Item>
+																	{/if}
 																</ContextMenu.Content>
 															</ContextMenu.Root>
-														</Collapsible.Trigger>
+														</Collapsible.Trigger >
 														<Collapsible.Content>
 															<Sidebar.MenuSub class="w-full">
 																{#if dbLoadingMap.get(databaseID)}
@@ -542,13 +554,15 @@
 																		<ContextMenu.Root>
 																			<ContextMenu.Trigger>
 																				<Sidebar.MenuButton
+																					class="select-none"
 																					ondblclick={() =>
 																						handleAddTab(
 																							connection.ID,
 																							databasesMap.get(databaseID)?.PoolID || "",
 																							databasesMap.get(databaseID)?.Name || "",
 																							"table",
-																							table
+																							table,
+																							false
 																						)}
 																				>
 																					<Table2 color="#fd6868" strokeWidth={2} size={25} />
@@ -563,11 +577,26 @@
 																							databasesMap.get(databaseID)?.PoolID || "",
 																							databasesMap.get(databaseID)?.Name || "",
 																							"table",
-																							table
+																							table,
+																							false
 																						)}
 																				>
-																					<Plus class="mr-2 h-4 w-4" />
-																					Open in New Tab
+																					<ArrowUpRight class="mr-2 h-4 w-4" />
+																					Open in Table View
+																				</ContextMenu.Item>
+																				<ContextMenu.Item
+																					onclick={() =>
+																						handleAddTab(
+																							connection.ID,
+																							databasesMap.get(databaseID)?.PoolID || "",
+																							databasesMap.get(databaseID)?.Name || "",
+																							"editor",
+																							table,
+																							true
+																						)}
+																				>
+																					<ArrowUpRight class="mr-2 h-4 w-4" />
+																					Open in Editor
 																				</ContextMenu.Item>
 																			</ContextMenu.Content>
 																		</ContextMenu.Root>

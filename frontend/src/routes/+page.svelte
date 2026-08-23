@@ -131,9 +131,10 @@
 		dbName: string,
 		addTabType: string,
 		tableName: string,
+		editorFromTable: boolean
 	) {
 		if (tabsComponent && tabsComponent.addTab) {
-			tabsComponent.addTab(connID, activeDBPoolID, dbName, addTabType, tableName);
+			tabsComponent.addTab(connID, activeDBPoolID, dbName, addTabType, tableName, editorFromTable);
 		}
 	}
 
@@ -253,7 +254,7 @@
 		isAiTyping = true;
 		await scrollToBottom();
 
-		Chat($modelID, aiChat)
+		Chat(tabID, $modelID, aiChat)
 		.then((chatRes) => {
 			isAiTyping = false;
 			const aiMsg = new model.AIMsg();
@@ -388,7 +389,7 @@
 									<div class="chat-message-in flex items-start justify-end gap-2 my-2">
 										<div class="flex flex-col items-end gap-0.5 max-w-[80%]">
 											<div class="rounded-2xl rounded-br-sm bg-background px-3 text-base text-foreground">
-												<p class="leading-relaxed whitespace-pre-wrap">{message.Content}</p>
+												<p class="leading-relaxed whitespace-pre-wrap text-sm">{message.Content}</p>
 											</div>
 											<span class="text-[10px] text-muted-foreground px-1">{formatTime(new Date(message.CreatedAt))}</span>
 										</div>
@@ -421,7 +422,7 @@
 													</div>
 												{/if}
 											{/if}
-											<div class="ai-prose rounded-2xl rounded-tl-sm bg-background pr-2 pt-1">
+											<div class="ai-prose rounded-2xl rounded-tl-sm bg-background pr-2 pt-1 text-sm">
 												{@html renderMarkdown(parts.response)}
 											</div>
 											<span class="text-[10px] text-muted-foreground px-1">{formatTime(new Date(message.CreatedAt))}</span>
