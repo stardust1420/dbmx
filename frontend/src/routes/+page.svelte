@@ -6,28 +6,22 @@
 	import X from '@lucide/svelte/icons/x';
 	import Play from '@lucide/svelte/icons/play';
 	import Plus from '@lucide/svelte/icons/plus';
-	import Ellipsis from '@lucide/svelte/icons/ellipsis';
-	import Paperclip from '@lucide/svelte/icons/paperclip';
 	import Star from '@lucide/svelte/icons/star';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import User from '@lucide/svelte/icons/user';
 	import * as Tooltip from "$lib/components/ui/tooltip/index.js";
-	import * as Avatar from '$lib/components/ui/avatar/index.js';
 	import { toast } from 'svelte-sonner';
 
 
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import * as Kbd from '$lib/components/ui/kbd/index.js';
-	import { Badge } from '$lib/components/ui/badge/index.js';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import * as Select from "$lib/components/ui/select/index.js";
-	import Label from '$lib/components/ui/label/label.svelte';
 	import { onMount, tick } from 'svelte';
-	import { dbmx, model } from '$lib/wailsjs/go/models';
+	import { model } from '$lib/wailsjs/go/models';
 	import { tabsMap, modelID, availableModels, userIsAIEnabled } from '$lib/state.svelte';
 	import { SaveNewChatMessage } from '$lib/wailsjs/go/app/Tabs';
 	import { Chat, ListAvailableModels } from '$lib/wailsjs/go/app/Stardust';
-	import { mode } from 'mode-watcher';
 	import Spinner from '$lib/components/ui/spinner/spinner.svelte';
 	import { Marked } from 'marked';
 	import { markedHighlight } from 'marked-highlight';
@@ -113,7 +107,7 @@
 	let tabType = $state('');
 
 	// Table tab active db properties
-	let tabTableDBPoolID = $state('');
+	let tabDBPoolID = $state('');
 	let tabConnName = $state('');
 	let tabDBName = $state('');
 	let tabConnID = $state(0);
@@ -132,14 +126,14 @@
 
 	// Function to handle adding a new tab from sidebar
 	function handleAddTab(
-		tableName?: string,
-		connID?: number,
-		dbName?: string,
-		tableDBPoolID?: string,
-		connName?: string
+		connID: number,
+		activeDBPoolID: string,
+		dbName: string,
+		addTabType: string,
+		tableName: string,
 	) {
 		if (tabsComponent && tabsComponent.addTab) {
-			tabsComponent.addTab(tableName, connID, dbName, tableDBPoolID, connName);
+			tabsComponent.addTab(connID, activeDBPoolID, dbName, addTabType, tableName);
 		}
 	}
 
@@ -312,7 +306,7 @@
 			<AppSidebar
 				bind:tabID
 				bind:tabName
-				bind:tabTableDBPoolID
+				bind:tabDBPoolID
 				bind:tabConnID
 				bind:tabDBName
 				onAddTab={handleAddTab}
@@ -323,7 +317,7 @@
 					bind:tabID
 					bind:tabName
 					bind:tabType
-					bind:tabTableDBPoolID
+					bind:tabDBPoolID
 					bind:tabConnName
 					bind:tabDBName
 					bind:tabConnID

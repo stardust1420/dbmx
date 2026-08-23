@@ -7,6 +7,7 @@ type Tab struct {
 	Output   string
 	IsActive bool
 
+	// TODO Handle tab's connected db using a boolean
 	// This is the active pool id
 	ActiveDBID *string
 

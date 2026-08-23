@@ -11,7 +11,7 @@ export function EstablishPostgresConnection(arg1:number):Promise<Array<model.Dat
 
 export function EstablishPostgresDatabaseConnection(arg1:number,arg2:string):Promise<model.Database>;
 
-export function ExecuteQuery(arg1:uuid.UUID,arg2:string,arg3:number,arg4:boolean):Promise<model.QueryResult>;
+export function ExecuteQuery(arg1:number,arg2:string,arg3:boolean):Promise<model.QueryResult>;
 
 export function GetAllConnections():Promise<Array<model.Connection>>;
 
@@ -25,9 +25,9 @@ export function GetPostgresServerDatabases(arg1:number,arg2:uuid.UUID,arg3:strin
 
 export function GetSqlite3Version():Promise<string>;
 
-export function GetTableData(arg1:uuid.UUID,arg2:number,arg3:string,arg4:string,arg5:string,arg6:string,arg7:string,arg8:string,arg9:string,arg10:boolean):Promise<model.QueryResult>;
+export function GetTableData(arg1:number,arg2:string,arg3:string,arg4:string,arg5:string,arg6:string,arg7:string,arg8:string,arg9:boolean):Promise<model.QueryResult>;
 
-export function GetTableInfo(arg1:uuid.UUID,arg2:string):Promise<model.TableInfo>;
+export function GetTableInfo(arg1:number,arg2:string):Promise<model.TableInfo>;
 
 export function RefreshPostgresDatabase(arg1:number,arg2:string,arg3:string,arg4:string):Promise<model.Database>;
 
@@ -39,6 +39,6 @@ export function TestConnectPostgres(arg1:model.Connection):Promise<boolean>;
 
 export function TypeConnectionTable():Promise<model.ConnectionTable>;
 
-export function UpdateCells(arg1:uuid.UUID,arg2:Array<model.UpdateCell>):Promise<boolean>;
+export function UpdateCells(arg1:number,arg2:Array<model.UpdateCell>):Promise<boolean>;
 
 export function UpdateConnection(arg1:model.Connection):Promise<boolean>;

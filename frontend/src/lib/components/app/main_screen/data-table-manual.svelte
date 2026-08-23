@@ -34,7 +34,7 @@
 
 
 	let {
-		tabTableDBPoolID,
+		tabID,
         tableName,
         getTablePageData,
 		lastQueryExecutionTime = 0
@@ -167,7 +167,7 @@
         if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') {
             event.preventDefault();
 			if (updateCellPayload.length > 0) {
-				UpdateCells(tabTableDBPoolID, updateCellPayload)
+				UpdateCells(tabID, updateCellPayload)
 				.then((res) => {
 					if (res) {
 						toast.success('Saving Changes', {

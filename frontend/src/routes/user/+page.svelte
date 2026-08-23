@@ -1,6 +1,5 @@
 <script lang="ts">
-import { onMount } from 'svelte';
-import { GetLoggedInUser, Logout } from '$lib/wailsjs/go/app/Auth';
+import { Logout } from '$lib/wailsjs/go/app/Auth';
 import { goto } from '$app/navigation';
 import Label from '$lib/components/ui/label/label.svelte';
 import { Button } from '$lib/components/ui/button/index.js';

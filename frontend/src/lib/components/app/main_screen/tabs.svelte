@@ -7,34 +7,27 @@
 	import Chat from 'lucide-svelte/icons/message-circle-more';
 	import * as Resizable from '$lib/components/ui/resizable/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import { onMount, type ComponentProps } from 'svelte';
+	import { onMount } from 'svelte';
 	import { LaserLoader } from '$lib/components/ui/laser-loader/index.js';
 	import * as Breadcrumb from '$lib/components/ui/breadcrumb/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
-	import { LineScale } from 'svelte-spins';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import * as Collapsible from '$lib/components/ui/collapsible/index.js';
 	import { Spinner } from '$lib/components/ui/spinner/index.js';
 
-	import * as Select from '$lib/components/ui/select/index.js';
 
 	// Import our custom components
 	import SqlEditor from '$lib/components/app/main_screen/sql_editor.svelte';
 	import {
 		AddTab,
 		DeleteTab,
-		SetActiveTab,
 		UpdateTabEditorContent,
-		SaveActiveDBProps,
 		GetAllTabs
 	} from '$lib/wailsjs/go/app/Tabs';
-	import { activeDBs, suggestions } from '$lib/state.svelte';
+	import { suggestions } from '$lib/state.svelte';
 	import {
 		tabsMap,
-		selectedDBDisplay,
-		currentColor,
-		activePoolID,
 		selectedQuery
 	} from '$lib/state.svelte';
 
@@ -107,7 +100,7 @@
 		tabName = $bindable(''),
 		tabType = $bindable(''),
 		tabDBName = $bindable(''),
-		tabTableDBPoolID = $bindable(''),
+		tabDBPoolID = $bindable(''),
 		tabConnName = $bindable(''),
 		tabConnID = $bindable(0),
 		select = $bindable(''),
@@ -133,11 +126,11 @@
 	let tableViewTab = $state('data');
 
 	onMount(() => {
-		getAllTabsTest() 
+		getAllTabs() 
 	});
 
 
-	function getAllTabsTest() {
+	function getAllTabs() {
 		tableViewTab = 'data';
 
 		if (tabsMap.size > 0) {
@@ -151,18 +144,13 @@
 					} else {
 						queryLoading = false;
 					}
-					console.log('Active tab', tab);
 					tabID = tab.ID;
 					tabName = tab.Name;
 					tabType = tab.Type;
-
-					// Properties for table view tab
-					if (tabType === 'table') {
-						tabDBName = tab.DBName || '';
-						tabTableDBPoolID = tab.ActiveDBID || '';
-						tabConnName = tab.ConnectionName || '';
-						tabConnID = tab.ConnectionID || 0;
-					}
+					tabDBName = tab.DBName || '';
+					tabDBPoolID = tab.ActiveDBID || '';
+					tabConnName = tab.ConnectionName || '';
+					tabConnID = tab.ConnectionID || 0;
 
 					select = tab.Select;
 					limit = tab.Limit;
@@ -174,16 +162,6 @@
 					aiChat = tab.AIChat || [];
 
 					editor = tab.Editor;
-
-					if ($activeDBs.length == 0) {
-						$selectedDBDisplay = 'Connect to a database';
-						$currentColor = '';
-						$activePoolID = '';
-					} else {
-						$selectedDBDisplay = tab.ActiveDB || 'Connect to a database';
-						$activePoolID = tab.ActiveDBID || '';
-						$currentColor = tab.ActiveDBColor || '';
-					}
 
 					// Update columns
 					if (tab.columns) {
@@ -232,18 +210,13 @@
 						} else {
 							queryLoading = false;
 						}
-						console.log('Active tab', tab);
 						tabID = tab.ID;
 						tabName = tab.Name;
 						tabType = tab.Type;
-
-						// Properties for table view tab
-						if (tabType === 'table') {
-							tabDBName = tab.DBName || '';
-							tabTableDBPoolID = tab.ActiveDBID || '';
-							tabConnName = tab.ConnectionName || '';
-							tabConnID = tab.ConnectionID || 0;
-						}
+						tabDBName = tab.DBName || '';
+						tabDBPoolID = tab.ActiveDBID || '';
+						tabConnName = tab.ConnectionName || '';
+						tabConnID = tab.ConnectionID || 0;
 
 						select = tab.Select;
 						limit = tab.Limit;
@@ -255,16 +228,6 @@
 						aiChat = tab.AIChat || [];
 
 						editor = tab.Editor;
-
-						if ($activeDBs.length == 0) {
-							$selectedDBDisplay = 'Connect to a database';
-							$currentColor = '';
-							$activePoolID = '';
-						} else {
-							$selectedDBDisplay = tab.ActiveDB || 'Connect to a database';
-							$activePoolID = tab.ActiveDBID || '';
-							$currentColor = tab.ActiveDBColor || '';
-						}
 
 						// Update columns
 						// if (tab.columns) {
@@ -313,109 +276,12 @@
 		rows.set([]);
 	}
 
-	function getAllTabs() {
-		tableViewTab = 'data';
-
-		GetAllTabs().then((tabs) => {
-			if (!tabs) {
-				return;
-			}
-			for (const tab of tabs) {
-				tabsMap.set(tab.ID, tab);
-
-				// Set active tab properties
-				if (tab.IsActive) {
-					if (tab.IsQueryRunning) {
-						queryLoading = true;
-					} else {
-						queryLoading = false;
-					}
-					console.log('Active tab', tab);
-					tabID = tab.ID;
-					tabName = tab.Name;
-					tabType = tab.Type;
-
-					// Properties for table view tab
-					if (tabType === 'table') {
-						tabDBName = tab.DBName || '';
-						tabTableDBPoolID = tab.ActiveDBID || '';
-						tabConnName = tab.ConnectionName || '';
-						tabConnID = tab.ConnectionID || 0;
-					}
-
-					select = tab.Select;
-					limit = tab.Limit;
-					offset = tab.Offset;
-					where = tab.Where;
-					orderBy = tab.OrderBy;
-					groupBy = tab.GroupBy;
-					tableColumns = tab.TableColumnsList;
-					aiChat = tab.AIChat || [];
-
-					editor = tab.Editor;
-
-					if ($activeDBs.length == 0) {
-						$selectedDBDisplay = 'Connect to a database';
-						$currentColor = '';
-						$activePoolID = '';
-					} else {
-						$selectedDBDisplay = tab.ActiveDB || 'Connect to a database';
-						$activePoolID = tab.ActiveDBID || '';
-						$currentColor = tab.ActiveDBColor || '';
-					}
-
-					// Update columns
-					// if (tab.columns) {
-					// 	for (const column of tab.columns) {
-					// 		columns.set([
-					// 			...$columns,
-					// 			{
-					// 				accessorKey: column,
-					// 				header: column
-					// 			}
-					// 		]);
-					// 	}
-					// }
-
-					// Process rows once and cache them
-					if (tab.rows) {
-						let processedRows: any[] = [];
-						for (const row of tab.rows) {
-							let cell: Record<string, any> = {};
-							if (Array.isArray(row)) {
-								for (const resultCell of row) {
-									if (resultCell.column && resultCell.value) {
-										cell[resultCell.column] = resultCell.value;
-									}
-								}
-								processedRows.push(cell);
-							}
-						}
-						// Cache the processed rows in the tab object
-						// We need to cast to any to avoid TS error if model definition isn't updated instantly in IDE
-						(tab as any).processedRows = processedRows;
-						tabsMap.set(tab.ID, tab);
-					}
-
-					// Update active rows from cache
-					if ((tab as any).processedRows) {
-						rows.set((tab as any).processedRows);
-					}
-				}
-			}
-			syncTabOrder();
-		});
-
-		columns.set([]);
-		rows.set([]);
-	}
-
 	export function addTab(
-		tableName: string = '',
-		connID: number = 0,
-		dbName: string = '',
-		tableDBPoolID: string = '',
-		connName: string = ''
+		connID: number,
+		activeDBPoolID: string,
+		dbName: string,
+		addTabType: string,
+		tableName: string,
 	) {
 		// Clear the output area for new tab. This is important to avoid confusion as the new tab loads and fetches its own data
 		columns.set([]);
@@ -426,34 +292,13 @@
 		tableViewTab = 'data';
 
 		tabLoading = true;
-		console.log('tab loading true');
-		let tableType = 'editor';
-		let tabDisplayName = 'Editor';
 
-		// If table's pool id is provided, use that instead of the active pool id
-		// This is used when we want to open a table in a new tab
-		// In case of table, we want the pool id of the table's database
-
-		// First assign the active global pool id
-		let poolID: string = $activePoolID;
-
-		// If table's pool id is provided, use that instead of the active pool id
-		if (tableName.trim() != '') {
-			tableType = 'table';
-			tabDisplayName = tableName;
-			poolID = tableDBPoolID;
-		}
-		// Send default values for now in activeDBID and activeDB
-		// Do not set active db for new tab in case of editor tab. Let the user select the active db
 		AddTab(
-			tableType === 'table' ? poolID : '',
-			"",
-			"",
-			tabDisplayName,
-			tableType,
 			connID,
+			activeDBPoolID,
 			dbName,
-			connName
+			addTabType,
+			tableName,
 		)
 			.then((tab) => {
 				queryLoading = false;
@@ -462,18 +307,10 @@
 				tabID = tab.ID;
 				tabName = tab.Name;
 				tabType = tab.Type;
-
-				// Properties for table view tab
-				if (tabType === 'table') {
-					tabDBName = tab.DBName || '';
-					tabTableDBPoolID = tab.ActiveDBID || '';
-					tabConnName = tab.ConnectionName || '';
-					tabConnID = tab.ConnectionID || 0;
-				}
-
-				$selectedDBDisplay = 'Connect to a database';
-				$currentColor = '';
-				$activePoolID = '';
+				tabDBName = tab.DBName || '';
+				tabDBPoolID = tab.ActiveDBID || '';
+				tabConnName = tab.ConnectionName || '';
+				tabConnID = tab.ConnectionID || 0;
 
 				select = tab.Select;
 				limit = tab.Limit;
@@ -541,9 +378,6 @@
 				aiChat = [];
 				columns.set([]);
 				rows.set([]);
-				$selectedDBDisplay = 'Connect to a database';
-				$currentColor = '';
-				$activePoolID = '';
 			}
 		} else {
 			// If not active, just ensure UI state is clean if needed, 
@@ -589,7 +423,7 @@
 
 		// Properties for table view tab
 		tabDBName = tab.DBName || '';
-		tabTableDBPoolID = tab.ActiveDBID || '';
+		tabDBPoolID = tab.ActiveDBID || '';
 		tabConnName = tab.ConnectionName || '';
 		tabConnID = tab.ConnectionID || 0;
 
@@ -603,16 +437,6 @@
 		aiChat = tab.AIChat || [];
 
 		editor = tab.Editor;
-
-		if ($activeDBs.length == 0) {
-			$selectedDBDisplay = 'Connect to a database';
-			$currentColor = '';
-			$activePoolID = '';
-		} else {
-			$selectedDBDisplay = tab.ActiveDB || 'Connect to a database';
-			$activePoolID = tab.ActiveDBID || '';
-			$currentColor = tab.ActiveDBColor || '';
-		}
 
 		totalRows.set(tab.totalRows);
 		currentPage.set(tab.currentPage);
@@ -703,15 +527,6 @@
 			});
 			return;
 		}
-		if ($activePoolID == '') {
-			toast.error('Please select a database to execute the query', {
-				action: {
-					label: 'OK',
-					onClick: () => console.info('OK')
-				}
-			});
-			return;
-		}
 
 		// Set the current output to empty
 		columns.set([]);
@@ -734,7 +549,7 @@
 		queryLoading = true;
 		let explain = isExplain || false;
 		// Execute query
-		ExecuteQuery($activePoolID, $selectedQuery, tabID, explain)
+		ExecuteQuery(tabID, $selectedQuery, explain)
 			.then((result) => {
 				let currentTab = tabsMap.get(currentTabID);
 
@@ -838,7 +653,7 @@
 			return;
 		}
 
-		if (tabTableDBPoolID == '') {
+		if (tabDBPoolID == '') {
 			toast.error('Please select a database to execute the query', {
 				action: {
 					label: 'OK',
@@ -869,7 +684,7 @@
 		}
 
 		// Execute query
-		GetTableData(tabTableDBPoolID, tabID, tabName, select, limit, offset, where, orderBy, groupBy, false)
+		GetTableData(tabID, tabName, select, limit, offset, where, orderBy, groupBy, false)
 			.then((result) => {
 				let currentTab = tabsMap.get(currentTabID);
 
@@ -966,7 +781,7 @@
 	}
 
 	function getTablePageData(limit: string, offset: string) {
-		if (tabTableDBPoolID == '') {
+		if (tabDBPoolID == '') {
 			toast.error('Please select a database to execute the query', {
 				action: {
 					label: 'OK',
@@ -997,7 +812,7 @@
 		}
 
 		// Execute query
-		GetTableData(tabTableDBPoolID, tabID, tabName, select, limit, offset, where, orderBy, groupBy, true)
+		GetTableData(tabID, tabName, select, limit, offset, where, orderBy, groupBy, true)
 			.then((result) => {
 				let currentTab = tabsMap.get(currentTabID);
 
@@ -1088,30 +903,6 @@
 
 	}
 
-	function selectActiveDB(activeDBDisplay: string, poolID: string, activeDBColor: string) {
-		$selectedDBDisplay = activeDBDisplay;
-		$activePoolID = poolID;
-		$currentColor = activeDBColor;
-
-		// Update tabsMap to persist state across tab switches
-		let currentTab = tabsMap.get(tabID);
-		if (currentTab) {
-			currentTab.ActiveDB = activeDBDisplay;
-			currentTab.ActiveDBID = poolID;
-			currentTab.ActiveDBColor = activeDBColor;
-			tabsMap.set(tabID, currentTab);
-		}
-
-		SaveActiveDBProps(tabID, $activePoolID, $selectedDBDisplay, $currentColor);
-	}
-
-	$effect(() => {
-		if ($activeDBs.length == 0) {
-			$selectedDBDisplay = 'Connect to a database';
-			$currentColor = '';
-		}
-	});
-
 	// Call UpdateTabEditorContent on editor change
 	let editorUpdateTimer: any;
 	$effect(() => {
@@ -1156,21 +947,6 @@
             event.preventDefault();
 			console.log('get table data');
 			getTableData();
-        }
-        
-        // // Command/Ctrl + S
-        // if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') {
-        //     event.preventDefault();
-        //     toast.success('Not Needed! 😂', {
-        //         description: 'Your queries are saved automatically 😂',
-        //         action: { label: 'OK', onClick: () => console.info('OK') }
-        //     });
-        // }
-
-        // Command/Ctrl + T
-        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 't') {
-            event.preventDefault(); // CAREFUL: Without this, the browser will open a new tab!
-            addTab();
         }
     }
 </script>
@@ -1230,12 +1006,6 @@
 								</Button>
 							</div>
 						{/if}
-						<button
-							class="flex items-center self-center ml-1 mb-1 rounded-full border border-muted-foreground p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-							onclick={() => addTab()}
-						>
-							<Plus size={16} />
-						</button>
 					</div>
 				</div>
 				<div class="flex mr-2 self-center">
@@ -1269,9 +1039,9 @@
 										</Breadcrumb.Item>
 										<Breadcrumb.Separator />
 										<Breadcrumb.Item>
-											<Breadcrumb.Page class='{tabTableDBPoolID === '' ? "text-red-500" : "text-green-500"}'>{tabName}</Breadcrumb.Page>
+											<Breadcrumb.Page class='{tabDBPoolID === '' ? "text-red-500" : "text-green-500"}'>{tabName}</Breadcrumb.Page>
 										</Breadcrumb.Item>
-										{#if tabTableDBPoolID}
+										{#if tabDBPoolID}
 											<button
 												class="flex items-center self-center mx-2 rounded-full border border-green-500 p-1 text-green-500 hover:bg-green-500/10 hover:text-green-600 transition-colors"
 												onclick={getTableData}
@@ -1540,7 +1310,7 @@
 									{#if $columns.length > 0}
 											{#key tabID}
 												<DataTableManual
-													tabTableDBPoolID={tabTableDBPoolID}
+													tabID={tabID}
 													tableName={tabName}
 													getTablePageData={getTablePageData}
 													{lastQueryExecutionTime}
@@ -1553,7 +1323,7 @@
 						{:else if tableViewTab === 'manage'}
 							<div class="mt-2 flex flex-1 flex-col overflow-hidden">
 								<ManageTable 
-									tabTableDBPoolID={tabTableDBPoolID}
+									tabID={tabID}
 									tabName={tabName} />
 							</div>
 						{/if}
@@ -1561,43 +1331,25 @@
 			{:else}
 					<Tabs.Content value={tabID.toString()} class="flex flex-col flex-1 overflow-hidden">
 						<div class="flex h-full flex-col">
-							<!-- Active DB Selector and Execute Query Button -->
-							<div class="flex items-center h-10">
-								<Select.Root type="single" name="activeDatabase">
-									<Select.Trigger
-										class="{getColorClass(
-											$currentColor
-										)} prevent:default w-auto bg-opacity-20 hover:bg-opacity-25 m-2 focus:ring-0 ml-4 mt-4"
-									>
-										{$selectedDBDisplay}
-									</Select.Trigger>
-									<Select.Content>
-										<Select.Group>
-											{#each $activeDBs as activeDB}
-												<Select.Item
-													onclick={() =>
-														selectActiveDB(
-															activeDB.ConnectionName + ' - ' + activeDB.Name,
-															activeDB.PoolID,
-															activeDB.Color
-														)}
-													class="{getColorClass(activeDB.Color)} bg-opacity-20 hover:bg-opacity-25"
-													value={activeDB.ID}
-													label={activeDB.Name}
-													>{activeDB.ConnectionName} - {activeDB.Name}</Select.Item
-												>
-											{/each}
-										</Select.Group>
-									</Select.Content>
-								</Select.Root>
-								<button
-									class="flex items-center self-center m-1 mx-2 rounded-full border border-green-500 p-1 text-green-500 hover:bg-green-500/10 hover:text-green-600 transition-colors"
-									onclick={() => executeQuery()}
-								>
-									<Play size={16} />
-								</button>
-								
-							</div>
+							 <Breadcrumb.Root class="mx-4 mt-2">
+								<Breadcrumb.List>
+									<Breadcrumb.Item>
+										<Breadcrumb.Link>{tabConnName}</Breadcrumb.Link>
+									</Breadcrumb.Item>
+									<Breadcrumb.Separator />
+									<Breadcrumb.Item>
+										<Breadcrumb.Link class='{tabDBPoolID === '' ? "text-red-500" : "text-green-500"}'>{tabDBName}</Breadcrumb.Link>
+									</Breadcrumb.Item>
+									{#if tabDBPoolID}
+										<button
+											class="flex items-center self-center mx-2 rounded-full border border-green-500 p-1 text-green-500 hover:bg-green-500/10 hover:text-green-600 transition-colors"
+											onclick={() => executeQuery()}
+										>
+											<Play size={16} />
+										</button>
+									{/if}
+								</Breadcrumb.List>
+							</Breadcrumb.Root>
 							
 
 							<!-- Resizable Panes for Editor and Output -->
@@ -1630,7 +1382,8 @@
 										{/if}
 										{#if $columns.length > 0}
 											{#key tabID}
-												<DataTable 
+												<DataTable
+													tabID={tabID}
 													tableName={executeQueryTableName} 
 													executeQuery={executeQuery}
 													{lastQueryExecutionTime}

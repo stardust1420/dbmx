@@ -25,9 +25,10 @@
 	import ChevronRightIcon from '@tabler/icons-svelte/icons/chevron-right';
 	import ChevronsRightIcon from '@tabler/icons-svelte/icons/chevrons-right';
 	import { toast } from 'svelte-sonner';
-	import { columns, rows, activePoolID } from '$lib/state.svelte';
+	import { columns, rows } from '$lib/state.svelte';
 
 	let {
+		tabID,
 		tableName,
 		executeQuery,
 		lastQueryExecutionTime = 0
@@ -143,7 +144,7 @@
         if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') {
             event.preventDefault();
 			if (updateCellPayload.length > 0) {
-				UpdateCells($activePoolID, updateCellPayload)
+				UpdateCells(tabID, updateCellPayload)
 				.then((res) => {
 					if (res) {
 						toast.success('Saving Changes', {

@@ -22,12 +22,27 @@ func NewTabs(db *sql.DB, pm *PoolManager) *Tabs {
 	}
 }
 
-func (t *Tabs) AddTab(activeDBID, activeDB, activeDBColor, tableName, tabType string, connID int64, dbName, connName string) (*model.Tab, error) {
-	var active_db_id, active_db, active_db_color *string
+func (t *Tabs) AddTab(connID int64, activeDBPoolID string, dbName string, tabType string, tableName string) (*model.Tab, error) {
+	// Validations
+	if connID == 0 {
+		return nil, errors.New("connection id is required")
+	}
+	if activeDBPoolID == "" {
+		return nil, errors.New("active db pool id is required")
+	}
+	if dbName == "" {
+		return nil, errors.New("database name is required")
+	}
+	if tabType == "" {
+		return nil, errors.New("tab type is required")
+	}
+	if !model.IsValidTabType(tabType) {
+		return nil, errors.New("invalid tab type. Only editor and table are allowed.")
+	}
 
-	// Required for tab type table
-	var conn_id *int64
-	var db_name *string
+	// Get connection color
+	var connColor, connName string
+	err := t.DB.QueryRow("SELECT name, color FROM connections WHERE id = ?", connID).Scan(&connName, &connColor)
 
 	var tableColumnsString string
 	var tableColumns []string
@@ -35,27 +50,16 @@ func (t *Tabs) AddTab(activeDBID, activeDB, activeDBColor, tableName, tabType st
 	name := "Editor"
 
 	if tabType == "table" {
-		if connID == 0 {
-			return nil, errors.New("connection id is required for tab type table")
-		}
-		if dbName == "" {
-			return nil, errors.New("database name is required for tab type table")
-		}
 		if tableName == "" {
 			return nil, errors.New("table name is required for tab type table")
 		}
-		if activeDBID == "" {
-			return nil, errors.New("active db pool id is required for tab type table")
-		}
 
-		conn_id = &connID
-		db_name = &dbName
 		name = tableName
 
 		// Get the columns of the table
 
 		// Convert active db id to uuid
-		activePoolID, err := uuid.Parse(activeDBID)
+		activePoolID, err := uuid.Parse(activeDBPoolID)
 		if err != nil {
 			return nil, err
 		}
@@ -96,24 +100,9 @@ func (t *Tabs) AddTab(activeDBID, activeDB, activeDBColor, tableName, tabType st
 		tableColumnsString = string(tableColumnsJSON)
 	}
 
-	if activeDBID != "" {
-		active_db_id = &activeDBID
-	}
-
-	if activeDB != "" {
-		active_db = &activeDB
-	}
-	if activeDBColor != "" {
-		active_db_color = &activeDBColor
-	}
-
-	if !model.IsValidTabType(tabType) {
-		return nil, errors.New("invalid tab type. Only editor and table are allowed.")
-	}
-
 	// Insert a new active tab
 	query := `INSERT INTO tabs (name, editor, output, is_active, active_db_id, active_db, active_db_color, type, connection_id, db_name, connection_name, "select", "limit", "offset", "where", "order_by", "group_by", table_columns) VALUES (?, '', '', true, ?, ?, ?, ?, ?, ?, ?, '', '', '', '', '', '', ?);`
-	result, err := t.DB.Exec(query, name, active_db_id, active_db, active_db_color, tabType, conn_id, db_name, connName, tableColumnsString)
+	result, err := t.DB.Exec(query, name, activeDBPoolID, dbName, connColor, tabType, connID, dbName, connName, tableColumnsString)
 	if err != nil {
 		return nil, err
 	}
@@ -133,12 +122,12 @@ func (t *Tabs) AddTab(activeDBID, activeDB, activeDBColor, tableName, tabType st
 		ID:               insertedID,
 		Name:             name,
 		IsActive:         true,
-		ActiveDBID:       active_db_id,
-		ActiveDB:         active_db,
-		ActiveDBColor:    active_db_color,
+		ActiveDBID:       &activeDBPoolID,
+		ActiveDB:         &dbName,
+		ActiveDBColor:    &connColor,
 		Type:             tabType,
-		ConnectionID:     conn_id,
-		DBName:           db_name,
+		ConnectionID:     &connID,
+		DBName:           &dbName,
 		ConnectionName:   connName,
 		TableColumnsList: tableColumns,
 	}, nil
