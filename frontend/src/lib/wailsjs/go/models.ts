@@ -522,3 +522,20 @@ export namespace model {
 
 }
 
+export namespace pgxpool {
+	
+	export class Pool {
+	
+	
+	    static createFrom(source: any = {}) {
+	        return new Pool(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	
+	    }
+	}
+
+}
+

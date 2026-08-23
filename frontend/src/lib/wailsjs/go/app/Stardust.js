@@ -6,8 +6,8 @@ export function AddProviderAPIKey(arg1, arg2) {
   return window['go']['app']['Stardust']['AddProviderAPIKey'](arg1, arg2);
 }
 
-export function Chat(arg1, arg2) {
-  return window['go']['app']['Stardust']['Chat'](arg1, arg2);
+export function Chat(arg1, arg2, arg3) {
+  return window['go']['app']['Stardust']['Chat'](arg1, arg2, arg3);
 }
 
 export function DeleteProviderAPIKey(arg1, arg2) {
@@ -20,6 +20,10 @@ export function DisableStardustAI() {
 
 export function EnableStardustAI() {
   return window['go']['app']['Stardust']['EnableStardustAI']();
+}
+
+export function GetSchemaContext(arg1) {
+  return window['go']['app']['Stardust']['GetSchemaContext'](arg1);
 }
 
 export function ListAvailableModels() {

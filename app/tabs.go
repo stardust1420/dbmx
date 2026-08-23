@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"dbmx/model"
 	"encoding/json"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -22,7 +23,7 @@ func NewTabs(db *sql.DB, pm *PoolManager) *Tabs {
 	}
 }
 
-func (t *Tabs) AddTab(connID int64, activeDBPoolID string, dbName string, tabType string, tableName string) (*model.Tab, error) {
+func (t *Tabs) AddTab(connID int64, activeDBPoolID string, dbName string, tabType string, tableName string, editorFromTable bool) (*model.Tab, error) {
 	// Validations
 	if connID == 0 {
 		return nil, errors.New("connection id is required")
@@ -48,6 +49,8 @@ func (t *Tabs) AddTab(connID int64, activeDBPoolID string, dbName string, tabTyp
 	var tableColumns []string
 
 	name := "Editor"
+
+	var editor string
 
 	if tabType == "table" {
 		if tableName == "" {
@@ -98,11 +101,17 @@ func (t *Tabs) AddTab(connID int64, activeDBPoolID string, dbName string, tabTyp
 		}
 
 		tableColumnsString = string(tableColumnsJSON)
+
+	}
+
+	if editorFromTable {
+		// Editor default
+		editor = fmt.Sprintf("SELECT * FROM %s ORDER BY 1 LIMIT 20", tableName)
 	}
 
 	// Insert a new active tab
-	query := `INSERT INTO tabs (name, editor, output, is_active, active_db_id, active_db, active_db_color, type, connection_id, db_name, connection_name, "select", "limit", "offset", "where", "order_by", "group_by", table_columns) VALUES (?, '', '', true, ?, ?, ?, ?, ?, ?, ?, '', '', '', '', '', '', ?);`
-	result, err := t.DB.Exec(query, name, activeDBPoolID, dbName, connColor, tabType, connID, dbName, connName, tableColumnsString)
+	query := `INSERT INTO tabs (name, editor, output, is_active, active_db_id, active_db, active_db_color, type, connection_id, db_name, connection_name, "select", "limit", "offset", "where", "order_by", "group_by", table_columns) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
+	result, err := t.DB.Exec(query, name, editor, "", 1, activeDBPoolID, dbName, connColor, tabType, connID, dbName, connName, "", "", "", "", "", "", tableColumnsString)
 	if err != nil {
 		return nil, err
 	}
@@ -121,6 +130,7 @@ func (t *Tabs) AddTab(connID int64, activeDBPoolID string, dbName string, tabTyp
 	return &model.Tab{
 		ID:               insertedID,
 		Name:             name,
+		Editor:           editor,
 		IsActive:         true,
 		ActiveDBID:       &activeDBPoolID,
 		ActiveDB:         &dbName,

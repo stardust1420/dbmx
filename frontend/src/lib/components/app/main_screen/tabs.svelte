@@ -59,6 +59,21 @@
 		}
 	}
 
+	function getColorClass(color: string): string {
+		const colorMap: Record<string, string> = {
+			'bg-purple-500': 'border-t dark:border-purple-700 light:border-purple-500',
+			'bg-indigo-500': 'border-t dark:border-indigo-700 light:border-indigo-500',
+			'bg-emerald-500': 'border-t dark:border-emerald-700 light:border-emerald-500',
+			'bg-red-500': 'border-t dark:border-red-700 light:border-red-500',
+			'bg-blue-500': 'border-t dark:border-blue-700 light:border-blue-500',
+			'bg-green-500': 'border-t dark:border-green-700 light:border-green-500',
+			'bg-yellow-500': 'border-t dark:border-yellow-700 light:border-yellow-500',
+			'bg-orange-500': 'border-t dark:border-orange-700 light:border-orange-500',
+			'bg-pink-500': 'border-t dark:border-pink-700 light:border-pink5900'
+		};
+		return colorMap[color] || '';
+	}
+
 	function onTabDragOver(e: DragEvent, id: number) {
 		e.preventDefault();
 		if (dragTabId === null || dragTabId === id) return;
@@ -282,6 +297,7 @@
 		dbName: string,
 		addTabType: string,
 		tableName: string,
+		editorFromTable: boolean
 	) {
 		// Clear the output area for new tab. This is important to avoid confusion as the new tab loads and fetches its own data
 		columns.set([]);
@@ -299,6 +315,7 @@
 			dbName,
 			addTabType,
 			tableName,
+			editorFromTable
 		)
 			.then((tab) => {
 				queryLoading = false;
@@ -326,6 +343,10 @@
 
 				if (tabType === 'table') {
 					getTableData();
+				}
+				if (editorFromTable) {
+					$selectedQuery = editor
+					executeQuery();
 				}
 			})
 			.catch((error) => {
@@ -454,7 +475,7 @@
 
 		// Update rows using cached data (O(1))
 		rows.set([]);
-		if ((tab as any).processedRows.length > 0) {
+		if ((tab as any).processedRows && (tab as any).processedRows.length > 0) {
 			rows.set((tab as any).processedRows);
 		} else if (tab.rows) {
 			// Fallback: If not cached yet (legacy/first load edge case), process and cache now
@@ -492,21 +513,6 @@
 		// 			}
 		// 		});
 		// 	});
-	}
-
-	function getColorClass(color: string): string {
-		const colorMap: Record<string, string> = {
-			'bg-purple-500': 'bg-purple-500',
-			'bg-indigo-500': 'bg-indigo-500',
-			'bg-emerald-500': 'bg-emerald-500',
-			'bg-red-500': 'bg-red-500',
-			'bg-blue-500': 'bg-blue-500',
-			'bg-green-500': 'bg-green-500',
-			'bg-yellow-500': 'bg-yellow-500',
-			'bg-orange-500': 'bg-orange-500',
-			'bg-pink-500': 'bg-pink-500'
-		};
-		return colorMap[color] || '';
 	}
 
 	let executeQueryTableName = $state("")
@@ -967,7 +973,7 @@
 							{@const tab = tabsMap.get(id)}
 							{#if tab}
 								<div
-									class="group relative flex items-center rounded-t-lg px-3 py-1.5 transition-all duration-150 select-none
+									class="{getColorClass(tab.ActiveDBColor || "")} group relative flex items-center rounded-t-lg px-3 py-1.5 transition-all duration-150 select-none
 										{tab.ID === tabID
 											? 'bg-muted text-foreground z-10'
 											: 'bg-background text-muted-foreground hover:bg-muted/50 hover:text-foreground'}"
