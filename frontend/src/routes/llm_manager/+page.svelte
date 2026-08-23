@@ -8,11 +8,10 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { AddProviderAPIKey, DeleteProviderAPIKey, DisableStardustAI, EnableStardustAI, ListProviders, SwitchDefaultKey, UpdateProviderAPIKey } from '$lib/wailsjs/go/app/Stardust';
-	import { Loader, toast } from 'svelte-sonner';
+	import { toast } from 'svelte-sonner';
 	import { dbmx } from '$lib/wailsjs/go/models';
 	import { Spinner } from "$lib/components/ui/spinner/index.js";
 	import { SvelteMap } from 'svelte/reactivity';
-	import { KeyIcon, KeyRound } from 'lucide-svelte';
 
 
 

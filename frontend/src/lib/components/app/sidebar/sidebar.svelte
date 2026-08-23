@@ -21,18 +21,18 @@
 		ref = $bindable(null),
 		tabID = $bindable(0),
 		tabName = $bindable(''),
-		tabTableDBPoolID = $bindable(''),
+		tabDBPoolID = $bindable(''),
 		tabConnID = $bindable(0),
 		tabDBName = $bindable(''),
 		onAddTab,
 		...restProps
 	}: ComponentProps<typeof Sidebar.Root> & {
 		onAddTab?: (
-			tableName?: string,
-			connID?: number,
-			dbName?: string,
-			tableDBPoolID?: string,
-			connName?: string
+			connID: number,
+			activeDBPoolID: string,
+			dbName: string,
+			addTabType: string,
+			tableName: string,
 		) => void;
 	} = $props();
 
@@ -44,9 +44,6 @@
 		dbLoadingMap,
 		activeDBs,
 		suggestions,
-		selectedDBDisplay,
-		currentColor,
-		activePoolID,
 		tabsMap
 	} from '$lib/state.svelte';
 
@@ -59,7 +56,6 @@
 	} from '$lib/wailsjs/go/app/Connections';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { toast } from 'svelte-sonner';
-	import { SaveActiveDBProps } from '$lib/wailsjs/go/app/Tabs';
 
 	const refresh = () => {
 		GetAllConnections()
@@ -148,33 +144,21 @@
 					});
 				}
 
-				$selectedDBDisplay = db.ConnectionName + ' - ' + db.Name;
-				$currentColor = db.Color;
-				$activePoolID = db.PoolID;
-				SaveActiveDBProps(tabID, $activePoolID, $selectedDBDisplay, $currentColor);
-
 				// If the server and database to which connection was established is the current table's database
 				// Set the tab table db pool id so that it's connected
 				if (tabConnID === db.ConnectionID && tabDBName === db.Name) {
-					tabTableDBPoolID = db.PoolID;
+					tabDBPoolID = db.PoolID;
 				}
 
 				// Loop over all the tabs in the tabs map
 				// If the connection id and database name of the tab matches the connection and database to which the connection was established
 				// Set the active db params of the tab
 				tabsMap.forEach((tab, id) => {
-					if (tab.Type === 'editor' && !tab.ActiveDBID) {
-						tab.ActiveDB = $selectedDBDisplay;
-						tab.ActiveDBID = $activePoolID;
-						tab.ActiveDBColor = $currentColor;
+					if (tab.ConnectionID === db.ConnectionID && tab.DBName === db.Name) {
+						tab.ActiveDB = db.Name;
+						tab.ActiveDBID = db.PoolID;
+						tab.ActiveDBColor = db.Color;
 						tabsMap.set(id, tab);
-					} else {
-						if (tab.ConnectionID === db.ConnectionID && tab.DBName === db.Name) {
-							tab.ActiveDB = $selectedDBDisplay;
-							tab.ActiveDBID = $activePoolID;
-							tab.ActiveDBColor = $currentColor;
-							tabsMap.set(id, tab);
-						}
 					}
 				});
 
@@ -232,31 +216,18 @@
 						// If the server and database to which connection was established is the current table's database
 						// Set the tab table db pool id so that it's connected
 						if (tabConnID === db.ConnectionID && tabDBName === db.Name) {
-							tabTableDBPoolID = db.PoolID;
+							tabDBPoolID = db.PoolID;
 						}
-
-						// Set active DB
-						$selectedDBDisplay = db.ConnectionName + ' - ' + db.Name;
-						$currentColor = db.Color;
-						$activePoolID = db.PoolID;
-						SaveActiveDBProps(tabID, $activePoolID, $selectedDBDisplay, $currentColor);
 
 						// Loop over all the tabs in the tabs map
 						// If the connection id and database name of the tab matches the connection and database to which the connection was established
 						// Set the active db params of the tab
 						tabsMap.forEach((tab, id) => {
-							if (tab.Type === 'editor' && !tab.ActiveDBID) {
-								tab.ActiveDB = $selectedDBDisplay;
-								tab.ActiveDBID = $activePoolID;
-								tab.ActiveDBColor = $currentColor;
+							if (tab.ConnectionID === db.ConnectionID && tab.DBName === db.Name) {
+								tab.ActiveDB = db.Name;
+								tab.ActiveDBID = db.PoolID;
+								tab.ActiveDBColor = db.Color;
 								tabsMap.set(id, tab);
-							} else {
-								if (tab.ConnectionID === db.ConnectionID && tab.DBName === db.Name) {
-									tab.ActiveDB = $selectedDBDisplay;
-									tab.ActiveDBID = $activePoolID;
-									tab.ActiveDBColor = $currentColor;
-									tabsMap.set(id, tab);
-								}
 							}
 						});
 
@@ -377,22 +348,9 @@
 					databasesMap.set(dbID, db);
 
 					// If the active tab is connected to this db, disconnect it
-					if (tabTableDBPoolID === db.PoolID) {
-						tabTableDBPoolID = '';
+					if (tabDBPoolID === db.PoolID) {
+						tabDBPoolID = '';
 					}
-
-					if ($activeDBs.length == 0) {
-						$selectedDBDisplay = 'Connect to a database';
-						$currentColor = '';
-						$activePoolID = '';
-					} else {
-						// Set first db as active DB
-						$selectedDBDisplay = $activeDBs[0].ConnectionName + ' - ' + $activeDBs[0].Name;
-						$currentColor = $activeDBs[0].Color;
-						$activePoolID = $activeDBs[0].PoolID;
-					}
-
-					SaveActiveDBProps(tabID, $activePoolID, $selectedDBDisplay, $currentColor);
 
 					// Loop over all the tabs in the tabs map
 					// If the connection id and database name of the tab matches the connection and database to which the connection was terminated
@@ -451,14 +409,14 @@
 
 	// Function to handle adding a new tab
 	function handleAddTab(
-		tableName?: string,
-		connID?: number,
-		dbName?: string,
-		tableDBPoolID?: string,
-		connName?: string
+		connID: number,
+		activeDBPoolID: string,
+		dbName: string,
+		addTabType: string,
+		tableName: string,
 	) {
 		if (onAddTab) {
-			onAddTab(tableName, connID, dbName, tableDBPoolID, connName);
+			onAddTab(connID, activeDBPoolID, dbName, addTabType, tableName);
 		}
 	}
 </script>
@@ -467,7 +425,7 @@
 	bind:ref
 	{tabID}
 	{tabName}
-	{tabTableDBPoolID}
+	{tabDBPoolID}
 	{tabConnID}
 	{tabDBName}
 	{...restProps}
@@ -552,11 +510,22 @@
 																	</Sidebar.MenuButton>
 																</ContextMenu.Trigger>
 																<ContextMenu.Content>
-																	<ContextMenu.Item onclick={() => terminateDBConnection(databaseID)}
-																		>Disconnect
+																	<ContextMenu.Item 
+																		onclick={() =>
+																			handleAddTab(
+																				connection.ID,
+																				databasesMap.get(databaseID)?.PoolID || "",
+																				databasesMap.get(databaseID)?.Name || "",
+																				"editor",
+																				"editor"
+																			)}
+																		>Open Editor
 																	</ContextMenu.Item>
 																	<ContextMenu.Item onclick={() => refreshDB(databaseID)}
 																		>Refresh
+																	</ContextMenu.Item>
+																	<ContextMenu.Item onclick={() => terminateDBConnection(databaseID)}
+																		>Disconnect
 																	</ContextMenu.Item>
 																</ContextMenu.Content>
 															</ContextMenu.Root>
@@ -575,11 +544,11 @@
 																				<Sidebar.MenuButton
 																					ondblclick={() =>
 																						handleAddTab(
-																							table,
 																							connection.ID,
-																							databasesMap.get(databaseID)?.Name,
-																							databasesMap.get(databaseID)?.PoolID,
-																							connection.Name
+																							databasesMap.get(databaseID)?.PoolID || "",
+																							databasesMap.get(databaseID)?.Name || "",
+																							"table",
+																							table
 																						)}
 																				>
 																					<Table2 color="#fd6868" strokeWidth={2} size={25} />
@@ -590,11 +559,11 @@
 																				<ContextMenu.Item
 																					onclick={() =>
 																						handleAddTab(
-																							table,
 																							connection.ID,
-																							databasesMap.get(databaseID)?.Name,
-																							databasesMap.get(databaseID)?.PoolID,
-																							connection.Name
+																							databasesMap.get(databaseID)?.PoolID || "",
+																							databasesMap.get(databaseID)?.Name || "",
+																							"table",
+																							table
 																						)}
 																				>
 																					<Plus class="mr-2 h-4 w-4" />

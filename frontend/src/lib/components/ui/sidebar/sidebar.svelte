@@ -15,7 +15,7 @@
 		children,
 		tabID = $bindable(0),
 		tabName = $bindable(''),
-		tabTableDBPoolID = $bindable(''),
+		tabDBPoolID = $bindable(''),
 		tabConnID = $bindable(0),
 		tabDBName = $bindable(''),
 		...restProps
@@ -25,7 +25,7 @@
 		collapsible?: 'offcanvas' | 'icon' | 'none';
 		tabID?: number;
 		tabName?: string;
-		tabTableDBPoolID?: string;
+		tabDBPoolID?: string;
 		tabConnID?: number;
 		tabDBName?: string;
 	} = $props();

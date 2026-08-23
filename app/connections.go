@@ -475,16 +475,10 @@ func (c *Connections) EstablishPostgresDatabaseConnection(id int64, dbName strin
 
 	activeDB := conn.Name + " - " + dbName
 
-	// Save the active db properties in all the tabs with type editor if active db properties are null
-	_, err = c.DB.Exec("UPDATE tabs SET active_db_id = ?, active_db = ?, active_db_color = ? WHERE active_db_id IS NULL AND type = 'editor'", activePoolID.String(), activeDB, conn.Color)
-	if err != nil {
-		return nil, err
-	}
-
 	// In case of table rows, find all the rows with type table where
 	// active_db_id is null and postgres_connection_id and database matches
 	// set the active pool id and active db properties in such tabs
-	_, err = c.DB.Exec("UPDATE tabs SET active_db_id = ?, active_db = ?, active_db_color = ? WHERE active_db_id IS NULL AND type = 'table' AND connection_id = ? AND db_name = ?", activePoolID.String(), activeDB, conn.Color, id, dbName)
+	_, err = c.DB.Exec("UPDATE tabs SET active_db_id = ?, active_db = ?, active_db_color = ? WHERE connection_id = ? AND db_name = ?", activePoolID.String(), activeDB, conn.Color, id, dbName)
 	if err != nil {
 		return nil, err
 	}
@@ -548,16 +542,9 @@ func (c *Connections) EstablishPostgresConnection(id int64) ([]model.Database, e
 
 	activeDB := conn.Name + " - " + conn.Database
 
-	// Save the active db properties in all the tabs with type editor if active db properties are null
-	_, err = c.DB.Exec("UPDATE tabs SET active_db_id = ?, active_db = ?, active_db_color = ? WHERE active_db_id IS NULL AND type = 'editor'", activePoolID.String(), activeDB, conn.Color)
-	if err != nil {
-		return nil, err
-	}
-
-	// In case of table rows, find all the rows with type table where
 	// active_db_id is null and postgres_connection_id and database matches
 	// set the active pool id and active db properties in such tabs
-	_, err = c.DB.Exec("UPDATE tabs SET active_db_id = ?, active_db = ?, active_db_color = ? WHERE active_db_id IS NULL AND type = 'table' AND connection_id = ? AND db_name = ?", activePoolID.String(), activeDB, conn.Color, id, conn.Database)
+	_, err = c.DB.Exec("UPDATE tabs SET active_db_id = ?, active_db = ?, active_db_color = ? WHERE connection_id = ? AND db_name = ?", activePoolID.String(), activeDB, conn.Color, id, conn.Database)
 	if err != nil {
 		return nil, err
 	}
@@ -795,12 +782,26 @@ func isWriteOperation(query string) bool {
 	return false
 }
 
-func (c *Connections) ExecuteQuery(activePoolID uuid.UUID, query string, tabID int64, isExplain bool) model.QueryResult {
+func (c *Connections) ExecuteQuery(tabID int64, query string, isExplain bool) model.QueryResult {
+	// Fetch Active Pool ID from Tab
+	var activePoolID *string
+	err := c.DB.QueryRow("SELECT active_db_id FROM tabs WHERE id = ?", tabID).Scan(&activePoolID)
+	if err != nil {
+		return model.QueryResult{OK: false, Message: "Tab doesn't exist"}
+	}
+	if activePoolID == nil {
+		return model.QueryResult{OK: false, Message: "pool doesn't exist in tab in db"}
+	}
+	activePoolIDUUID, err := uuid.Parse(*activePoolID)
+	if err != nil {
+		return model.QueryResult{OK: false, Message: "invalid active pool id in tab"}
+	}
+
 	if isExplain {
 		query = "EXPLAIN " + query
 	}
 
-	pool, exists := c.PM.GetPool(activePoolID)
+	pool, exists := c.PM.GetPool(activePoolIDUUID)
 	if !exists {
 		return model.QueryResult{OK: false, Message: "pool doesn't exist"}
 	}
@@ -871,7 +872,7 @@ func (c *Connections) ExecuteQuery(activePoolID uuid.UUID, query string, tabID i
 		// Set response table name if query output contains only one table data and has an id column
 		if len(tableOidSet) == 1 && idExists {
 			for oid := range tableOidSet {
-				response.TableName = c.getTableOidNameMap(activePoolID, oid)
+				response.TableName = c.getTableOidNameMap(activePoolIDUUID, oid)
 			}
 		}
 
@@ -989,8 +990,22 @@ func (c *Connections) handleQueryError(err error) model.QueryResult {
 	}
 }
 
-func (c *Connections) GetTableData(activePoolID uuid.UUID, tabID int64, tableName, selectQuery, limit, offset, where, orderBy, groupBy string, isPageData bool) model.QueryResult {
-	pool, exists := c.PM.GetPool(activePoolID)
+func (c *Connections) GetTableData(tabID int64, tableName, selectQuery, limit, offset, where, orderBy, groupBy string, isPageData bool) model.QueryResult {
+	// Fetch Active Pool ID from Tab
+	var activePoolID *string
+	err := c.DB.QueryRow("SELECT active_db_id FROM tabs WHERE id = ?", tabID).Scan(&activePoolID)
+	if err != nil {
+		return model.QueryResult{OK: false, Message: "Tab doesn't exist"}
+	}
+	if activePoolID == nil {
+		return model.QueryResult{OK: false, Message: "pool doesn't exist in tab in db"}
+	}
+	activePoolIDUUID, err := uuid.Parse(*activePoolID)
+	if err != nil {
+		return model.QueryResult{OK: false, Message: "invalid active pool id in tab"}
+	}
+
+	pool, exists := c.PM.GetPool(activePoolIDUUID)
 	if !exists {
 		return model.QueryResult{OK: false, Message: "pool doesn't exist"}
 	}
@@ -1127,8 +1142,22 @@ func (c *Connections) GetTableData(activePoolID uuid.UUID, tabID int64, tableNam
 	return response
 }
 
-func (c *Connections) GetTableInfo(activePoolID uuid.UUID, tableName string) (*model.TableInfo, error) {
-	pool, exists := c.PM.GetPool(activePoolID)
+func (c *Connections) GetTableInfo(tabID int64, tableName string) (*model.TableInfo, error) {
+	// Fetch Active Pool ID from Tab
+	var activePoolID *string
+	err := c.DB.QueryRow("SELECT active_db_id FROM tabs WHERE id = ?", tabID).Scan(&activePoolID)
+	if err != nil {
+		return nil, errors.Wrap(err, "Tab doesn't exist")
+	}
+	if activePoolID == nil {
+		return nil, errors.New("Active pool doesn't exist in tab")
+	}
+	activePoolIDUUID, err := uuid.Parse(*activePoolID)
+	if err != nil {
+		return nil, errors.Wrap(err, "Invalid active pool in tab")
+	}
+
+	pool, exists := c.PM.GetPool(activePoolIDUUID)
 	if !exists {
 		return nil, errors.New("pool doesn't exist")
 	}
@@ -1408,8 +1437,22 @@ func (c *Connections) GetTableInfo(activePoolID uuid.UUID, tableName string) (*m
 	return &model.TableInfo{Structure: structure, Indexes: indexes, Rules: rules}, nil
 }
 
-func (c *Connections) UpdateCells(activePoolID uuid.UUID, updateCells []model.UpdateCell) (bool, error) {
-	pool, exists := c.PM.GetPool(activePoolID)
+func (c *Connections) UpdateCells(tabID int64, updateCells []model.UpdateCell) (bool, error) {
+	// Fetch Active Pool ID from Tab
+	var activePoolID *string
+	err := c.DB.QueryRow("SELECT active_db_id FROM tabs WHERE id = ?", tabID).Scan(&activePoolID)
+	if err != nil {
+		return false, errors.Wrap(err, "Tab doesn't exist")
+	}
+	if activePoolID == nil {
+		return false, errors.New("Active pool doesn't exist in tab")
+	}
+	activePoolIDUUID, err := uuid.Parse(*activePoolID)
+	if err != nil {
+		return false, errors.Wrap(err, "Invalid active pool in tab")
+	}
+
+	pool, exists := c.PM.GetPool(activePoolIDUUID)
 	if !exists {
 		return false, errors.New("pool doesn't exist")
 	}

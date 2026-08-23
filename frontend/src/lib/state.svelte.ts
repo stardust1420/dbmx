@@ -21,11 +21,6 @@ export let dbLoadingMap = $state<SvelteMap<string, boolean>>(new SvelteMap<strin
 // Declare tabsMap as a reactive state variable
 export let tabsMap = $state<SvelteMap<number, model.Tab & { processedRows?: any[] }>>(new SvelteMap<number, model.Tab & { processedRows?: any[] }>());
 
-export let selectedDBDisplay = writable('Connect to a database');
-export let currentColor = writable('');
-export let activePoolID = writable('');
-
-
 export let selectedQuery = writable('');
 
 export let activeDBs = writable<Array<model.Database>>([]);

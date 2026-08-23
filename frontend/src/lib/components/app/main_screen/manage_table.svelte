@@ -8,7 +8,7 @@
 
 
 	// Accept pool id and table name as props
-	let { tabTableDBPoolID, tabName = '' } = $props();
+	let { tabID, tabName = '' } = $props();
 	let selectedView = $state('structure');
 
 	// Columns and rows for the query output data table
@@ -29,15 +29,6 @@
 	});
 
 	function getTableInfo() {
-		if (tabTableDBPoolID == '') {
-			toast.error('Please connect to a database', {
-				action: {
-					label: 'OK',
-					onClick: () => console.info('OK')
-				}
-			});
-			return;
-		}
 		if (tabName == '') {
 			toast.error('Please select a table to execute the query', {
 				action: {
@@ -48,7 +39,7 @@
 			return;
 		}
 
-		GetTableInfo(tabTableDBPoolID, tabName)
+		GetTableInfo(tabID, tabName)
 			.then((response) => {
 				// Update structure columns
 

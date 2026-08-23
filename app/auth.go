@@ -63,7 +63,6 @@ func (a *Auth) getLatestSession() {
 	// Fetch user from supabase
 	userRes, err := a.SupabaseAuthedClient.GetUser()
 	if err != nil {
-		// TODO handle expired token
 		log.Println("Error getting user:", err)
 		return
 	}
@@ -125,7 +124,6 @@ func (a *Auth) SignUp(fullname, email, password, confirmPassword string) (bool, 
 	// Get User
 	userRes, err := a.SupabaseAuthedClient.GetUser()
 	if err != nil {
-		// TODO handle expired token
 		log.Println("Error getting user:", err)
 		return false, err
 	}
@@ -164,7 +162,6 @@ func (a *Auth) Login(email, password string) (model.User, error) {
 	// Get User
 	userRes, err := a.SupabaseAuthedClient.GetUser()
 	if err != nil {
-		// TODO handle expired token
 		log.Println("Error getting user:", err)
 		return model.User{}, err
 	}
