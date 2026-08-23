@@ -8,7 +8,7 @@
 	import Plus from '@lucide/svelte/icons/plus';
 	import Ellipsis from '@lucide/svelte/icons/ellipsis';
 	import Paperclip from '@lucide/svelte/icons/paperclip';
-	import Sparkles from '@lucide/svelte/icons/sparkles';
+	import Star from '@lucide/svelte/icons/star';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import User from '@lucide/svelte/icons/user';
 	import * as Tooltip from "$lib/components/ui/tooltip/index.js";
@@ -342,7 +342,7 @@
 		</Sidebar.Provider>
 	</Resizable.Pane>
 
-	<Resizable.Handle />
+	<Resizable.Handle withHandle />
 	
 	<Resizable.Pane
 		defaultSize={0}
@@ -352,7 +352,7 @@
 		onCollapse={() => (chatPaneCollapsed = true)}
 		onExpand={() => (chatPaneCollapsed = false)}
 		bind:this={chatPane}
-		class="flex rounded-lg bg-background my-2"
+		class="flex rounded-lg bg-background"
 	>
 		<div class="flex w-full h-full flex-col">
 			<!-- header -->
@@ -370,7 +370,7 @@
 						<!-- Empty state -->
 						<div class="flex h-full flex-col items-center justify-center gap-4 opacity-60">
 							<div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 ring-1 ring-border">
-								<Sparkles size={22} class="text-indigo-400" />
+								<Star size={22} class="text-indigo-400" />
 							</div>
 							<div class="flex flex-col items-center gap-1">
 								<p class="text-sm font-medium text-foreground">Start a conversation</p>
@@ -387,32 +387,32 @@
 							</p>
 						</div>
 					{:else}
-						<div class="flex flex-col gap-2.5 py-2">
+						<div class="flex flex-col gap-2.5 py-4">
 							{#each aiChat as message (message.ID)}
 								{#if message.Role === 'user'}
 									<!-- User message -->
-									<div class="chat-message-in flex items-start justify-end gap-2">
+									<div class="chat-message-in flex items-start justify-end gap-2 my-2">
 										<div class="flex flex-col items-end gap-0.5 max-w-[80%]">
-											<div class="rounded-2xl rounded-br-sm bg-primary px-3 py-1.5 text-base text-primary-foreground">
+											<div class="rounded-2xl rounded-br-sm bg-background px-3 text-base text-foreground">
 												<p class="leading-relaxed whitespace-pre-wrap">{message.Content}</p>
 											</div>
 											<span class="text-[10px] text-muted-foreground px-1">{formatTime(new Date(message.CreatedAt))}</span>
 										</div>
-										<div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted mt-0.5">
-											<User size={12} class="text-muted-foreground" />
+										<div class="flex h-6 w-6 items-center justify-center rounded-full bg-background">
+											<User size={18} class="text-foreground" />
 										</div>
 									</div>
 								{:else}
 									{@const parts = splitThinking(message.Content)}
 									<!-- AI message -->
-									<div class="chat-message-in flex items-start gap-2">
-										<div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted mt-0.5">
-											<Sparkles size={12} class="text-muted-foreground" />
+									<div class="chat-message-in flex items-start gap-2 my-2">
+										<div class="flex h-6 w-6 items-center justify-center rounded-full bg-background">
+											<Star size={18} color="yellow" class="text-foreground" />
 										</div>
 										<div class="flex flex-col gap-1 max-w-[95%] min-w-0">
 											{#if parts.thinking}
 												<button
-													class="thinking-toggle flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors py-0.5"
+													class="thinking-toggle flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors py-1"
 													onclick={() => toggleThinking(message.ID)}
 												>
 													<ChevronRight
@@ -427,7 +427,7 @@
 													</div>
 												{/if}
 											{/if}
-											<div class="ai-prose rounded-2xl rounded-tl-sm bg-muted px-3.5 py-2.5 border border-border">
+											<div class="ai-prose rounded-2xl rounded-tl-sm bg-background pr-2 pt-1">
 												{@html renderMarkdown(parts.response)}
 											</div>
 											<span class="text-[10px] text-muted-foreground px-1">{formatTime(new Date(message.CreatedAt))}</span>
@@ -439,8 +439,8 @@
 							{#if isAiTyping}
 								<!-- Typing indicator -->
 								<div class="chat-message-in flex items-start gap-2">
-									<div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted mt-0.5">
-										<Sparkles size={12} class="text-muted-foreground" />
+									<div class="flex h-6 w-6 items-center justify-center rounded-full bg-background">
+										<Star size={18} color="orange" class="text-foreground" />
 									</div>
 									<div class="rounded-2xl rounded-tl-sm bg-muted px-4 py-3 border border-border">
 										<div class="flex items-center gap-1.5">
@@ -456,7 +456,7 @@
 				</div>
 			</div>
 			<div
-				class="flex flex-[1] flex-col items-center justify-center rounded-3xl bg-muted mr-2 mt-1"
+				class="flex flex-[1] flex-col items-center justify-center rounded-3xl bg-muted m-1"
 			>
 			{#if availableModelsLoading}
 				<Spinner class="size-6 text-yellow-500"/>

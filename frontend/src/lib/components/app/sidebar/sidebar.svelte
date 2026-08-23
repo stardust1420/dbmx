@@ -91,6 +91,7 @@
 	};
 
 	import { onMount } from 'svelte';
+	import Label from '$lib/components/ui/label/label.svelte';
 
 
 	onMount(async () => {
@@ -473,30 +474,35 @@
 	variant="floating"
 >
 	<Sidebar.Content class="bg-background">
-		<Sidebar.Group>
-			<Sidebar.GroupLabel>
+		<Sidebar.Group class="overflow-hidden">
+			<Sidebar.GroupLabel class="h-10">
 				<div class="flex w-full items-center justify-between">
-					Connections
-					<div class="flex gap-1">
-						<Button size="sm" variant="ghost" onclick={() => refresh()}>
-							<RefreshCw />
-						</Button>
-					</div>
+					<Label class="text-xl tracking-wider">DBMX</Label>
 				</div>
 			</Sidebar.GroupLabel>
-			<Sidebar.GroupContent>
-				<Sidebar.Menu class="mt-2">
-						<Sidebar.MenuItem class="flex w-full flex-col items-center justify-center">
-						<div class="relative w-full">
-							<Search class="text-muted-foreground absolute left-2.5 top-2.5 h-4 w-4" />
-							<Input
-								type="text"
-								placeholder="Search..."
-								bind:value={searchQuery}
-								class="pl-8 bg-sidebar focus-visible:border-0 focus-visible:ring-[1px] rounded-3xl"
-							/>
-						</div>
-						</Sidebar.MenuItem>
+
+			
+			<div class="flex w-full items-center justify-between mx-2">
+				<Label class="text-md">Connections</Label>
+				<div class="flex">
+					<Button size="lg" variant="ghost" onclick={() => refresh()}>
+						<RefreshCw />
+					</Button>
+				</div>
+			</div>
+
+			<div class="relative w-full mb-2">
+				<Search class="text-muted-foreground absolute left-2.5 top-2.5 h-4 w-4" />
+				<Input
+					type="text"
+					placeholder="Search..."
+					bind:value={searchQuery}
+					class="pl-8 bg-sidebar focus-visible:border-0 focus-visible:ring-[1px] rounded-lg"
+				/>
+			</div>
+
+			<Sidebar.GroupContent class="overflow-auto">
+				<Sidebar.Menu>
 
 					<!-- Check if postgresConnectionsMap is empty -->
 					{#if postgresConnectionsMap.size === 0}
@@ -509,7 +515,7 @@
 					{:else}
 						{#each Array.from(postgresConnectionsMap.entries()).filter(([key, connection]) => connectionMatchesSearch(connection.ID, connection.Name)) as [key, connection]}
 							<Sidebar.MenuItem
-								class="{getColorClass(connection.Color)} bg-opacity-20 hover:bg-opacity-25 rounded-3xl"
+								class="{getColorClass(connection.Color)} bg-opacity-20 hover:bg-opacity-25 rounded-lg overflow-y-auto"
 							>
 								<Collapsible.Root>
 									<Collapsible.Trigger onclick={() => establishConnection(connection.ID)}>
