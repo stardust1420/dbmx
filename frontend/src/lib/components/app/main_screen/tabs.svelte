@@ -1177,7 +1177,7 @@
 
 <svelte:document onkeydown={handleKeyDown} />
 
-<div class="flex h-full flex-1 flex-col rounded-md bg-background mr-2">
+<div class="flex h-full flex-1 flex-col rounded-md bg-background">
 	<Tabs.Root value={tabID.toString()} class="flex h-full flex-1 flex-col overflow-hidden">
 		<!-- Tabs visible in the header - Chrome style -->
 		<header class="flex h-11 items-end bg-background pt-1">
@@ -1606,7 +1606,7 @@
 								<Resizable.Pane
 									defaultSize={editorHeight}
 									minSize={10}
-									class="rsz-pane rounded-3xl mx-1 pt-1"
+									class="rsz-pane rounded-t-3xl rounded-lg mx-1 pt-1"
 								>
 									<SqlEditor
 										bind:value={editor}

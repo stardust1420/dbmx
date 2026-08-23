@@ -184,8 +184,8 @@
 
 <div class="h-full w-full overflow-auto">
 	<div class="flex h-full flex-col">
-		<div class="position-sticky top-0 flex flex-1 overflow-auto rounded-3xl">
-			<Table.Root class="border rounded-3xl overflow-hidden">
+		<div class="position-sticky top-0 flex flex-1 overflow-auto rounded-lg rounded-b-3xl">
+			<Table.Root class="border rounded-lg rounded-b-3xl overflow-hidden">
 				<Table.Header class="bg-background text-xs font-medium">
 					{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
 						<Table.Row>
