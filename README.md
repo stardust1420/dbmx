@@ -40,28 +40,13 @@
 
 ---
 
-## Screenshots
+## Demo
 
-#### DBMX
-<img width="1440" height="900" alt="dbmx" src="https://github.com/user-attachments/assets/765dbede-dead-43d9-ba32-a4e616f860c1" />
+[![Google Drive](https://img.shields.io/badge/Google_Drive-View_Video-4285F4?logo=googledrive&logoColor=white)](https://drive.google.com/file/d/YOUR_FILE_ID/view?usp=sharing)
 
-#### Multi Database Sidebar
-<img width="727" height="708" alt="sidebar" src="https://github.com/user-attachments/assets/e06b1ba3-f3af-4b4a-a70e-a564b24f6139" />
+<img width="1440" height="900" alt="dbmx new" src="https://github.com/user-attachments/assets/0102a001-ca9d-4808-b00c-d38183c8c797" />
 
-#### Table View
-<img width="1440" height="900" alt="table" src="https://github.com/user-attachments/assets/a805c93d-0d79-4873-99a0-2eb5f2265966" />
 
-#### Autocomplete Tables and Columns
-<img width="572" height="432" alt="autocomplete" src="https://github.com/user-attachments/assets/4f1a8d25-565f-4957-80db-f18ca1e79339" />
-
-#### Manage Schema
-<img width="1440" height="900" alt="manage" src="https://github.com/user-attachments/assets/a251c8f6-cebc-4d43-a8aa-2d54546d7c0c" />
-
-#### Manage Connections
-<img width="1440" height="900" alt="connections" src="https://github.com/user-attachments/assets/847035d3-90e8-461c-b909-9885ceb1faa0" />
-
-#### Edit Cells
-<img width="468" height="451" alt="cell_edit" src="https://github.com/user-attachments/assets/6046f58b-b20e-4524-8173-43ebed845401" />
 
 
 ---
@@ -75,6 +60,9 @@
 | **Frontend** | SvelteKit 5, TypeScript, Tailwind CSS                                  |
 | **UI**       | shadcn-svelte, Flowbite Svelte, Lucide Icons                           |
 | **Editor**   | Monaco Editor                                                          |
+
+
+
 | **Tables**   | TanStack Table                                                         |
 | **Auth**     | Supabase Auth                                                          |
 | **DnD**      | dnd-kit (Svelte)                                                       |
