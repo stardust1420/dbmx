@@ -14,6 +14,10 @@ export function AddPostgresConnection(arg1) {
   return window['go']['app']['Connections']['AddPostgresConnection'](arg1);
 }
 
+export function CancelQuery(arg1) {
+  return window['go']['app']['Connections']['CancelQuery'](arg1);
+}
+
 export function CreateIndex(arg1, arg2, arg3) {
   return window['go']['app']['Connections']['CreateIndex'](arg1, arg2, arg3);
 }

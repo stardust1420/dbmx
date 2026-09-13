@@ -9,6 +9,8 @@ export function AddConstraint(arg1:number,arg2:string,arg3:model.ConstraintDefin
 
 export function AddPostgresConnection(arg1:model.Connection):Promise<boolean>;
 
+export function CancelQuery(arg1:number):Promise<boolean>;
+
 export function CreateIndex(arg1:number,arg2:string,arg3:model.IndexDefinition):Promise<void>;
 
 export function DeleteConnection(arg1:number):Promise<boolean>;
