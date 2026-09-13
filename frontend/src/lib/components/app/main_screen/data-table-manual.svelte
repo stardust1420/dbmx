@@ -19,7 +19,8 @@
 	import * as Select from '$lib/components/ui/select/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
-	import { ColumnTypeTag, FlexRender } from '$lib/components/ui/data-table/index.js';
+	import { ColumnTypeTag, FlexRender, isJsonColumn } from '$lib/components/ui/data-table/index.js';
+	import CellValueEditor from './cell-value-editor.svelte';
 	import ChevronsLeftIcon from '@tabler/icons-svelte/icons/chevrons-left';
 	import ChevronLeftIcon from '@tabler/icons-svelte/icons/chevron-left';
 	import ChevronRightIcon from '@tabler/icons-svelte/icons/chevron-right';
@@ -165,6 +166,58 @@
 	let editedCellsMap = $state(new SvelteMap<string, string>());
 	let editingCellValue: any = $state(null);
 
+	/**
+	 * A JSON cell is too wide to read or edit on the one line the grid gives it,
+	 * so double clicking one opens the cell editor instead of the inline input.
+	 * `original` is the value as the page load returned it, kept so that editing
+	 * a cell back to what it was drops the pending change the way the inline
+	 * editor does.
+	 */
+	type JsonEditorTarget = {
+		cellId: string;
+		columnName: string;
+		dataType: string;
+		value: string;
+		original: string;
+		rowId: number | null;
+		/** The cell the popover hangs off, so the value opens where it lives. */
+		anchor: HTMLElement | null;
+	};
+
+	let jsonEditorOpen = $state(false);
+	let jsonEditorTarget = $state<JsonEditorTarget | null>(null);
+
+	function openJsonEditor(
+		cell: any,
+		row: any,
+		currentValue: string,
+		anchor: HTMLElement | null
+	) {
+		const rowId = row.original['id'];
+		jsonEditorTarget = {
+			cellId: cell.id,
+			columnName: cell.column.columnDef.header as string,
+			dataType: cell.column.columnDef.meta?.columnType?.dataType ?? '',
+			value: currentValue,
+			original: String(cell.getValue()),
+			rowId: rowId === undefined ? null : Number(rowId),
+			anchor
+		};
+		jsonEditorOpen = true;
+	}
+
+	function applyJsonEdit(next: string) {
+		const target = jsonEditorTarget;
+		if (!target || target.rowId === null) return;
+		if (next === target.original) {
+			editedCellsMap.delete(target.cellId);
+			removeUpdateCellPayload(target.cellId);
+			return;
+		}
+		editedCellsMap.set(target.cellId, next);
+		addUpdateCellPayload(target.cellId, target.rowId, target.columnName, next);
+	}
+
 	let addRowOpen = $state(false);
 	let deleteConfirmOpen = $state(false);
 	let deleting = $state(false);
@@ -247,7 +300,7 @@
 	function handleKeyDown(event: KeyboardEvent) {
 		// The add-row sheet owns the keyboard while it is open, so Escape closes it
 		// instead of discarding pending cell edits behind it.
-		if (addRowOpen || deleteConfirmOpen) {
+		if (addRowOpen || deleteConfirmOpen || jsonEditorOpen) {
 			return;
 		}
 
@@ -294,6 +347,18 @@
 </script>
 
 <svelte:document onkeydown={handleKeyDown} />
+
+<CellValueEditor
+	bind:open={jsonEditorOpen}
+	anchor={jsonEditorTarget?.anchor ?? null}
+	cellId={jsonEditorTarget?.cellId ?? ''}
+	columnName={jsonEditorTarget?.columnName ?? ''}
+	dataType={jsonEditorTarget?.dataType ?? ''}
+	value={jsonEditorTarget?.value ?? ''}
+	readOnly={jsonEditorTarget?.rowId === null}
+	readOnlyReason="This row has no id column, so the value can be read and copied but not edited. Select the primary key in the query to edit it."
+	onApply={applyJsonEdit}
+/>
 
 <AddRowSheet {tabID} {tableName} bind:open={addRowOpen} onInserted={onRowInserted} />
 
@@ -380,9 +445,14 @@
 									class={`${
 										editedCellsMap.has(cell.id) ? 'bg-destructive/20 hover:bg-destructive/30' : ''
 									} h-12 px-4 text-start focus-within:px-2 transition-[padding] w-fit`}
-									ondblclick={() => {
+									ondblclick={(event: MouseEvent & { currentTarget: HTMLElement }) => {
+										const currentValue = editedCellsMap.get(cell.id) ?? String(cell.getValue());
+										if (isJsonColumn(cell.column.columnDef.meta?.columnType)) {
+											openJsonEditor(cell, row, currentValue, event.currentTarget);
+											return;
+										}
 										editingCell = cell.id;
-										editingCellValue = editedCellsMap.get(cell.id) ?? String(cell.getValue());
+										editingCellValue = currentValue;
 									}}
 								>
 									{#if editingCell === cell.id}

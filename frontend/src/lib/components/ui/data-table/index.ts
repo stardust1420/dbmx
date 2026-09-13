@@ -7,4 +7,5 @@ export {
 	columnTypeIcon,
 	columnTypeLabel,
 	columnTypeMeta,
+	isJsonColumn,
 } from "./data-table.svelte.js";
