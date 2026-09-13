@@ -30,7 +30,8 @@ type Connections struct {
 
 	// Track active queries per tab
 	mu            sync.Mutex
-	activeQueries map[int64]context.CancelFunc
+	activeQueries map[queryKey]context.CancelCauseFunc
+	querySeq      uint64
 
 	// Map to save connection level table oid and names
 	// Table Oid uniquely identifies a teble within a database. But it can repeat for a different database.
@@ -59,7 +60,7 @@ func NewConnections(db *sql.DB, pm *PoolManager) *Connections {
 	return &Connections{
 		DB:              db,
 		PM:              pm,
-		activeQueries:   make(map[int64]context.CancelFunc),
+		activeQueries:   make(map[queryKey]context.CancelCauseFunc),
 		tableOidNameMap: make(map[uuid.UUID]map[uint32]string),
 		typeOidInfoMap:  make(map[uuid.UUID]map[uint32]pgTypeInfo),
 	}
@@ -828,29 +829,11 @@ func (c *Connections) ExecuteQuery(tabID int64, query string, isExplain bool) mo
 	}
 
 	// --- 1. CONCURRENCY CONTROL & TIMEOUT SETUP ---
-	c.mu.Lock()
-	if c.activeQueries == nil {
-		c.activeQueries = make(map[int64]context.CancelFunc)
+	ctx, cancel, release, err := c.beginQuery(tabID, queryKindEditor)
+	if err != nil {
+		return model.QueryResult{OK: false, Message: err.Error()}
 	}
-
-	// Prevent running if this tab is already executing a query
-	if _, isRunning := c.activeQueries[tabID]; isRunning {
-		c.mu.Unlock()
-		return model.QueryResult{OK: false, Message: "A query is already running on this tab"}
-	}
-
-	// Set a timeout (e.g., 30 seconds). You can adjust this duration.
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	c.activeQueries[tabID] = cancel
-	c.mu.Unlock()
-
-	// Ensure the tab is freed up when the function returns
-	defer func() {
-		cancel() // Free context resources
-		c.mu.Lock()
-		delete(c.activeQueries, tabID)
-		c.mu.Unlock()
-	}()
+	defer release()
 	// ----------------------------------------------
 
 	response := model.QueryResult{OK: true}
@@ -862,7 +845,7 @@ func (c *Connections) ExecuteQuery(tabID int64, query string, isExplain bool) mo
 	if isWrite {
 		tag, err := pool.Exec(ctx, query)
 		if err != nil {
-			return c.handleQueryError(err)
+			return c.handleQueryError(ctx, err)
 		}
 		response.RowsAffected = tag.RowsAffected()
 		response.Columns = []string{"Rows Affected"}
@@ -870,7 +853,7 @@ func (c *Connections) ExecuteQuery(tabID int64, query string, isExplain bool) mo
 	} else {
 		resultRows, err := pool.Query(ctx, query)
 		if err != nil {
-			return c.handleQueryError(err)
+			return c.handleQueryError(ctx, err)
 		}
 		defer resultRows.Close()
 
@@ -913,7 +896,7 @@ func (c *Connections) ExecuteQuery(tabID int64, query string, isExplain bool) mo
 				// Return partial results collected so far
 				cancel()
 				response.Rows = rows
-				response.Message = "Query timed out after 30 seconds. Partial results returned."
+				response.Message = partialResultMessage(ctx)
 				response.ExecutionTime = time.Since(startTime).Milliseconds()
 				return response
 			default:
@@ -975,11 +958,11 @@ func (c *Connections) ExecuteQuery(tabID int64, query string, isExplain bool) mo
 			// return the partial results with a warning instead of failing
 			if (errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled)) && len(rows) > 0 {
 				response.Rows = rows
-				response.Message = "Query timed out. Partial results returned."
+				response.Message = partialResultMessage(ctx)
 				response.ExecutionTime = time.Since(startTime).Milliseconds()
 				return response
 			}
-			return c.handleQueryError(err)
+			return c.handleQueryError(ctx, err)
 		}
 
 		response.Rows = rows
@@ -994,8 +977,123 @@ func (c *Connections) ExecuteQuery(tabID int64, query string, isExplain bool) mo
 	return response
 }
 
+// queryTimeout caps how long a query may run before the server is asked to stop
+// it. Generous on purpose: a slow report deserves the chance to finish, and a
+// user who does not want to wait can stop it themselves.
+const queryTimeout = 5 * time.Minute
+
+var (
+	// errQueryCancelledByUser is recorded as the cancellation cause when the user
+	// presses stop. The cause is what separates a deliberate cancel from a
+	// timeout, because the error pgx returns cannot: a cancel that reaches the
+	// server comes back as postgres error 57014, which says only that somebody
+	// cancelled the statement.
+	errQueryCancelledByUser = errors.New("query cancelled by user")
+
+	// errQueryTimedOut is the cause recorded when queryTimeout expires.
+	errQueryTimedOut = errors.New("query timed out")
+
+	errQueryAlreadyRunning = errors.New("a query is already running on this tab")
+)
+
+// queryKind separates the two things one tab can be running. They are tracked
+// apart so that a table-view refresh and an editor run on the same tab do not
+// block each other, while a single stop still reaches both.
+type queryKind string
+
+const (
+	queryKindEditor queryKind = "editor"
+	queryKindTable  queryKind = "table"
+)
+
+type queryKey struct {
+	tabID int64
+	kind  queryKind
+
+	// seq distinguishes concurrent table loads. Paging through a table fires
+	// them back to back and they have never excluded each other, so each gets
+	// its own key. Editor queries leave it zero: there is only ever one, and
+	// that is what makes a second run refusable.
+	seq uint64
+}
+
+// beginQuery registers a cancellable context for one tab's query. It returns the
+// context, a stop function for abandoning the result stream locally, and a
+// release function that must be deferred to unregister the query.
+func (c *Connections) beginQuery(tabID int64, kind queryKind) (context.Context, context.CancelFunc, func(), error) {
+	key := queryKey{tabID: tabID, kind: kind}
+
+	c.mu.Lock()
+	if c.activeQueries == nil {
+		c.activeQueries = make(map[queryKey]context.CancelCauseFunc)
+	}
+	if kind == queryKindEditor {
+		if _, running := c.activeQueries[key]; running {
+			c.mu.Unlock()
+			return nil, nil, nil, errQueryAlreadyRunning
+		}
+	} else {
+		c.querySeq++
+		key.seq = c.querySeq
+	}
+
+	// Two layers, so that a timeout and a user cancel leave distinguishable
+	// causes behind: the deadline sets errQueryTimedOut, CancelQuery sets
+	// errQueryCancelledByUser, and Cause reports whichever fired.
+	parent, cancelCause := context.WithCancelCause(context.Background())
+	ctx, stop := context.WithTimeoutCause(parent, queryTimeout, errQueryTimedOut)
+
+	c.activeQueries[key] = cancelCause
+	c.mu.Unlock()
+
+	release := func() {
+		stop()
+		cancelCause(nil)
+		c.mu.Lock()
+		delete(c.activeQueries, key)
+		c.mu.Unlock()
+	}
+	return ctx, stop, release, nil
+}
+
+// CancelQuery stops whatever the tab is running, an editor query or a table-view
+// load or both, and reports whether there was anything to stop.
+func (c *Connections) CancelQuery(tabID int64) bool {
+	c.mu.Lock()
+	cancels := make([]context.CancelCauseFunc, 0, 2)
+	for key, cancel := range c.activeQueries {
+		if key.tabID == tabID {
+			cancels = append(cancels, cancel)
+		}
+	}
+	c.mu.Unlock()
+
+	for _, cancel := range cancels {
+		cancel(errQueryCancelledByUser)
+	}
+	return len(cancels) > 0
+}
+
+// partialResultMessage explains why a result set was cut short.
+func partialResultMessage(ctx context.Context) string {
+	if errors.Is(context.Cause(ctx), errQueryCancelledByUser) {
+		return "Query cancelled. Partial results returned."
+	}
+	return fmt.Sprintf("Query timed out after %s. Partial results returned.", queryTimeout)
+}
+
 // Helper to handle standard vs timeout errors consistently
-func (c *Connections) handleQueryError(err error) model.QueryResult {
+func (c *Connections) handleQueryError(ctx context.Context, err error) model.QueryResult {
+	// Consult the cancellation cause before the error itself. A cancel that
+	// actually reached the server arrives as postgres error 57014 rather than
+	// context.Canceled, so the error on its own cannot say what stopped the query.
+	switch cause := context.Cause(ctx); {
+	case errors.Is(cause, errQueryCancelledByUser):
+		return model.QueryResult{OK: false, Message: "Query cancelled"}
+	case errors.Is(cause, errQueryTimedOut):
+		return model.QueryResult{OK: false, Message: fmt.Sprintf("Query timed out after %s", queryTimeout)}
+	}
+
 	// Check if the error was caused by our context timing out or being canceled
 	if errors.Is(err, context.DeadlineExceeded) {
 		return model.QueryResult{OK: false, Message: "Query timed out after exceeding the maximum allowed time"}
@@ -1058,7 +1156,11 @@ func (c *Connections) GetTableData(tabID int64, tableName, selectQuery, limit, o
 		return model.QueryResult{OK: false, Message: "pool doesn't exist"}
 	}
 
-	ctx := context.Background()
+	ctx, _, release, err := c.beginQuery(tabID, queryKindTable)
+	if err != nil {
+		return model.QueryResult{OK: false, Message: err.Error()}
+	}
+	defer release()
 
 	response := model.QueryResult{OK: true}
 
@@ -1090,13 +1192,7 @@ func (c *Connections) GetTableData(tabID int64, tableName, selectQuery, limit, o
 		var totalRows int64
 		err := pool.QueryRow(ctx, totalRowsQuery).Scan(&totalRows)
 		if err != nil {
-			return model.QueryResult{
-				OK:           true,
-				Message:      err.Error(),
-				RowsAffected: int64(0),
-				Columns:      []string{"Error"},
-				Rows:         [][]model.Cell{{model.Cell{Column: "Error", Value: err.Error()}}},
-			}
+			return c.handleQueryError(ctx, err)
 		}
 		response.TotalRows = totalRows
 	}
@@ -1113,13 +1209,7 @@ func (c *Connections) GetTableData(tabID int64, tableName, selectQuery, limit, o
 	// Use Query for read operations
 	resultRows, err := pool.Query(ctx, query)
 	if err != nil {
-		return model.QueryResult{
-			OK:           true,
-			Message:      err.Error(),
-			RowsAffected: int64(0),
-			Columns:      []string{"Error"},
-			Rows:         [][]model.Cell{{model.Cell{Column: "Error", Value: err.Error()}}},
-		}
+		return c.handleQueryError(ctx, err)
 	}
 	defer resultRows.Close()
 
@@ -1167,7 +1257,7 @@ func (c *Connections) GetTableData(tabID int64, tableName, selectQuery, limit, o
 	}
 
 	if err := resultRows.Err(); err != nil {
-		return model.QueryResult{OK: false, Message: err.Error()}
+		return c.handleQueryError(ctx, err)
 	}
 
 	response.Rows = rows

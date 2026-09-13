@@ -4,9 +4,12 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgconn/ctxwatch"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -32,6 +35,26 @@ func (pm *PoolManager) AddPool(id uuid.UUID, c *pgx.ConnConfig, connID int64) (*
 		return nil, err
 	}
 	poolConfig.ConnConfig = c
+
+	// Cancelling a query has to reach the server. pgx defaults to
+	// DeadlineContextWatcherHandler, which only sets a deadline on the socket:
+	// the client returns immediately with a cancellation error while postgres
+	// keeps executing the query to completion, holding the connection and
+	// burning CPU. A backend doing real work never looks at its socket, so
+	// nothing interrupts it. CancelRequestContextWatcherHandler instead sends a
+	// genuine cancel request, which stops the query and leaves the connection
+	// reusable.
+	//
+	// The delays are pgx's own: cancelling is inherently racy, so give a query
+	// that is about to finish on its own a moment to do so, and fall back to the
+	// socket deadline if the server never answers the cancel request.
+	poolConfig.ConnConfig.BuildContextWatcherHandler = func(pgConn *pgconn.PgConn) ctxwatch.Handler {
+		return &pgconn.CancelRequestContextWatcherHandler{
+			Conn:               pgConn,
+			CancelRequestDelay: 250 * time.Millisecond,
+			DeadlineDelay:      5 * time.Second,
+		}
+	}
 
 	pool, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
 	if err != nil {

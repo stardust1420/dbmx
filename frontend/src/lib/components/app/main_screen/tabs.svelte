@@ -29,20 +29,46 @@
 	} from '$lib/state.svelte';
 
 	import { toast } from 'svelte-sonner';
-	import { ExecuteQuery, GetTableData } from '$lib/wailsjs/go/app/Connections.js';
+	import { CancelQuery, ExecuteQuery, GetTableData } from '$lib/wailsjs/go/app/Connections.js';
 
 	import { columnTypeMeta } from '$lib/components/ui/data-table/index.js';
 	import DataTable from './data-table.svelte';
 	import { columns, rows, totalRows, currentPage, currentPageSize } from '$lib/state.svelte';
 	import ManageTable from './manage_table.svelte';
 	import DataTableManual from './data-table-manual.svelte';
-	import { Play } from 'lucide-svelte';
+	import { Play, Square } from 'lucide-svelte';
 
 	let editorHeight = $state(50); // Percentage of the container height
 	let outputHeight = $state(50); // Percentage of the container height
 
 	let queryLoading = $state(false);
 	let tabLoading = $state(false);
+
+	// Ask the backend to stop whatever this tab is running. The in-flight call
+	// resolves on its own with a cancelled result, which is what clears the
+	// running state, so there is nothing to unwind here.
+	function cancelQuery() {
+		const currentTabID = tabID;
+		CancelQuery(currentTabID).catch((error) => {
+			toast.error('Could not stop the query', { description: String(error) });
+		});
+	}
+
+	// A cancelled query is something the user asked for, not a failure worth an
+	// error toast.
+	function reportQueryOutcome(message: string) {
+		if (message?.toLowerCase().startsWith('query cancelled')) {
+			toast.info(message);
+			return;
+		}
+		toast.error('Query Failed', {
+			description: message,
+			action: {
+				label: 'OK',
+				onClick: () => console.info('OK')
+			}
+		});
+	}
 
 	// Drag-and-drop tab reordering state
 	let dragTabId: number | null = $state(null);
@@ -137,6 +163,23 @@
 		chatPaneCollapsed = $bindable(false),
 		toggleChatPane
 	} = $props();
+
+	// Read the running flag off the tab itself rather than a component-local one,
+	// so switching tabs shows each tab's own state instead of whatever the last
+	// query left behind. Declared after the props because it reads tabID.
+	const activeTabRunning = $derived(tabsMap.get(tabID)?.IsQueryRunning ?? false);
+
+	// tabsMap is a SvelteMap, and SvelteMap only notifies its readers when the
+	// value stored against a key changes identity. Tabs are read out of the map,
+	// mutated in place and put straight back, so the map is handed the very object
+	// it already holds and nothing re-renders. Storing a fresh object with the same
+	// prototype is what makes those mutations visible: without it a finished query
+	// leaves its spinner spinning and its stop button up until something else
+	// happens to invalidate the read.
+	function commitTab(id: number, tab: NonNullable<ReturnType<typeof tabsMap.get>>) {
+		tabsMap.set(id, Object.assign(Object.create(Object.getPrototypeOf(tab)), tab));
+	}
+
 	let editor = $state('');
 
 
@@ -556,7 +599,7 @@
 			currentTab.columnTypes = [];
 			currentTab.rows = [];
 			(currentTab as any).processedRows = []; // Clear cached rows as well
-			tabsMap.set(currentTabID, currentTab);
+			commitTab(currentTabID, currentTab);
 		}
 
 		queryLoading = true;
@@ -573,16 +616,10 @@
 					// Update the tab state in memory
 					if (currentTab) {
 						currentTab.IsQueryRunning = false;
-						tabsMap.set(currentTabID, currentTab);
+						commitTab(currentTabID, currentTab);
 					}
 
-					toast.error('Query Failed', {
-						description: result.message,
-						action: {
-							label: 'OK',
-							onClick: () => console.info('OK')
-						}
-					});
+					reportQueryOutcome(result.message);
 					return;
 				}
 
@@ -622,7 +659,7 @@
 					currentTab.rows = result.rows; // result.rows is Cell[][]
 					currentTab.IsQueryRunning = false;
 					currentTab.LastQueryExecutionTime = result.executionTime || 0;
-					tabsMap.set(currentTabID, currentTab);
+					commitTab(currentTabID, currentTab);
 				}
 				queryLoading = false;
 				executeQueryTableName = result.tableName;
@@ -646,7 +683,7 @@
 				if (currentTab) {
 					currentTab.IsQueryRunning = false;
 					currentTab.LastQueryExecutionTime = 0
-					tabsMap.set(currentTabID, currentTab);
+					commitTab(currentTabID, currentTab);
 				}
 
 				// Handle errors from the ExecuteQuery call
@@ -696,7 +733,7 @@
 			currentTab.columnTypes = [];
 			currentTab.rows = [];
 			(currentTab as any).processedRows = []; // Clear cached rows as well
-			tabsMap.set(currentTabID, currentTab);
+			commitTab(currentTabID, currentTab);
 		}
 
 		// Execute query
@@ -710,16 +747,10 @@
 					// Update the tab state in memory
 					if (currentTab) {
 						currentTab.IsQueryRunning = false;
-						tabsMap.set(currentTabID, currentTab);
+						commitTab(currentTabID, currentTab);
 					}
 
-					toast.error('Query Failed', {
-						description: result.message,
-						action: {
-							label: 'OK',
-							onClick: () => console.info('OK')
-						}
-					});
+					reportQueryOutcome(result.message);
 					return;
 				}
 
@@ -767,7 +798,7 @@
 					currentTab.currentPage = 0;
 					currentTab.IsQueryRunning = false;
 					currentTab.LastQueryExecutionTime = result.executionTime || 0
-					tabsMap.set(currentTabID, currentTab);
+					commitTab(currentTabID, currentTab);
 				}
 				queryLoading = false;
 			})
@@ -779,7 +810,7 @@
 				if (currentTab) {
 					currentTab.IsQueryRunning = false;
 					currentTab.LastQueryExecutionTime = 0
-					tabsMap.set(currentTabID, currentTab);
+					commitTab(currentTabID, currentTab);
 				}
 
 				// Handle errors from the ExecuteQuery call
@@ -827,7 +858,7 @@
 			currentTab.columnTypes = [];
 			currentTab.rows = [];
 			(currentTab as any).processedRows = []; // Clear cached rows as well
-			tabsMap.set(currentTabID, currentTab);
+			commitTab(currentTabID, currentTab);
 		}
 
 		// Execute query
@@ -841,16 +872,10 @@
 					// Update the tab state in memory
 					if (currentTab) {
 						currentTab.IsQueryRunning = false;
-						tabsMap.set(currentTabID, currentTab);
+						commitTab(currentTabID, currentTab);
 					}
 
-					toast.error('Query Failed', {
-						description: result.message,
-						action: {
-							label: 'OK',
-							onClick: () => console.info('OK')
-						}
-					});
+					reportQueryOutcome(result.message);
 					return;
 				}
 
@@ -893,7 +918,7 @@
 					currentTab.currentPage = $currentPage;
 					currentTab.IsQueryRunning = false;
 					currentTab.LastQueryExecutionTime = result.executionTime || 0
-					tabsMap.set(currentTabID, currentTab);
+					commitTab(currentTabID, currentTab);
 				}
 				queryLoading = false;
 			})
@@ -905,7 +930,7 @@
 				if (currentTab) {
 					currentTab.IsQueryRunning = false;
 					currentTab.LastQueryExecutionTime = 0
-					tabsMap.set(currentTabID, currentTab);
+					commitTab(currentTabID, currentTab);
 				}
 
 				// Handle errors from the ExecuteQuery call
@@ -974,6 +999,30 @@
 
 <svelte:document onkeydown={handleKeyDown} />
 
+<!-- One control with two states: the same spot runs the query and stops it, so a
+     running query always has its stop button where the run button just was. -->
+{#snippet runControl(run: () => void, runLabel: string)}
+	{#if activeTabRunning}
+		<button
+			class="mx-2 flex items-center self-center rounded-full border border-red-500 p-1 text-red-500 transition-colors hover:bg-red-500/10 hover:text-red-600"
+			onclick={cancelQuery}
+			title="Stop the running query"
+			aria-label="Stop the running query"
+		>
+			<Square size={16} />
+		</button>
+	{:else}
+		<button
+			class="mx-2 flex items-center self-center rounded-full border border-green-500 p-1 text-green-500 transition-colors hover:bg-green-500/10 hover:text-green-600"
+			onclick={run}
+			title={runLabel}
+			aria-label={runLabel}
+		>
+			<Play size={16} />
+		</button>
+	{/if}
+{/snippet}
+
 <div class="flex h-full flex-1 flex-col rounded-md bg-background">
 	<Tabs.Root value={tabID.toString()} class="flex h-full flex-1 flex-col overflow-hidden">
 		<!-- Tabs visible in the header - Chrome style -->
@@ -1004,6 +1053,11 @@
 								>
 									{tab.Name}
 								</button>
+								{#if tab.IsQueryRunning}
+									<span class="mr-1 flex items-center" title="Query running">
+										<Spinner class="size-3" />
+									</span>
+								{/if}
 								<button
 									class="ml-1 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-muted"
 									onclick={(e) => { e.stopPropagation(); deleteTab(tab.ID); }}
@@ -1060,12 +1114,7 @@
 											<Breadcrumb.Page class='{tabDBPoolID === '' ? "text-red-500" : "text-green-500"}'>{tabName}</Breadcrumb.Page>
 										</Breadcrumb.Item>
 										{#if tabDBPoolID}
-											<button
-												class="flex items-center self-center mx-2 rounded-full border border-green-500 p-1 text-green-500 hover:bg-green-500/10 hover:text-green-600 transition-colors"
-												onclick={getTableData}
-											>
-												<Play size={16} />
-											</button>
+											{@render runControl(getTableData, 'Load table data')}
 										{/if}
 									</Breadcrumb.List>
 								</Breadcrumb.Root>
@@ -1142,12 +1191,7 @@
 										<Breadcrumb.Link class='{tabDBPoolID === '' ? "text-red-500" : "text-green-500"}'>{tabDBName}</Breadcrumb.Link>
 									</Breadcrumb.Item>
 									{#if tabDBPoolID}
-										<button
-											class="flex items-center self-center mx-2 rounded-full border border-green-500 p-1 text-green-500 hover:bg-green-500/10 hover:text-green-600 transition-colors"
-											onclick={() => executeQuery()}
-										>
-											<Play size={16} />
-										</button>
+										{@render runControl(() => executeQuery(), 'Run query')}
 									{/if}
 								</Breadcrumb.List>
 							</Breadcrumb.Root>

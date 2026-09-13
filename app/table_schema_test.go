@@ -40,10 +40,16 @@ func liveConnections(t *testing.T) (*Connections, func()) {
 
 	// The app reads the tab's active pool out of local sqlite, so stand up the
 	// smallest table poolForTab needs.
-	db, err := sql.Open("sqlite3", ":memory:")
+	// A bare ":memory:" database belongs to one connection, and database/sql
+	// opens more on demand: the moment a test touches sqlite from two goroutines
+	// the second one lands on an empty database and the tabs row vanishes. A
+	// named shared-cache database is the same store on every connection, and one
+	// connection keeps the writes serialised.
+	db, err := sql.Open("sqlite3", fmt.Sprintf("file:%s?mode=memory&cache=shared", uuid.NewString()))
 	if err != nil {
 		t.Fatalf("sqlite open: %v", err)
 	}
+	db.SetMaxOpenConns(1)
 	poolID := uuid.New()
 	if _, err := db.Exec(`CREATE TABLE tabs (id INTEGER PRIMARY KEY, active_db_id TEXT)`); err != nil {
 		t.Fatalf("create tabs: %v", err)
