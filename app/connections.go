@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"database/sql"
 	"dbmx/model"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net"
@@ -19,6 +20,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/pkg/errors"
@@ -875,6 +877,7 @@ func (c *Connections) ExecuteQuery(tabID int64, query string, isExplain bool) mo
 		// Resolved before the rows are read, so a result that is cut short by the
 		// timeout or the size cap still returns with its header types intact.
 		response.ColumnTypes = c.columnTypesFor(ctx, activePoolIDUUID, pool, columns)
+		isJSONColumn := jsonColumnSet(columns)
 
 		// Set response table name if query output contains only one table data and has an id column
 		if len(tableOidSet) == 1 && idExists {
@@ -911,26 +914,7 @@ func (c *Connections) ExecuteQuery(tabID int64, query string, isExplain bool) mo
 			cells := make([]model.Cell, 0, len(row))
 			for i, cell := range row {
 				newCell := model.Cell{Column: columnNames[i]}
-
-				// ... (Keep your existing switch statement to format newCell.Value) ...
-				switch v := cell.(type) {
-				case []byte:
-					newCell.Value = string(v)
-				case time.Time:
-					newCell.Value = v.Format(time.RFC3339)
-				case nil:
-					newCell.Value = "NULL"
-				case [16]uint8:
-					newCell.Value = uuid.UUID(v).String()
-				case string:
-					if v == "" {
-						newCell.Value = "EMPTY"
-					} else {
-						newCell.Value = v
-					}
-				default:
-					newCell.Value = fmt.Sprintf("%v", v)
-				}
+				newCell.Value = formatCellValue(cell, i < len(isJSONColumn) && isJSONColumn[i])
 
 				// 2. MEMORY CHECK: Estimate the size of the cell we just created
 				// We count the string length + ~32 bytes for struct/pointer overhead in Go
@@ -1220,6 +1204,7 @@ func (c *Connections) GetTableData(tabID int64, tableName, selectQuery, limit, o
 	}
 	response.Columns = columnNames
 	response.ColumnTypes = c.columnTypesFor(ctx, activePoolIDUUID, pool, columns)
+	isJSONColumn := jsonColumnSet(columns)
 
 	var rows [][]model.Cell
 
@@ -1234,23 +1219,7 @@ func (c *Connections) GetTableData(tabID int64, tableName, selectQuery, limit, o
 			newCell := model.Cell{
 				Column: columnNames[i],
 			}
-			switch v := cell.(type) {
-			case []byte:
-				newCell.Value = string(v)
-			case time.Time:
-				newCell.Value = v.Format(time.RFC3339)
-			case nil:
-				newCell.Value = "NULL"
-			case [16]uint8:
-				newCell.Value = uuid.UUID(v).String()
-			case string:
-				if v == "" {
-					newCell.Value = "EMPTY"
-				}
-				newCell.Value = v
-			default:
-				newCell.Value = fmt.Sprintf("%v", v)
-			}
+			newCell.Value = formatCellValue(cell, i < len(isJSONColumn) && isJSONColumn[i])
 			cells = append(cells, newCell)
 		}
 		rows = append(rows, cells)
@@ -1667,6 +1636,50 @@ const columnTypeOidQuery = `
 		t.typcategory::text
 	FROM pg_type t
 	WHERE t.oid = ANY($1::oid[])`
+
+// jsonColumnSet marks the result columns carrying json or jsonb. pgx decodes
+// those into a Go map or slice, and fmt prints a map as "map[k:v ...]" -- which
+// is not valid JSON, cannot be copied out as JSON, and does not survive a round
+// trip back into the column. The flags let formatCellValue re-encode only those
+// columns as JSON text. Read off the field's type OID rather than the resolved
+// model.ColumnType, so it costs nothing and needs no catalog lookup.
+func jsonColumnSet(fields []pgconn.FieldDescription) []bool {
+	isJSON := make([]bool, len(fields))
+	for i, field := range fields {
+		isJSON[i] = field.DataTypeOID == pgtype.JSONOID || field.DataTypeOID == pgtype.JSONBOID
+	}
+	return isJSON
+}
+
+// formatCellValue renders one decoded postgres value as the string the grid
+// displays and edits. isJSON asks for JSON text instead of fmt's rendering and
+// is only ever true for a json or jsonb column. The encoding is compact on
+// purpose: the grid shows a cell on one line, and the cell editor is what
+// formats it for reading.
+func formatCellValue(value any, isJSON bool) string {
+	switch v := value.(type) {
+	case []byte:
+		return string(v)
+	case time.Time:
+		return v.Format(time.RFC3339)
+	case nil:
+		return "NULL"
+	case [16]uint8:
+		return uuid.UUID(v).String()
+	case string:
+		if v == "" {
+			return "EMPTY"
+		}
+		return v
+	default:
+		if isJSON {
+			if encoded, err := json.Marshal(v); err == nil {
+				return string(encoded)
+			}
+		}
+		return fmt.Sprintf("%v", v)
+	}
+}
 
 // columnTypesFor resolves the type of every column of a result set, for the type
 // icons the grid draws in its header.

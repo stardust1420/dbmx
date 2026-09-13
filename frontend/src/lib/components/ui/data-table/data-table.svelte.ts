@@ -237,3 +237,17 @@ export function columnTypeIcon(columnType?: model.ColumnType): IconComponent {
 export function columnTypeLabel(columnType?: model.ColumnType): string {
 	return columnType?.dataType || "unknown type";
 }
+
+/**
+ * Whether a column holds JSON, which the grid cannot show usefully on the one
+ * line a cell gives it. Those cells open the cell editor on double click
+ * instead of the inline input, so the value can be read, formatted, copied and
+ * edited at a readable size.
+ *
+ * Deliberately json and jsonb only. Every other type -- including long text and
+ * arrays -- keeps the inline input it has always had, so double clicking a cell
+ * you already edit in place does not suddenly open a dialog.
+ */
+export function isJsonColumn(columnType?: model.ColumnType): boolean {
+	return columnType?.dataType === "json" || columnType?.dataType === "jsonb";
+}
