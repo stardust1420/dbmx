@@ -19,7 +19,12 @@
 	import * as Select from '$lib/components/ui/select/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
-	import { ColumnTypeTag, FlexRender, isJsonColumn } from '$lib/components/ui/data-table/index.js';
+	import {
+		ColumnTypeTag,
+		FlexRender,
+		isCellSentinel,
+		isJsonColumn
+	} from '$lib/components/ui/data-table/index.js';
 	import CellValueEditor from './cell-value-editor.svelte';
 	import ChevronsLeftIcon from '@tabler/icons-svelte/icons/chevrons-left';
 	import ChevronLeftIcon from '@tabler/icons-svelte/icons/chevron-left';
@@ -443,7 +448,11 @@
 							{#each row.getVisibleCells() as cell (cell.id)}
 								<Table.Cell
 									class={`${
-										editedCellsMap.has(cell.id) ? 'bg-destructive/20 hover:bg-destructive/30' : ''
+										editingCell === cell.id
+											? 'dbmx-editing bg-cyan-500/20'
+											: editedCellsMap.has(cell.id)
+												? 'dbmx-editing bg-destructive hover:bg-destructive'
+												: ''
 									} h-12 px-4 text-start focus-within:px-2 transition-[padding] w-fit`}
 									ondblclick={(event: MouseEvent & { currentTarget: HTMLElement }) => {
 										const currentValue = editedCellsMap.get(cell.id) ?? String(cell.getValue());
@@ -475,7 +484,7 @@
 											}}
 										>
 											<Input
-												class="hover:bg-input/30 px-2 focus-visible:bg-background dark:hover:bg-input/30 dark:focus-visible:bg-input/30 w-full bg-transparent text-start shadow-none focus-visible:border dark:bg-transparent"
+												class="w-full px-2 text-start bg-transparent dark:bg-transparent border-0 rounded-none shadow-none focus-visible:ring-0"
 												bind:value={editingCellValue}
 												autofocus
 												onfocusout={() => {
@@ -487,6 +496,8 @@
 									{:else}
 										{#if editedCellsMap.has(cell.id)}
 											{editedCellsMap.get(cell.id)}
+										{:else if isCellSentinel(cell.getValue())}
+											<span class="text-muted-foreground/60">{cell.getValue()}</span>
 										{:else}
 											<FlexRender
 												content={cell.column.columnDef.cell}
@@ -682,11 +693,14 @@
 		/* One place to retune the highlight. The radius has to track the rounded-3xl on
 		   Table.Root, which is what the table's overflow clips to. */
 		--grid-accent: 217 91% 60%;
+		/* The cell being edited uses the same box in cyan, to read as a distinct mode
+		   rather than a stronger hover. Matches the bg-cyan-500/20 fill on the cell. */
+		--grid-edit-accent: 189 94% 43%;
 		--grid-radius: 1.5rem;
 	}
 
 	/* A selected row is marked by its edges alone, with no fill. The background still has
-	   to be stated: leaving it out would let Table.Row's own data-[state=selected]:bg-muted
+	   to be stated: leaving it out would let Table.Row's own data-[state=selected]:bg-muted/50
 	   paint the muted tint back in. */
 	:global(table.dbmx-grid tbody tr[data-state='selected'] > td) {
 		background-color: transparent;
@@ -696,8 +710,13 @@
 
 	/* Row hover: a tint that is actually distinguishable from the panel behind the grid.
 	   It comes after the selected-row rule, which it ties with on specificity, so that a
-	   selected row still responds to the pointer. */
-	:global(table.dbmx-grid tbody tr:hover > td) {
+	   selected row still responds to the pointer.
+
+	   A cell carrying its own fill -- cyan while it is being edited, destructive while it
+	   holds an unsaved edit -- is left out. That fill is a Tailwind utility on the cell, a
+	   single class, so this rule would otherwise outrank it on specificity and paint the
+	   state away exactly when the pointer is on it. */
+	:global(table.dbmx-grid tbody tr:hover > td:not(.dbmx-editing)) {
 		background-color: hsl(var(--grid-accent) / 0.07);
 	}
 	/* The outer left and right edges are drawn as positioned pseudo-elements rather than
@@ -793,6 +812,31 @@
 		position: absolute;
 		inset: 0;
 		border-bottom: 1px solid hsl(var(--grid-accent));
+		pointer-events: none;
+	}
+
+	/* The cell being edited gets the same 1px box as a hover, in cyan to match its
+	   fill, and holds it whether or not the pointer is over it. The neighbour and the
+	   last-row overlay follow the hover rules' reasoning above. Each selector below is
+	   paired with a :hover variant: without it the hover rule is the more specific of
+	   the two on the cell being edited, and would paint its own blue back over this. */
+	:global(table.dbmx-grid tbody td.dbmx-editing),
+	:global(table.dbmx-grid tbody td.dbmx-editing:hover) {
+		border: 1px solid hsl(var(--grid-edit-accent));
+	}
+	:global(table.dbmx-grid tbody td:has(+ td.dbmx-editing)),
+	:global(table.dbmx-grid tbody td:has(+ td.dbmx-editing:hover)) {
+		border-right-color: hsl(var(--grid-edit-accent));
+	}
+	:global(table.dbmx-grid tbody tr:last-child td.dbmx-editing) {
+		position: relative;
+	}
+	:global(table.dbmx-grid tbody tr:last-child td.dbmx-editing::after),
+	:global(table.dbmx-grid tbody tr:last-child td.dbmx-editing:hover::after) {
+		content: '';
+		position: absolute;
+		inset: 0;
+		border-bottom: 1px solid hsl(var(--grid-edit-accent));
 		pointer-events: none;
 	}
 </style>

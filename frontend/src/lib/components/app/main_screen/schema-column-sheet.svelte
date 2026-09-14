@@ -349,7 +349,7 @@
 					{#if dataType !== ''}
 						<Field.Field>
 							<Field.FieldLabel>Column will be declared as</Field.FieldLabel>
-							<pre class="bg-muted text-muted-foreground overflow-x-auto rounded-md border px-3 py-2 font-mono text-xs">{form.name.trim() ||
+							<pre class="bg-muted/50 text-muted-foreground overflow-x-auto rounded-md border px-3 py-2 font-mono text-xs">{form.name.trim() ||
 									'column'} {dataType}</pre>
 						</Field.Field>
 					{/if}
