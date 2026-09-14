@@ -1037,8 +1037,8 @@
 							<div
 								class="{getColorClass(tab.ActiveDBColor || "")} group relative flex items-center rounded-t-lg px-3 py-1.5 transition-all duration-150 select-none
 									{tab.ID === tabID
-										? 'bg-muted text-foreground z-10'
-										: 'bg-background text-muted-foreground hover:bg-muted/50 hover:text-foreground'}"
+										? 'bg-muted/50 text-foreground z-10'
+										: 'bg-background text-muted-foreground hover:bg-muted/50/50 hover:text-foreground'}"
 								draggable="true"
 								ondragstart={(e) => onTabDragStart(e, tab.ID)}
 								ondragover={(e) => onTabDragOver(e, tab.ID)}
@@ -1059,14 +1059,14 @@
 									</span>
 								{/if}
 								<button
-									class="ml-1 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-muted"
+									class="ml-1 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-muted/50"
 									onclick={(e) => { e.stopPropagation(); deleteTab(tab.ID); }}
 								>
 									<X size={14} />
 								</button>
 								<!-- Active tab connector to content below -->
 								{#if tab.ID === tabID}
-									<div class="absolute bottom-0 left-0 right-0 h-[2px] bg-muted"></div>
+									<div class="absolute bottom-0 left-0 right-0 h-[2px] bg-muted/50"></div>
 								{/if}
 							</div>
 						{/each}
@@ -1091,7 +1091,7 @@
 			</div>
 		</header>
 
-		<div class="flex h-screen flex-1 flex-col rounded-3xl bg-muted">
+		<div class="flex h-screen flex-1 flex-col rounded-3xl bg-muted/50">
 		{#if tabsMap.size > 0}
 			<!-- Main Content on screen -->
 

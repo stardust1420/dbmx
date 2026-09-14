@@ -251,3 +251,19 @@ export function columnTypeLabel(columnType?: model.ColumnType): string {
 export function isJsonColumn(columnType?: model.ColumnType): boolean {
 	return columnType?.dataType === "json" || columnType?.dataType === "jsonb";
 }
+
+/**
+ * The query paths render a SQL NULL as the text "NULL" and an empty string as
+ * "EMPTY" on the Go side, long before the row reaches the grid, so by the time a
+ * cell gets here the sentinel is an ordinary string. The grid dims these so an
+ * absent value reads as absent rather than as content.
+ *
+ * The sentinel is the only signal left, which means a column whose real content
+ * is the word NULL is dimmed too. That is the same trade the export path already
+ * makes in app/export.go (`cellExportValue`), so the two stay consistent.
+ */
+const CELL_SENTINELS = new Set(["NULL", "EMPTY"]);
+
+export function isCellSentinel(value: unknown): boolean {
+	return typeof value === "string" && CELL_SENTINELS.has(value);
+}

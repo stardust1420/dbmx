@@ -231,7 +231,7 @@
 						<Table.Row>
 							{#each row.getVisibleCells() as cell (cell.id)}
 								<Table.Cell
-									class={`hover:bg-muted ${
+									class={`hover:bg-muted/50 ${
 										editedCellsMap.has(cell.id) ? 'bg-destructive/20 hover:bg-destructive/30' : ''
 									} h-12 px-4 text-start focus-within:px-2 transition-[padding] w-fit`}
 									ondblclick={() => {

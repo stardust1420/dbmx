@@ -230,7 +230,7 @@
 
 <div class="overflow-auto">
 	<Table.Root class="border">
-		<Table.Header class="bg-muted sticky top-0 z-10 overflow-auto">
+		<Table.Header class="bg-muted/50 sticky top-0 z-10 overflow-auto">
 			{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
 				<Table.Row>
 					{#each headerGroup.headers as header (header.id)}
@@ -255,7 +255,7 @@
 								{#each row.getVisibleCells() as cell (cell.id)}
 									<Table.Cell
 										style="width: {cell.column.getSize()}px"
-										class="h-12 group hover:bg-muted"
+										class="h-12 group hover:bg-muted/50"
 									>
 									{#if cell.column.id === 'actions'}
 										<FlexRender

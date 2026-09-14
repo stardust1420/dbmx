@@ -480,7 +480,7 @@
 						{:else}
 							<pre
 								id="constraint-definition"
-								class="bg-muted text-muted-foreground overflow-x-auto rounded-md border px-3 py-2 font-mono text-xs">{definition ||
+								class="bg-muted/50 text-muted-foreground overflow-x-auto rounded-md border px-3 py-2 font-mono text-xs">{definition ||
 									'—'}</pre>
 						{/if}
 						{#if showErrors && definitionError}

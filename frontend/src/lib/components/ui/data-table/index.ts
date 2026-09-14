@@ -8,4 +8,5 @@ export {
 	columnTypeLabel,
 	columnTypeMeta,
 	isJsonColumn,
+	isCellSentinel,
 } from "./data-table.svelte.js";

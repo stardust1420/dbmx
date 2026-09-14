@@ -174,7 +174,7 @@ Use the `cn()` utility from the project for conditional or merged class names. D
   let isActive = $state(false);
 </script>
 
-<div class={`flex items-center ${isActive ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+<div class={`flex items-center ${isActive ? "bg-primary text-primary-foreground" : "bg-muted/50"}`}>
 ```
 
 **Correct:**
@@ -185,7 +185,7 @@ Use the `cn()` utility from the project for conditional or merged class names. D
   let isActive = $state(false);
 </script>
 
-<div class={cn("flex items-center", isActive ? "bg-primary text-primary-foreground" : "bg-muted")}>
+<div class={cn("flex items-center", isActive ? "bg-primary text-primary-foreground" : "bg-muted/50")}>
 ```
 
 ---
